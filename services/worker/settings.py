@@ -81,11 +81,16 @@ class OptionalSettings(FrozenSettings):
     diarization_batch_size: int = Field(ge=1, le=64)
 
 
+class WorkerSettings(FrozenSettings):
+    no_activity_timeout_seconds: int = Field(ge=60, le=86400)
+
+
 class InferenceSettings(FrozenSettings):
     schema_version: Literal[1]
     llm: LLMSettings
     asr: ASRSettings
     optional: OptionalSettings
+    worker: WorkerSettings
 
 
 def load_settings(path: Path | None = None):

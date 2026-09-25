@@ -14,6 +14,7 @@ import psutil
 from filelock import FileLock, Timeout
 
 from services.api import config
+from services.api.audio import atomic_write, sha
 from services.api.db import canonical, migrate, transaction, uid
 from services.api.domain import Candidate, event_key, validate_evidence
 from services.api.dates import resolve
@@ -50,17 +51,65 @@ def stage_environment():
     return env
 
 
+def cached_stage_output(target, receipt, input_hash):
+    """Only a complete, hash-matched output/receipt pair is reusable."""
+    try:
+        record = json.loads(receipt.read_text(encoding="utf-8"))
+        payload = target.read_bytes()
+        if record.get("input_hash") != input_hash or record.get("output_hash") != hashlib.sha256(payload).hexdigest():
+            return None
+        value = json.loads(payload)
+        return value if isinstance(value, dict) else None
+    except (OSError, ValueError, AttributeError):
+        return None
+
+
+class StageActivity:
+    """Monotonic inactivity timer; file-display failure alone cannot stop active computation."""
+    def __init__(self, timeout, clock=time.monotonic):
+        self.timeout, self.clock = timeout, clock
+        self.last_activity = clock()
+        self.work, self.cpu_seconds = None, 0.0
+
+    def observe(self, progress, cpu_seconds):
+        work = tuple(progress.get(k) for k in ("phase", "completed", "total")) if progress else None
+        if (work is not None and work != self.work) or cpu_seconds > self.cpu_seconds + 0.01:
+            self.last_activity = self.clock()
+        if work is not None:
+            self.work = work
+        self.cpu_seconds = cpu_seconds
+        return self.clock() - self.last_activity > self.timeout
+
+
+def process_tree_cpu_seconds(pid):
+    try:
+        parent = psutil.Process(pid)
+        processes = [parent, *parent.children(recursive=True)]
+    except psutil.NoSuchProcess:
+        return 0.0
+    total = 0.0
+    for process in processes:
+        try:
+            times = process.cpu_times()
+            total += times.user + times.system
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            pass
+    return total
+
+
 def run_stage(job, stage, spec):
     folder = config.DATA / "jobs" / job["id"]
     folder.mkdir(parents=True, exist_ok=True)
     spec["run_dir"] = str(folder)
     source = folder / f"{stage}-input.json"
     target = folder / f"{stage}-output.json"
-    source.write_text(canonical(spec), encoding="utf-8")
-    digest = hashlib.sha256(source.read_bytes()).hexdigest()
+    serialized = canonical(spec).encode("utf-8")
+    atomic_write(source, serialized)
+    digest = hashlib.sha256(serialized).hexdigest()
     receipt = folder / f"{stage}-receipt.json"
-    if target.exists() and receipt.exists() and json.loads(receipt.read_text())["input_hash"] == digest:
-        return json.loads(target.read_text(encoding="utf-8"))
+    cached = cached_stage_output(target, receipt, digest)
+    if cached is not None:
+        return cached
     with transaction() as c:
         c.execute("UPDATE jobs SET stage=?,lease=? WHERE id=?", (stage, time.time() + 30, job["id"]))
         c.execute(
@@ -85,6 +134,10 @@ def run_stage(job, stage, spec):
         env=env,
     )
     started = time.time()
+    from services.worker.settings import settings_for
+    from services.api.progress import read_progress
+
+    activity = StageActivity(settings_for(spec).worker.no_activity_timeout_seconds)
     last_resource_sample = 0
     try:
         while proc.poll() is None:
@@ -93,11 +146,12 @@ def run_stage(job, stage, spec):
                 c.execute("UPDATE jobs SET lease=? WHERE id=?", (time.time() + 30, job["id"]))
             if row["cancel"]:
                 raise RuntimeError("cancelled")
-            if time.time() - started > 7200:
-                raise RuntimeError("stage_timeout")
             if time.monotonic() - last_resource_sample >= 1:
                 last_resource_sample = time.monotonic()
                 sampler.sample(proc.pid)
+                progress = read_progress(config.DATA, {**job, "state": "running", "stage": stage})
+                if activity.observe(progress, process_tree_cpu_seconds(proc.pid)):
+                    raise RuntimeError("stage_stalled")
             time.sleep(0.5)
         if proc.returncode != 0:
             log.flush()
@@ -108,8 +162,8 @@ def run_stage(job, stage, spec):
         output = json.loads(target.read_text(encoding="utf-8"))
         resources = sampler.report()
         gpu0 = next((d for d in resources["gpu_devices"] if d["index"] == "0"), {})
-        receipt.write_text(
-            canonical(
+        atomic_write(
+            receipt, canonical(
                 {
                     "input_hash": digest,
                     "output_hash": hashlib.sha256(target.read_bytes()).hexdigest(),
@@ -122,8 +176,7 @@ def run_stage(job, stage, spec):
                     "resources": resources,
                     "contract_version": 2,
                 }
-            ),
-            encoding="utf-8",
+            ).encode("utf-8"),
         )
         return output
     finally:
@@ -170,6 +223,7 @@ def process(job):
         else None,
         "prompt_code_hash": hashlib.sha256(prompt_file.read_bytes()).hexdigest(),
         "input_audio_hash": asset["hash"],
+        "canonical_audio_hash": sha(asset["path"]),
     }
     asr = retry_stage(job, "whisper", spec)
     with transaction() as c:
@@ -197,7 +251,7 @@ def process(job):
         ]
     from .optional import optional_stages
 
-    optional_stages(job, spec, asset, segments, run_stage)
+    optional_stages(job, spec, asset, segments, retry_stage)
     with transaction() as c:
         segments = [
             dict(r)

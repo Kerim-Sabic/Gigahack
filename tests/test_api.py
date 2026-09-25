@@ -918,3 +918,52 @@ def test_template_configuration_requires_admin_but_selection_is_readable(client)
     assert client.get("/api/v1/settings/templates").status_code == 200
     response = client.put("/api/v1/settings/templates/Medical", json={"version": 0, "titles": {}})
     assert response.status_code == 403 and response.json()["code"] == "admin_required"
+
+
+def test_recording_finish_retry_is_idempotent_and_decode_does_not_hold_database_lock(client, monkeypatch):
+    import services.api.main as api_main
+    meeting = new_meeting(client)
+    rid = client.post(f"/api/v1/meetings/{meeting['id']}/recordings", json={"sample_rate": 16000}).json()['id']
+    assert client.put(f'/api/v1/recordings/{rid}/chunks/0', content=b'\0\0' * 32000).status_code == 200
+    original_decode = api_main.decode
+    calls = []
+
+    def checked_decode(source, target):
+        # A separate writer must be admitted while decoding runs.
+        with transaction() as db:
+            state = db.execute('SELECT state FROM recordings WHERE id=?', (rid,)).fetchone()[0]
+            assert state == 'finalizing'
+        calls.append(1)
+        return original_decode(source, target)
+
+    monkeypatch.setattr(api_main, 'decode', checked_decode)
+    with transaction() as db:
+        db.execute("UPDATE recordings SET state='finalizing' WHERE id=?", (rid,))
+    first = client.post(f'/api/v1/recordings/{rid}/finish', json={'count': 1, 'gaps': []})
+    assert first.status_code == 200, first.text
+    retry = client.post(f'/api/v1/recordings/{rid}/finish', json={'count': 1, 'gaps': []})
+    assert retry.status_code == 200 and retry.json() == first.json()
+    assert len(calls) == 1
+    with transaction() as db:
+        assert db.execute('SELECT COUNT(*) FROM assets WHERE id=?', (rid,)).fetchone()[0] == 1
+
+
+def test_recording_finish_retains_chunks_when_decode_fails_and_blocks_concurrent_finish(client, monkeypatch):
+    import services.api.main as api_main
+    from filelock import FileLock
+    meeting = new_meeting(client)
+    rid = client.post(f"/api/v1/meetings/{meeting['id']}/recordings", json={"sample_rate": 16000}).json()['id']
+    assert client.put(f'/api/v1/recordings/{rid}/chunks/0', content=b'\0\0' * 32000).status_code == 200
+    folder = config.DATA / 'audio' / meeting['id'] / rid
+    with FileLock(str(folder / 'finalize.lock')):
+        locked = client.post(f'/api/v1/recordings/{rid}/finish', json={'count': 1})
+        assert locked.status_code == 409 and locked.json()['code'] == 'recording_finalizing'
+    monkeypatch.setattr(api_main, 'decode', lambda *args: (_ for _ in ()).throw(RuntimeError('synthetic decoder failure')))
+    failed = client.post(f'/api/v1/recordings/{rid}/finish', json={'count': 1})
+    assert failed.status_code == 500
+    with transaction() as db:
+        assert db.execute('SELECT state FROM recordings WHERE id=?', (rid,)).fetchone()[0] == 'recording'
+        assert db.execute('SELECT COUNT(*) FROM assets WHERE id=?', (rid,)).fetchone()[0] == 0
+        chunk_path = db.execute('SELECT path FROM chunks WHERE recording_id=?', (rid,)).fetchone()[0]
+    from pathlib import Path
+    assert Path(chunk_path).read_bytes() == b'\0\0' * 32000

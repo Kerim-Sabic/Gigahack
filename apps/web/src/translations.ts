@@ -2,6 +2,9 @@ import type { Lang } from './i18n';
 let language:Lang='en';
 export function setUiLanguage(value:Lang){language=value;document.documentElement.lang=value;}
 const rows:[string,string,string][]=[
+ ["This recording is still being saved. Wait a moment and retry.", "Înregistrarea este încă în curs de salvare. Așteptați puțin și reîncercați.", "Запись ещё сохраняется. Подождите немного и повторите попытку."],
+ ["A saved audio chunk failed its integrity check. The other chunks are retained. Ask the operator to inspect the recording.", "Un fragment audio salvat nu a trecut verificarea integrității. Celelalte fragmente sunt păstrate. Cereți operatorului să verifice înregistrarea.", "Сохранённый фрагмент аудио не прошёл проверку целостности. Остальные фрагменты сохранены. Попросите оператора проверить запись."],
+ ["Processing stopped after a long period without activity. Your audio and saved work are retained. Retry or ask the operator to inspect local logs.", "Procesarea s-a oprit după o perioadă lungă fără activitate. Înregistrarea și rezultatele salvate sunt păstrate. Reîncercați sau cereți operatorului să verifice jurnalele locale.", "Обработка остановилась после длительного отсутствия активности. Аудио и сохранённые результаты не потеряны. Повторите попытку или попросите оператора проверить локальные журналы."],
  ["Check the wording here against the audio; this passage crosses a processing boundary.", "Verificați formularea cu înregistrarea audio; acest pasaj trece peste limita unui segment de procesare.", "Сверьте формулировку с аудио: этот фрагмент пересекает границу обработки."],
  ["Loading local model", "Se încarcă modelul local", "Загрузка локальной модели"],
  ["Transcribing audio", "Se transcrie înregistrarea", "Распознавание речи"],

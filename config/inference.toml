@@ -42,3 +42,6 @@ diarization_batch_size = 16
 
 # Generation slots and GPU admission remain fixed at one. This is a safety invariant,
 # not an unqualified performance knob. No runtime setting enables network inference.
+
+[worker]
+no_activity_timeout_seconds = 1800 # No fixed total duration cutoff; stop only after sustained inactivity.

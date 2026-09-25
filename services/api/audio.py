@@ -45,6 +45,8 @@ def decode(path, target):
     duration = float(info.get("format", {}).get("duration", 0))
     if duration <= 0 or duration > config.MAX_SECONDS:
         raise ValueError("invalid_audio_duration")
+    target = Path(target)
+    temporary = target.with_name(target.stem + ".partial.wav")
     subprocess.run(
         [
             "ffmpeg",
@@ -66,17 +68,21 @@ def decode(path, target):
             "16000",
             "-c:a",
             "pcm_s16le",
-            str(target),
+            str(temporary),
         ],
         capture_output=True,
         timeout=300,
         check=True,
     )
-    with wave.open(str(target)) as w:
+    with wave.open(str(temporary)) as w:
         samples, rate = w.getnframes(), w.getframerate()
     if samples / rate > config.MAX_SECONDS:
-        target.unlink(missing_ok=True)
+        temporary.unlink(missing_ok=True)
         raise ValueError("decoded_duration_exceeded")
+    with temporary.open("r+b") as stream:
+        stream.flush()
+        os.fsync(stream.fileno())
+    os.replace(temporary, target)
     return dict(
         sample_rate=rate,
         samples=samples,

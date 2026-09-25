@@ -1,6 +1,9 @@
 import { tr } from './translations';
 
 const messages: Record<string, string> = {
+  recording_finalizing: 'This recording is still being saved. Wait a moment and retry.',
+  recording_chunk_corrupt: 'A saved audio chunk failed its integrity check. The other chunks are retained. Ask the operator to inspect the recording.',
+  stage_stalled: 'Processing stopped after a long period without activity. Your audio and saved work are retained. Retry or ask the operator to inspect local logs.',
   implementation_changed_queue_new_job: 'The processing software changed. Start a new analysis from the saved audio.',
   delivery_not_safe_to_retry: 'This delivery cannot be safely retried. Check its status on the mail server.',
   cancel_processing_before_metadata_edit: 'Cancel or finish processing before changing meeting details.',

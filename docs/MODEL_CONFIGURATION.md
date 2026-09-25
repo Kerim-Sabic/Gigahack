@@ -49,3 +49,8 @@ Checkpoints are atomic/fsynced and keyed to the actual audio hash, settings, dev
 profile and implementation identity. Corrupt or mismatching checkpoints are recomputed.
 This bounds waveform memory; total transcript/LLM state is still proportional to meeting size.
 Upload duration/container limits and full-pipeline long-file qualification are not yet removed.
+
+`worker.no_activity_timeout_seconds` controls the inactivity watchdog (default 1800 seconds).
+A long stage is not stopped merely because two hours elapsed. Advancing work or observed CPU
+computation in its process tree keeps it alive; timestamp-only updates do not. This cannot
+identify every logical busy loop. Cancellation and bounded model-request timeouts remain.

@@ -651,12 +651,26 @@ def parakeet(spec):
 
 
 def diarize(spec):
+    progress = ProgressReporter(spec["run_dir"], "diarize")
     import torch
     from pyannote.audio import Pipeline
 
     pipeline = Pipeline.from_pretrained(str(MODELS / "diarization"))
+    batch = 1 if spec["config"].get("oom_retry") else settings_for(spec).optional.diarization_batch_size
+    pipeline.segmentation_batch_size = batch
+    pipeline.embedding_batch_size = batch
     pipeline.to(torch.device(spec["config"]["device"]))
-    result = pipeline(spec["audio"])
+    current_step = None
+
+    def hook(step, artifact, *, total=None, completed=None, **kwargs):
+        nonlocal current_step
+        if step != current_step:
+            current_step = step
+            progress.begin("diarizing", total if total and total > 0 else None, "items")
+        if completed is not None:
+            progress.advance(max(progress.completed, completed))
+
+    result = pipeline(spec["audio"], hook=hook)
     return {
         "turns": [
             {"start": t.start, "end": t.end, "cluster": speaker}
@@ -695,4 +709,6 @@ if __name__ == "__main__":
         spec
     )
     result["elapsed_seconds"] = time.time() - started
-    Path(sys.argv[3]).write_text(json.dumps(result, ensure_ascii=False), encoding="utf-8")
+    from services.api.audio import atomic_write
+
+    atomic_write(Path(sys.argv[3]), json.dumps(result, ensure_ascii=False).encode("utf-8"))

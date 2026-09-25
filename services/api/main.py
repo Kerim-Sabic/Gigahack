@@ -1,6 +1,7 @@
 import asyncio
 import hashlib
 import json
+import os
 import secrets
 import sqlite3
 import time
@@ -17,6 +18,7 @@ from fastapi import Depends, FastAPI, HTTPException, Request, Response, UploadFi
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import Field
+from filelock import FileLock, Timeout
 
 from . import config
 from .audio import atomic_write, decode, sha
@@ -595,40 +597,73 @@ class Finish(Strict):
 
 @app.post("/api/v1/recordings/{ident}/finish")
 def finish(ident: str, body: Finish, u=Depends(user)):
+    # Authorize before constructing the app-owned recording lock path.
     with transaction() as c:
-        r = c.execute("SELECT * FROM recordings WHERE id=?", (ident,)).fetchone()
-        if not r:
+        row = c.execute("SELECT * FROM recordings WHERE id=?", (ident,)).fetchone()
+        if not row:
             fail("recording_not_found", 404)
-        access(c, r["meeting_id"], u, True)
-        chunks = c.execute("SELECT * FROM chunks WHERE recording_id=? ORDER BY sequence", (ident,)).fetchall()
-        if [x["sequence"] for x in chunks] != list(range(body.count)):
-            fail("missing_chunks", 409)
-        if r["state"] != "recording":
-            fail("recording_sealed", 409)
-        path = config.DATA / "audio" / r["meeting_id"] / ident / "original.wav"
-        with wave.open(str(path), "wb") as w:
-            w.setnchannels(1)
-            w.setsampwidth(2)
-            w.setframerate(r["rate"])
-            for ch in chunks:
-                w.writeframes(Path(ch["path"]).read_bytes())
-        target = path.with_name("source.wav")
-        metadata = decode(path, target)
-        c.execute(
-            "INSERT INTO assets VALUES(?,?,?,?,?,?,?,?)",
-            (
-                ident,
-                r["meeting_id"],
-                str(target),
-                sha(path),
-                16000,
-                metadata["samples"],
-                1,
-                canonical({"rate": r["rate"], "gaps": body.gaps}),
-            ),
-        )
-        c.execute("UPDATE recordings SET state='sealed',gaps=? WHERE id=?", (canonical(body.gaps), ident))
-        return {"id": ident, "samples": metadata["samples"], "sample_rate": 16000}
+        access(c, row["meeting_id"], u, True)
+        folder = config.DATA / "audio" / row["meeting_id"] / row["id"]
+    folder.mkdir(parents=True, exist_ok=True)
+    lock = FileLock(str(folder / "finalize.lock"))
+    try:
+        lock.acquire(timeout=0)
+    except Timeout:
+        fail("recording_finalizing", 409)
+    try:
+        with transaction() as c:
+            r = c.execute("SELECT * FROM recordings WHERE id=?", (ident,)).fetchone()
+            if not r:
+                fail("recording_not_found", 404)
+            access(c, r["meeting_id"], u, True)
+            chunks = c.execute("SELECT * FROM chunks WHERE recording_id=? ORDER BY sequence", (ident,)).fetchall()
+            if len(chunks) != body.count or any(ch["sequence"] != i for i, ch in enumerate(chunks)):
+                fail("missing_chunks", 409)
+            if r["state"] == "sealed":
+                if r["gaps"] != canonical(body.gaps):
+                    fail("recording_sealed", 409)
+                asset = c.execute("SELECT * FROM assets WHERE id=?", (ident,)).fetchone()
+                if not asset:
+                    fail("recording_asset_missing", 409)
+                return {"id": ident, "samples": asset["samples"], "sample_rate": asset["sample_rate"]}
+            if r["state"] not in ("recording", "finalizing"):
+                fail("recording_sealed", 409)
+            # OS lock serializes retries, including recovery after a process died in finalizing.
+            c.execute("UPDATE recordings SET state='finalizing' WHERE id=?", (ident,))
+        try:
+            path = folder / "original.wav"
+            temporary = folder / "original.partial.wav"
+            with temporary.open("w+b") as stream:
+                with wave.open(stream, "wb") as w:
+                    w.setnchannels(1)
+                    w.setsampwidth(2)
+                    w.setframerate(r["rate"])
+                    for ch in chunks:
+                        pcm = Path(ch["path"]).read_bytes()
+                        if hashlib.sha256(pcm).hexdigest() != ch["hash"]:
+                            fail("recording_chunk_corrupt", 409)
+                        w.writeframes(pcm)
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.replace(temporary, path)
+            target = folder / "source.wav"
+            metadata = decode(path, target)
+            original_hash = sha(path)
+            with transaction() as c:
+                access(c, r["meeting_id"], u, True)
+                c.execute(
+                    "INSERT INTO assets VALUES(?,?,?,?,?,?,?,?)",
+                    (ident, r["meeting_id"], str(target), original_hash, 16000,
+                     metadata["samples"], 1, canonical({"rate": r["rate"], "gaps": body.gaps})),
+                )
+                c.execute("UPDATE recordings SET state='sealed',gaps=? WHERE id=?", (canonical(body.gaps), ident))
+            return {"id": ident, "samples": metadata["samples"], "sample_rate": 16000}
+        except BaseException:
+            with transaction() as c:
+                c.execute("UPDATE recordings SET state='recording' WHERE id=? AND state='finalizing'", (ident,))
+            raise
+    finally:
+        lock.release()
 
 
 class Queue(Strict):
