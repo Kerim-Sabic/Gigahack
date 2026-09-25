@@ -162,7 +162,26 @@ const rows:[string,string,string][]=[
  ['This version is retained for history. Create a current preview to send.','Această versiune este păstrată în istoric. Creați o versiune curentă pentru trimitere.','Эта версия сохранена в истории. Для отправки создайте актуальную версию.'],['Local delivery:','Livrare locală:','Локальная доставка:'],['Secretary amendment','Modificare a secretarului','Изменение секретаря'],
  ['Changes are labeled as reviewer additions. No audio evidence is invented for edited fields.','Modificările sunt etichetate ca adăugiri ale revizorului. Nu se inventează dovezi audio.','Изменения отмечаются как дополнения проверяющего. Аудиоподтверждения для изменённых полей не выдумываются.'],
  ['Text','Text','Текст'],['Owner','Responsabil','Ответственный'],['Due','Termen','Срок'],['Category','Categorie','Категория'],['Speech act','Tipul enunțului','Тип высказывания'],['Reason for amendment','Motivul modificării','Причина изменения'],['Save reviewed amendment','Salvează modificarea revizuită','Сохранить проверенное изменение'],
- ['Draft','Ciornă','Черновик'],['Approved','Aprobat','Утверждено'],['Unknown speaker','Vorbitor necunoscut','Неизвестный говорящий'],['Not measured','Nemăsurat','Не измерено'],['Available','Disponibil','Доступно'],['Unavailable','Indisponibil','Недоступно'],['Saved on this computer.','Salvat pe acest calculator.','Сохранено на этом компьютере.']
+ ['Draft','Ciornă','Черновик'],['Approved','Aprobat','Утверждено'],['Unknown speaker','Vorbitor necunoscut','Неизвестный говорящий'],['Not measured','Nemăsurat','Не измерено'],['Available','Disponibil','Доступно'],['Unavailable','Indisponibil','Недоступно'],['Saved on this computer.','Salvat pe acest calculator.','Сохранено на этом компьютере.'],
+ ["DOCUMENT TEMPLATES", "ȘABLOANE DE DOCUMENTE", "ШАБЛОНЫ ДОКУМЕНТОВ"],
+ ["Meeting classification selects a template. Existing previews keep their saved template and content.", "Categoria ședinței selectează șablonul. Previzualizările existente păstrează șablonul și conținutul salvate.", "Категория совещания определяет шаблон. Созданные версии сохраняют свой шаблон и содержание."],
+ ["A suggested recipient group never authorizes sending. Review the exact addresses before delivery.", "Grupul sugerat nu autorizează trimiterea. Verificați adresele exacte înainte de expediere.", "Предложенная группа получателей не разрешает отправку. Перед отправкой проверьте точные адреса."],
+ ["Required decisions, actions, unresolved matters and amendment history are always included.", "Deciziile, acțiunile, aspectele nerezolvate și istoricul modificărilor sunt incluse întotdeauna.", "Решения, действия, нерешённые вопросы и история изменений включаются всегда."],
+ ["Version", "Versiune", "Версия"],
+ ["A newer template is available. Your edits have been kept.", "Este disponibil un șablon mai nou. Modificările dvs. au fost păstrate.", "Доступна новая версия шаблона. Ваши изменения сохранены в форме."],
+ ["Replace my edits with saved template", "Înlocuiește modificările mele cu șablonul salvat", "Заменить мои изменения сохранённым шаблоном"],
+ ["English document heading", "Titlul documentului în engleză", "Заголовок документа на английском"],
+ ["Romanian document heading", "Titlul documentului în română", "Заголовок документа на румынском"],
+ ["Russian document heading", "Titlul documentului în rusă", "Заголовок документа на русском"],
+ ["Leave blank for the standard heading", "Lăsați gol pentru titlul standard", "Оставьте пустым для стандартного заголовка"],
+ ["Document introduction", "Introducerea documentului", "Вступление документа"],
+ ["Plain text only. Enter approved organizational wording; it is not translated automatically.", "Doar text simplu. Introduceți formulări aprobate de organizație; nu sunt traduse automat.", "Только обычный текст. Введите утверждённую организацией формулировку; автоматический перевод не выполняется."],
+ ["Suggested recipient group", "Grup de destinatari sugerat", "Предлагаемая группа получателей"],
+ ["No suggested group", "Fără grup sugerat", "Без предлагаемой группы"],
+ ["Saving…", "Se salvează…", "Сохранение…"],
+ ["Save template", "Salvează șablonul", "Сохранить шаблон"],
+ ["Admin access required to edit templates.", "Pentru editarea șabloanelor este necesar acces de administrator.", "Для редактирования шаблонов нужны права администратора."],
+ ["Template version","Versiunea șablonului","Версия шаблона"]
 ];
 const lookup=new Map(rows.map(([en,ro,ru])=>[en,{en,ro,ru}]));
 export function tr(text:string):string {const key=text.trim();const translated=lookup.get(key)?.[language]||key;return (text.startsWith(' ')?' ':'')+translated+(text.endsWith(' ')?' ':'');}

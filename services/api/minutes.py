@@ -111,6 +111,8 @@ LABELS = {
 def render(data):
     m = data["meeting"]
     labels = LABELS[m["language"]]
+    template = data.get("template", {})
+    title = template.get("titles", {}).get(m["language"]) or labels["title"]
 
     def esc(value):
         return html.escape(str(value if value is not None else labels["unknown"]))
@@ -130,8 +132,8 @@ def render(data):
     )
     return f'''<!doctype html><html lang="{m["language"]}"><meta charset="utf-8"><title>{esc(m["title"])}</title>
 <style>body{{font:16px sans-serif;color:#203339;max-width:900px;margin:40px auto;padding:24px}}h1{{font-size:30px}}table{{border-collapse:collapse;width:100%}}td,th{{text-align:left;padding:12px;border-bottom:1px solid #ccd6d5}}footer{{margin-top:32px;font-size:12px}}@page{{size:A4;margin:18mm}}</style>
-<h1>{labels["title"]}</h1><h2>{esc(m["title"])}</h2><p>{esc(m["date"])} · {esc(m["timezone"])} · {esc(m["classification"])}</p>
-<h3>{labels["participants"]}</h3><p>{esc(", ".join(data["participants"]))}</p><h3>{labels["items"]}</h3>
+<h1>{esc(title)}</h1><h2>{esc(m["title"])}</h2><p>{esc(m["date"])} · {esc(m["timezone"])} · {esc(m["classification"])}</p>
+<p style="white-space:pre-wrap">{esc(template.get("introduction", ""))}</p><h3>{labels["participants"]}</h3><p>{esc(", ".join(data["participants"]))}</p><h3>{labels["items"]}</h3>
 <table><thead><tr>{headers}</tr></thead><tbody>{rows}</tbody></table>
 <h3>{labels["unresolved"]}</h3><ul>{unresolved}</ul><h3>{labels["history"]}</h3><ul>{history}</ul>
 <footer>Secure MOM · {labels["revision"]} {m["revision"]} · {labels["evidence"]}</footer></html>'''
@@ -144,6 +146,7 @@ class Revision(Strict):
 @router.post("/meetings/{ident}/snapshots")
 def snapshot(ident: str, body: Revision, u=Depends(authenticated)):
     from .main import access, fail, projections
+    from .settings import load_template
 
     with transaction() as c:
         m = access(c, ident, u, True)
@@ -161,7 +164,8 @@ def snapshot(ident: str, body: Revision, u=Depends(authenticated)):
             fail("processing_incomplete", 409)
         data = {
             "schema_version": 1,
-            "template_version": 3,
+            "template_version": 4,
+            "template": load_template(c, m["classification"]),
             "application_version": "0.1.0",
             "meeting": m,
             "participants": [
@@ -201,7 +205,7 @@ def list_snapshots(ident: str, u=Depends(authenticated)):
         return [
             dict(r)
             for r in c.execute(
-                "SELECT s.id,s.revision,s.hash,s.created,a.created AS approved FROM snapshots s LEFT JOIN approvals a ON a.snapshot_id=s.id WHERE s.meeting_id=? ORDER BY s.created DESC",
+                "SELECT s.id,s.revision,s.hash,s.created,json_extract(s.body,'$.template.recipient_group_id') AS suggested_group_id,json_extract(s.body,'$.template.version') AS template_revision,a.created AS approved FROM snapshots s LEFT JOIN approvals a ON a.snapshot_id=s.id WHERE s.meeting_id=? ORDER BY s.created DESC",
                 (ident,),
             )
         ]

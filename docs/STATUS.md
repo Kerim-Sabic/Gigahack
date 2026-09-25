@@ -9,7 +9,16 @@ Current stage: generalize and verify semantic corrections before target/deployme
 - Structured literal quantities preserve amount/unit/scope/raw/evidence. API review/snapshot
   and human replacement tests pass. Quantity now appears in the minutes template; real
   UI/PDF verification of this change is still pending.
-- Sixteen development variations running; six held-out variations remain frozen and unrun.
+- Extended semantic experiments are ongoing; later prompt attempts introduced regressions.
+  Current 768-token bounded reasoning experiment is undergoing full original/development runs.
+  Six held-out variations remain frozen and unrun. Last fully passing original run is attempt 4.
+- Working tree: 103 backend tests and 8 frontend tests pass; strict frontend build/lint pass.
+- Resource attribution committed at 029f35de92f9cd0f06445cf82ae7e56fdbcd1895; remote verified,
+  CI run 36180243770 passed. Real CUDA silence with sampled resource receipt passed.
+  Windows per-process GPU memory remains unavailable; target laptop remains unobserved.
+- Versioned template forms/API/snapshots and group suggestions are implemented and tested.
+  Captured T10 replay passes real UI/JSON/PDF with a configured template; full Mailpit fixture
+  rerun must wait for evaluator GPU admission. See TEMPLATES.md and RESOURCE_OBSERVATION.md.
 - Complete mission remains active. See CONTINUATION_PLAN.md and CONTINUATION_RESULTS.md.
 - No new dependencies/models adopted. No package deletion, links or kit mutation performed.
 - No persistent app services currently started; evaluation temporarily owns port 8081.

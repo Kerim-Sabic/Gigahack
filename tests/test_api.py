@@ -832,3 +832,56 @@ def test_asr_disagreement_withholds_structured_quantity_through_review(client, m
     assert fact["category"] == "information" and fact["status"] == "information"
     assert fact["value"] is None and fact["quantity"] is None
     assert any("Critical numeric value withheld" in issue for issue in fact["uncertainties"])
+
+
+def test_templates_are_versioned_escaped_and_frozen_in_snapshots(client):
+    templates = client.get("/api/v1/settings/templates").json()
+    assert {t["classification"] for t in templates} == {"Administrative", "Medical", "Executive"}
+    group = client.get("/api/v1/recipient-groups").json()[0]
+    body = {
+        "version": 0,
+        "titles": {
+            "en": "<script>unsafe</script>",
+            "ro": "Proces-verbal sintetic",
+            "ru": "Синтетический протокол",
+        },
+        "introduction": "Synthetic introduction",
+        "recipient_group_id": group["id"],
+    }
+    path = "/api/v1/settings/templates/Administrative"
+    saved = client.put(path, json=body)
+    assert saved.status_code == 200 and saved.json()["version"] == 1
+    assert client.put(path, json=body).status_code == 409
+    meeting = new_meeting(client)
+    snapshot = client.post(f"/api/v1/meetings/{meeting['id']}/snapshots", json={"revision": 1}).json()["id"]
+    base = f"/api/v1/snapshots/{snapshot}/exports/"
+    before = client.get(base + "json").json()
+    assert before["template"]["recipient_group_id"] == group["id"]
+    html = client.get(base + "html").text
+    assert "<script>unsafe</script>" not in html and "&lt;script&gt;unsafe&lt;/script&gt;" in html
+    assert "Synthetic introduction" in html
+    changed = client.put(path, json={**body, "version": 1, "introduction": "Changed introduction"})
+    assert changed.status_code == 200 and changed.json()["version"] == 2
+    assert client.get(base + "json").json() == before
+    assert client.get(base + "html").text == html
+    snapshots = client.get(f"/api/v1/meetings/{meeting['id']}/snapshots").json()
+    assert snapshots[0]["suggested_group_id"] == group["id"]
+    current = client.post(f"/api/v1/meetings/{meeting['id']}/snapshots", json={"revision": 1}).json()["id"]
+    assert current != snapshot
+    assert client.get(f"/api/v1/snapshots/{current}/exports/json").json()["template"]["version"] == 2
+    assert client.put(path, json={**body, "version": 2, "recipient_group_id": "missing"}).status_code == 409
+
+
+def test_template_configuration_requires_admin_but_selection_is_readable(client):
+    created = client.post(
+        "/api/v1/accounts",
+        json={"name": "template-reader", "password": "synthetic-reader-password", "role": "secretary"},
+    )
+    assert created.status_code == 200
+    login = client.post(
+        "/api/v1/sessions", json={"name": "template-reader", "password": "synthetic-reader-password"}
+    )
+    client.headers["x-csrf-token"] = login.json()["csrf"]
+    assert client.get("/api/v1/settings/templates").status_code == 200
+    response = client.put("/api/v1/settings/templates/Medical", json={"version": 0, "titles": {}})
+    assert response.status_code == 403 and response.json()["code"] == "admin_required"

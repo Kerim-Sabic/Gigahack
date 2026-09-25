@@ -609,6 +609,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/settings/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Templates */
+        get: operations["templates_api_v1_settings_templates_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/settings/templates/{classification}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Template */
+        put: operations["update_template_api_v1_settings_templates__classification__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1038,6 +1072,55 @@ export interface components {
             alternatives: string;
             /** Words */
             words: string;
+        };
+        /** TemplateEdit */
+        TemplateEdit: {
+            /** Version */
+            version: number;
+            titles: components["schemas"]["TemplateTitles"];
+            /**
+             * Introduction
+             * @default
+             */
+            introduction: string;
+            /** Recipient Group Id */
+            recipient_group_id?: string | null;
+        };
+        /** TemplateTitles */
+        TemplateTitles: {
+            /**
+             * En
+             * @default
+             */
+            en: string;
+            /**
+             * Ro
+             * @default
+             */
+            ro: string;
+            /**
+             * Ru
+             * @default
+             */
+            ru: string;
+        };
+        /** TemplateView */
+        TemplateView: {
+            /** Version */
+            version: number;
+            titles: components["schemas"]["TemplateTitles"];
+            /**
+             * Introduction
+             * @default
+             */
+            introduction: string;
+            /** Recipient Group Id */
+            recipient_group_id?: string | null;
+            /**
+             * Classification
+             * @enum {string}
+             */
+            classification: "Administrative" | "Executive" | "Medical";
         };
         /** ValidationError */
         ValidationError: {
@@ -2410,6 +2493,61 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    templates_api_v1_settings_templates_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateView"][];
+                };
+            };
+        };
+    };
+    update_template_api_v1_settings_templates__classification__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                classification: "Administrative" | "Executive" | "Medical";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TemplateEdit"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateView"];
                 };
             };
             /** @description Validation Error */

@@ -46,6 +46,21 @@ def main(*, fixture_inference=False):
             page.get_by_label("Role", exact=True).select_option("viewer")
             page.get_by_role("button", name="Create account", exact=True).click()
             expect(page.get_by_text("Saved on this computer.", exact=True)).to_be_visible()
+            page.get_by_role("button", name="Templates", exact=True).click()
+            template_card = page.locator("section.card").filter(
+                has=page.get_by_role("heading", name="Administrative", exact=False)
+            )
+            template_card.get_by_label("English document heading", exact=True).fill(
+                "Synthetic template minutes"
+            )
+            template_card.get_by_label("Document introduction", exact=True).fill(
+                "Synthetic configured introduction"
+            )
+            template_card.get_by_label("Suggested recipient group", exact=True).select_option(
+                label="CI reviewers"
+            )
+            template_card.get_by_role("button", name="Save template", exact=True).click()
+            expect(template_card.get_by_text("Saved on this computer.", exact=True)).to_be_visible()
             page.get_by_role("button", name="Meetings", exact=True).click()
         page.get_by_role("button", name="＋ New meeting", exact=True).click()
         page.get_by_label("Meeting title").fill("Synthetic end-to-end qualification")
@@ -82,8 +97,16 @@ def main(*, fixture_inference=False):
         page.get_by_role("button", name="Create preview", exact=True).click()
         page.get_by_role("button", name="Approve version", exact=True).click()
         if fixture_inference:
-            page.get_by_label("Recipient group", exact=True).select_option(label="CI reviewers")
+            expect(page.get_by_label("Recipient group", exact=True).locator("option:checked")).to_have_text(
+                "CI reviewers"
+            )
             expect(page.locator(".snapshot strong")).to_have_text("reviewers@secure-mom.test")
+            snapshot_json = page.request.get(
+                "http://127.0.0.1:8765" + page.get_by_role("link", name="JSON ↗").get_attribute("href")
+            ).json()
+            assert snapshot_json["template"]["version"] == 1
+            assert snapshot_json["template"]["titles"]["en"] == "Synthetic template minutes"
+            assert snapshot_json["template"]["introduction"] == "Synthetic configured introduction"
         send = page.get_by_role("button", name="Send approved version", exact=True)
         expect(send).to_be_enabled()
         send.click()
@@ -126,6 +149,9 @@ def main(*, fixture_inference=False):
                 "account_create",
                 "member_grant",
                 "recipient_group_edit",
+                "template_configuration",
+                "template_snapshot_freezing",
+                "suggested_recipient_group",
                 "manual_topic_link",
                 "retained_amendment_history",
             ]

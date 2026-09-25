@@ -1,5 +1,6 @@
 import os
 import re
+from typing import Literal
 
 from fastapi import APIRouter, Depends, Request
 from pydantic import Field
@@ -91,3 +92,84 @@ def glossary(body: Glossary, u=Depends(admin)):
         )
         audit(c, None, u["id"], "glossary_updated", {"version": body.version + 1})
         return {"version": body.version + 1, "terms": body.terms}
+
+
+# Templates contain plain text only. Required evidence/history sections cannot be disabled.
+
+Classification = Literal["Administrative", "Executive", "Medical"]
+
+
+class TemplateTitles(Strict):
+    en: str = Field(default="", max_length=120)
+    ro: str = Field(default="", max_length=120)
+    ru: str = Field(default="", max_length=120)
+
+
+class TemplateEdit(Strict):
+    version: int = Field(ge=0)
+    titles: TemplateTitles
+    introduction: str = Field(default="", max_length=1000)
+    recipient_group_id: str | None = Field(default=None, max_length=100)
+
+
+class TemplateView(TemplateEdit):
+    classification: Classification
+
+
+def load_template(c, classification):
+    import json
+
+    row = c.execute(
+        "SELECT version,body FROM settings WHERE key=?", ("template:" + classification,)
+    ).fetchone()
+    if row:
+        return {"classification": classification, "version": row["version"], **json.loads(row["body"])}
+    return {
+        "classification": classification,
+        "version": 0,
+        "titles": {"en": "", "ro": "", "ru": ""},
+        "introduction": "",
+        "recipient_group_id": None,
+    }
+
+
+def signed_in(request: Request):
+    from .main import user
+
+    return user(request)
+
+
+@router.get("/settings/templates", response_model=list[TemplateView])
+def templates(u=Depends(signed_in)):
+    with transaction() as c:
+        return [load_template(c, category) for category in ("Administrative", "Executive", "Medical")]
+
+
+@router.put("/settings/templates/{classification}", response_model=TemplateView)
+def update_template(classification: Classification, body: TemplateEdit, u=Depends(admin)):
+    from .main import fail
+
+    with transaction() as c:
+        current = load_template(c, classification)
+        if current["version"] != body.version:
+            fail("revision_conflict", 409)
+        if (
+            body.recipient_group_id
+            and not c.execute(
+                "SELECT 1 FROM recipient_groups WHERE id=?", (body.recipient_group_id,)
+            ).fetchone()
+        ):
+            fail("recipient_group_changed", 409)
+        data = body.model_dump(exclude={"version"})
+        c.execute(
+            "INSERT INTO settings VALUES(?,?,?) ON CONFLICT(key) DO UPDATE SET version=excluded.version,body=excluded.body",
+            ("template:" + classification, body.version + 1, canonical(data)),
+        )
+        audit(
+            c,
+            None,
+            u["id"],
+            "template_updated",
+            {"classification": classification, "version": body.version + 1},
+        )
+        return load_template(c, classification)

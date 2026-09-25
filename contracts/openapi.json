@@ -1663,6 +1663,82 @@
           }
         }
       }
+    },
+    "/api/v1/settings/templates": {
+      "get": {
+        "summary": "Templates",
+        "operationId": "templates_api_v1_settings_templates_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TemplateView"
+                  },
+                  "type": "array",
+                  "title": "Response Templates Api V1 Settings Templates Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/settings/templates/{classification}": {
+      "put": {
+        "summary": "Update Template",
+        "operationId": "update_template_api_v1_settings_templates__classification__put",
+        "parameters": [
+          {
+            "name": "classification",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "Administrative",
+                "Executive",
+                "Medical"
+              ],
+              "type": "string",
+              "title": "Classification"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplateEdit"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2784,6 +2860,115 @@
           "words"
         ],
         "title": "SegmentView"
+      },
+      "TemplateEdit": {
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Version"
+          },
+          "titles": {
+            "$ref": "#/components/schemas/TemplateTitles"
+          },
+          "introduction": {
+            "type": "string",
+            "maxLength": 1000,
+            "title": "Introduction",
+            "default": ""
+          },
+          "recipient_group_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recipient Group Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "version",
+          "titles"
+        ],
+        "title": "TemplateEdit"
+      },
+      "TemplateTitles": {
+        "properties": {
+          "en": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "En",
+            "default": ""
+          },
+          "ro": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Ro",
+            "default": ""
+          },
+          "ru": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Ru",
+            "default": ""
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "TemplateTitles"
+      },
+      "TemplateView": {
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Version"
+          },
+          "titles": {
+            "$ref": "#/components/schemas/TemplateTitles"
+          },
+          "introduction": {
+            "type": "string",
+            "maxLength": 1000,
+            "title": "Introduction",
+            "default": ""
+          },
+          "recipient_group_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recipient Group Id"
+          },
+          "classification": {
+            "type": "string",
+            "enum": [
+              "Administrative",
+              "Executive",
+              "Medical"
+            ],
+            "title": "Classification"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "version",
+          "titles",
+          "classification"
+        ],
+        "title": "TemplateView"
       },
       "ValidationError": {
         "properties": {
