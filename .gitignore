@@ -1,0 +1,16 @@
+.venv/
+.runtime/
+models/
+node_modules/
+dist/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.env
+*.sqlite*
+*.wav
+*.mp3
+*.gguf
+*.bin
+test-results/
+playwright-report/
