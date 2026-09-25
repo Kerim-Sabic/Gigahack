@@ -100,6 +100,7 @@ def parts(raw):
 
 def enrich_quantity(event, segments):
     """Attach an auditable quantity to an existing supported value, if unambiguous."""
+    event.pop("quantity", None)  # Rebuild from the current field and citations, never stale metadata.
     value = event.get("value")
     if not value:
         return event
@@ -127,6 +128,8 @@ def enrich_quantity(event, segments):
             parsed = parts(raw)
             if not parsed or parsed["amount"] != amount or source["text"].count(raw) != 1:
                 continue
+            if declared and declared["unit"] and raw != value:
+                continue  # Structure the already selected literal, never choose another unit.
             evidence = {**ref, "field": "value", "quote": raw}
             options[(parsed["amount"], parsed["unit"], raw)] = (parsed, evidence)
     with_units = {key: pair for key, pair in options.items() if pair[0]["unit"]}
@@ -152,3 +155,16 @@ def enrich_quantity(event, segments):
     event["evidence"] = [r for r in event["evidence"] if r["field"] != "value"] + [evidence]
     event["uncertainties"].extend(uncertainties)
     return event
+
+
+def literal_candidates(segments):
+    """Offer literal unit-bearing spans for model interpretation, never acceptance.
+
+    Includes negated alternatives; only the model/reviewer can judge their meaning.
+    """
+    return [
+        {"value": match[0], "segment_id": source["id"]}
+        for source in segments
+        for match in _QUANTITY.finditer(source["text"])
+        if (match["prefix"] or match["unit"]) and parts(match[0]) and source["text"].count(match[0]) == 1
+    ]

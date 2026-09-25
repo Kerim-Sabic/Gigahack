@@ -27,6 +27,7 @@ def evaluate(selected=None, corpus=None):
             "services/api/quantities.py",
             "scripts/semantic_checks.py",
             "scripts/variation_checks.py",
+            "scripts/evaluation_metrics.py",
             "scripts/evaluate_text.py",
         )
     }
@@ -149,6 +150,10 @@ def evaluate(selected=None, corpus=None):
         "general_accuracy": "NOT MEASURED: fixed development corpus, not held-out hospital audio",
         "report": str(folder / "text-results.json"),
     }
+    if variations:
+        from scripts.evaluation_metrics import measure
+
+        summary["metrics"] = measure(results, cases)
     (folder / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     print(json.dumps(summary, indent=2))
     return 1 if summary["failed"] or summary["not_run"] else 0

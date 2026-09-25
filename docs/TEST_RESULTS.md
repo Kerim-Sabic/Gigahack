@@ -1,5 +1,30 @@
 # Verification results
 
+## Current continuation evidence
+
+Development environment remains Windows, Python 3.12.10, two RTX 5080 16 GB and 128 GiB RAM.
+The requested RTX 3070 Ti Laptop / 24 GB system is not accessible and is not qualified.
+
+- Current backend/domain/API/evaluation tests: **109 passed**, one existing Starlette warning;
+  Python lint passes. Current template frontend: **8 passed**, strict build passed.
+- Original actual text model run `1790364630444995500`: **25 PASS / 0 FAIL / 5 NOT RUN**.
+- Development variation run `1790365368826297600`: **16 PASS / 0 FAIL**.
+- First held-out run `1790366119505605300`: **5 PASS / 1 FAIL**. H03 replaces an approved
+  date with a tentative Russian alternative. Semantic acceptance remains open.
+- Template source checkpoint `750944e65bd28407188a9a4ead8f2f623fdb9662`: remote verified,
+  GitHub CI **36181262970 passed**. Later semantic/evaluation changes are local pending publication.
+- Captured actual T10 result replay passes real UI, configured-template JSON and PDF;
+  rendered short PDF visually inspected. Replay is not fresh inference or audio qualification.
+- Real 20-second CUDA silence run `silence-1790364624616926600`: no segments, candidates
+  or deliveries; 5.547 seconds. Generated instrumental music run `music-1790366407304190100` also passes: zero outputs, 5.594 seconds.
+- Current template browser fixture passes through Mailpit (12.513 seconds, no page errors);
+  inference is explicitly a test fixture.
+- See CONTINUATION_RESULTS.md for every attempt and hashes, EVALUATION_GUIDE.md for scope,
+  and RESOURCE_OBSERVATION.md for attribution limits. Full delivery, long/multilingual audio,
+  native review, target hardware, final PDF/brand and Windows egress gates remain open.
+
+## Historical first-build evidence (retained, not current counts)
+
 Environment: Windows development host, Python 3.12.10, two RTX 5080 16 GB, 128 GiB RAM.
 
 | Check | Observed result |

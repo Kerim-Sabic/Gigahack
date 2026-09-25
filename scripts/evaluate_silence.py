@@ -1,6 +1,6 @@
-"""T26 silence branch: real 20-second audio through the production worker.
+"""T26 generated silence or original instrumental audio through the production worker.
 
-This does not qualify music, overlapping speakers or human multilingual accuracy.
+The generated tune does not qualify arbitrary music, overlap or multilingual speech.
 """
 
 import hashlib
@@ -10,6 +10,8 @@ from pathlib import Path
 import tempfile
 import time
 import wave
+import math
+import struct
 
 from filelock import FileLock
 
@@ -19,15 +21,31 @@ from services.api.provenance import runtime_identity
 from services.worker.supervisor import process
 
 
-def main():
-    data = config.DATA / "evaluations" / ("silence-" + str(time.time_ns()))
+def main(condition="silence"):
+    if condition not in {"silence", "music"}:
+        raise ValueError("unknown_nonspeech_condition")
+    data = config.DATA / "evaluations" / (condition + "-" + str(time.time_ns()))
     config.DATA = data
     os.environ["MOM_DATA"] = str(data.resolve())
     migrate()
-    audio = data / "audio/synthetic-silence.wav"
+    audio = data / ("audio/synthetic-" + condition + ".wav")
     with wave.open(str(audio), "wb") as output:
         output.setparams((1, 2, 16000, 0, "NONE", "not compressed"))
-        output.writeframes(b"\0\0" * (20 * 16000))
+        if condition == "silence":
+            output.writeframes(b"\0\0" * (20 * 16000))
+        else:
+            # Original procedural instrumental fixture; no borrowed recording,
+            # voice, pretrained synthesizer or third-party musical composition.
+            notes = (261.63, 329.63, 392.00, 293.66, 349.23, 440.00, 329.63, 261.63)
+            frames = bytearray()
+            for sample in range(20 * 16000):
+                t = sample / 16000
+                phase = t % 0.5
+                envelope = min(1, phase / 0.02) * max(0, 1 - phase / 0.48)
+                frequency = notes[int(t * 2) % len(notes)]
+                value = envelope * (0.3 * math.sin(2 * math.pi * frequency * t) + 0.08 * math.sin(4 * math.pi * frequency * t))
+                frames.extend(struct.pack("<h", round(32767 * value)))
+            output.writeframes(frames)
     digest = hashlib.sha256(audio.read_bytes()).hexdigest()
     meeting, asset, job_id = uid(), uid(), uid()
     settings = {
@@ -39,7 +57,7 @@ def main():
     with transaction() as db:
         db.execute(
             "INSERT INTO meetings VALUES(?,?,'2026-09-25','Europe/Chisinau','en','Administrative',1,'queued',?)",
-            (meeting, "Synthetic silence evaluation", time.time()),
+            (meeting, "Synthetic " + condition + " evaluation", time.time()),
         )
         db.execute(
             "INSERT INTO assets VALUES(?,?,?,?,16000,320000,1,?)",
@@ -52,7 +70,10 @@ def main():
         job = dict(db.execute("SELECT * FROM jobs WHERE id=?", (job_id,)).fetchone())
     report = {
         "case": "T26",
-        "scope": "20 seconds generated silence; music NOT RUN",
+        "scope": "20 seconds generated " + condition + "; only this nonspeech fixture, not arbitrary music/speech",
+        "condition": condition,
+        "generator_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "provenance": "locally generated synthetic waveform; no recorded people or external assets",
         "audio_sha256": digest,
         "implementation": settings["implementation"],
         "status": "FAIL",
@@ -66,7 +87,7 @@ def main():
             report["observed_candidates"] = db.execute("SELECT COUNT(*) FROM candidates").fetchone()[0]
             report["observed_deliveries"] = db.execute("SELECT COUNT(*) FROM outbox").fetchone()[0]
         if any(report[key] for key in ("observed_segments", "observed_candidates", "observed_deliveries")):
-            raise RuntimeError("Unexpected speech/content from silence")
+            raise RuntimeError("Unexpected speech/content from " + condition)
         report["status"] = "PASS"
     finally:
         report["elapsed_seconds"] = time.monotonic() - started
@@ -75,4 +96,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import argparse
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--condition", choices=("silence", "music"), default="silence")
+    main(parser.parse_args().condition)

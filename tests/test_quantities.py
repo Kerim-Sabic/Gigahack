@@ -94,3 +94,15 @@ def test_quantity_is_validated_and_survives_owner_only_amendment():
     assert projected["value"] == "16 chairs"
     assert projected["quantity"] == body["quantity"]
     assert projected["owner"] == "Mara"
+
+
+def test_explicit_literal_value_keeps_its_unit_among_negated_alternatives():
+    from services.api.quantities import literal_candidates
+
+    text = "The protocol says 7 kg, not 7 g."
+    source = {"id": "s", "text": text, "revision": 1}
+    assert {i["value"] for i in literal_candidates([source])} == {"7 kg", "7 g"}
+    event = candidate(text, "7 kg")
+    enrich_quantity(event, {"s": source})
+    assert event["quantity"]["raw"] == "7 kg"
+    assert event["quantity"]["unit"] == "kg"

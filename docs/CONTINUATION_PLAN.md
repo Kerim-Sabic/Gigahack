@@ -13,8 +13,8 @@ functional acceptance; required identity/UI/PDF/presentation; optional model exp
 | 1 | Actual handoff and current-state audit | Repository, remote, rules, status, matrix, tests, model manifests and handoff inspected; starting revision matches supplied checkpoint |
 | 2 | Judging scorecard, with no fabricated scores | Create rubric-aligned evidence ledger; security disqualification gate separate from weighted quality |
 | 3 | Reproduced baseline, all artifacts retained | Fresh 80 backend / 6 frontend tests, lint/build and prepared asset hashes pass; browser and silence pass; baseline 23/25 text pass reproduced; logs under ignored continuation-baseline-0363960 |
-| 4 | General evidence-backed date corrections | T01 root cause fixed; all original 25 text cases pass. Separate EN/RO/RU/mixed, rejected/tentative/distant and ambiguity variations running |
-| 5 | Structured quantity and scope end-to-end | T10 passes; structured quantity and immutable JSON/HTML tested. Actual UI/PDF checks pending; varied units/subjects running |
+| 4 | General evidence-backed date corrections | T01 root cause fixed; all original 25 text cases pass. 16/16 separate EN/RO/RU/mixed, rejected/tentative/distant and ambiguity variations pass; held-out running |
+| 5 | Structured quantity and scope end-to-end | T10 passes; structured quantity and immutable JSON/HTML tested. Actual captured-output UI/JSON/PDF replay passes; 16/16 varied development checks pass |
 | 6 | All 30 cases plus held-out semantic evaluation | Keep every specification; classify text/stateful/audio/human scope; report precision/recall, final state, fields, unsupported statements, evidence, abstention and correction counts; retain all attempts |
 | 7 | Versioned multilingual/long meeting evaluation | Separate development/held-out materials, preserve critical WER distinctions, long-distance amendments; human recording/review gate explicit if unavailable |
 | 8 | Resource attribution and target command | Recheck actual device; extend existing qualify-target and receipts with total/idle/process/allocation distinctions; target hardware must be observed before qualification |

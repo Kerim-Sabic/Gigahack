@@ -4,24 +4,25 @@ Current stage: generalize and verify semantic corrections before target/deployme
 
 - T01/T10 root causes fixed; full original actual model run `1790362810483903700`:
   25 text-model PASS, 0 FAIL, 5 outside text scope. Original gold assertions unchanged.
-- 95 backend/domain/API tests and Python lint pass. Frontend is unchanged since the fresh
-  continuation baseline (6 tests and strict build passed there).
+- Earlier semantic checkpoint 69e2684 passed 95 backend tests; current counts are below.
 - Structured literal quantities preserve amount/unit/scope/raw/evidence. API review/snapshot
   and human replacement tests pass. Quantity now appears in the minutes template; real
-  UI/PDF verification of this change is still pending.
+  UI/PDF replay passed; final document polish remains pending.
 - Extended semantic experiments are ongoing; later prompt attempts introduced regressions.
-  Current 768-token bounded reasoning experiment is undergoing full original/development runs.
-  Six held-out variations remain frozen and unrun. Last fully passing original run is attempt 4.
-- Working tree: 103 backend tests and 8 frontend tests pass; strict frontend build/lint pass.
+  Current 768-token bounded reasoning candidate passes full original attempt 19 (25/25 text)
+  and development attempt 20 (16/16). The first held-out run is 5/6: H03 wrongly accepts a tentative Russian date change.
+  Five original audio/stateful cases remain outside the text run.
+- Working tree: 109 backend tests and 8 frontend tests pass; strict frontend build/lint pass.
 - Resource attribution committed at 029f35de92f9cd0f06445cf82ae7e56fdbcd1895; remote verified,
   CI run 36180243770 passed. Real CUDA silence with sampled resource receipt passed.
   Windows per-process GPU memory remains unavailable; target laptop remains unobserved.
 - Versioned template forms/API/snapshots and group suggestions are implemented and tested.
   Captured T10 replay passes real UI/JSON/PDF with a configured template; full Mailpit fixture
-  rerun must wait for evaluator GPU admission. See TEMPLATES.md and RESOURCE_OBSERVATION.md.
+  rerun passes through actual Mailpit receipt (test-only inference). See TEMPLATES.md.
+- Template checkpoint 750944e remote verified; GitHub CI 36181262970 passed.
 - Complete mission remains active. See CONTINUATION_PLAN.md and CONTINUATION_RESULTS.md.
 - No new dependencies/models adopted. No package deletion, links or kit mutation performed.
-- No persistent app services currently started; evaluation temporarily owns port 8081.
+- No persistent app services currently started; completed evaluation/browser services cleaned up.
 
 ## Earlier first-build checkpoint (historical)
 

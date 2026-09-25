@@ -98,8 +98,21 @@ def bounded_completion(client, payload, raw_path):
 
     Raw local artifacts include failed/truncated generations, never authorization headers.
     """
+    # Bounded local reasoning for interpretation passes; extraction remains unchanged.
+    name = payload.get("response_format", {}).get("json_schema", {}).get("name")
+    if name in ("classification", "category", "fields"):
+        payload = {
+            **payload,
+            "chat_template_kwargs": {"enable_thinking": True},
+            "max_tokens": payload["max_tokens"] + 800,
+        }
     rendered = client.post(
-        "/apply-template", json={"messages": payload["messages"], "add_generation_prompt": True}
+        "/apply-template",
+        json={
+            "messages": payload["messages"],
+            "add_generation_prompt": True,
+            "chat_template_kwargs": payload.get("chat_template_kwargs", {}),
+        },
     )
     rendered.raise_for_status()
     tokens = client.post("/tokenize", json={"content": rendered.json()["prompt"]})
@@ -183,6 +196,8 @@ def extract(spec):
         "--jinja",
         "--chat-template-kwargs",
         '{"enable_thinking":false}',
+        "--reasoning-budget",
+        "768",
         "--api-key",
         key,
     ]
@@ -432,7 +447,7 @@ def extract(spec):
                     "messages": [
                         {
                             "role": "system",
-                            "content": "Classify this specific meeting content. action = work to perform, even if proposed, passive, unnamed, or scheduled (maintenance, sending, checking). decision = approving a budget, resource count, policy or meeting date without assigning work. information = descriptions, historical quotes, or unresolved questions with no commitment. The words approved/confirmed do NOT decide category. Classify what is being approved. A correction fragment inherits the category of its referenced task or decision; a task's corrected date is not a separate information item. Replacing a filter next week is action; approving expenditure is decision; stating an inventory count is information. Return only category.",
+                            "content": "Classify this specific meeting content. action = work to perform, even if proposed, passive, unnamed, or scheduled (maintenance, sending, checking). decision = approving a budget, resource count, policy or meeting date without assigning work. information = descriptions, historical quotes, or unresolved questions with no commitment. A work deadline is an action even if no execution verb appears. Revising a resource or budget number is a decision, not a task to edit the number. The words approved/confirmed do NOT decide category. Classify what is being approved. A correction fragment inherits the category of its referenced task or decision; a task's corrected date is not a separate information item. Replacing a filter next week is action; approving expenditure is decision; stating an inventory count is information. Return only category.",
                         },
                         {
                             "role": "user",
@@ -497,6 +512,10 @@ def extract(spec):
                 "required": ["owner", "raw_due", "condition", "value"],
                 "additionalProperties": False,
             }
+            from services.api.quantities import literal_candidates, enrich_quantity
+
+            enrich_quantity(event, by_id)
+
             fields = bounded_completion(
                 client,
                 {
@@ -521,6 +540,7 @@ def extract(spec):
                                         k: event[k] for k in ("text", "kind", "category", "changed_fields")
                                     },
                                     "source": field_source,
+                                    "literal_numeric_options_not_facts": literal_candidates(field_source),
                                     "current_event_refs": event["evidence"],
                                 },
                                 ensure_ascii=False,
