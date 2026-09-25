@@ -192,7 +192,9 @@ def extract(spec):
         key,
     ]
     log = open(Path(spec["run_dir"]) / "llama.log", "wb")
-    process = subprocess.Popen(args, stdout=log, stderr=log)
+    from services.worker.ownership import child_command
+
+    process = subprocess.Popen(child_command(args), stdout=log, stderr=log)
     client = httpx.Client(
         base_url="http://127.0.0.1:8081",
         headers={"Authorization": "Bearer " + key},
@@ -681,7 +683,12 @@ def diarize(spec):
 
 if __name__ == "__main__":
     import psutil
+    import tempfile
+    from filelock import FileLock
+    from services.worker.ownership import bind_to_parent, contain_windows_children
 
+    bind_to_parent(int(os.environ.get("MOM_STAGE_PARENT_PID", os.getppid())))
+    contain_windows_children()
     parent = psutil.Process(os.getppid())
     from services.worker.process_identity import identity
 
@@ -703,6 +710,10 @@ if __name__ == "__main__":
             os._exit(2)
 
     threading.Thread(target=watch_parent, daemon=True).start()
+    # Supervisor admits work; this second lock survives supervisor death until
+    # the old model stage itself exits, preventing overlapping replacement stages.
+    model_lock = FileLock(str(Path(tempfile.gettempdir()) / "secure-mom-model.lock"))
+    model_lock.acquire()
     spec = json.loads(Path(sys.argv[2]).read_text(encoding="utf-8"))
     started = time.time()
     result = {"whisper": whisper, "extract": extract, "parakeet": parakeet, "diarize": diarize}[sys.argv[1]](

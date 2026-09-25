@@ -1,13 +1,18 @@
 # Current implementation status
 
 Complete mission remains active. The last verified remote checkpoint is
-68853d89f47c6f7c668c17499844e7bc92399b46 (CI 36188551810 PASS). It contains multilingual
+b68f0c8e478c75f76c01b0c8d73b647427afd6a9 (CI 36190175156 PASS). It contains multilingual
 transcription, frozen developer settings, current-step ETA and bounded ASR checkpoints.
-The following recovery/preparation changes are the next checkpoint and require their own CI.
+It also includes atomic recording/stage recovery and optional-model provenance. Kernel-backed
+model-process ownership is the next checkpoint and requires its own CI.
 
 ## Current evidence
 
-- 140 backend tests, 10 frontend tests, strict frontend build and Python lint pass locally.
+- 141 backend tests pass locally with one Linux-only check skipped; that check and the actual
+  child cleanup test pass in Linux. Last frontend checkpoint: 10 tests and strict build pass.
+- Hard-killing a model stage now terminates its owned child through Windows Job Objects or
+  Linux parent-death binding; the actual tests preserve an unrelated running process.
+  New CUDA silence inference passes in 7.00s. Full application crash rehearsal remains open.
 - Actual supplied private recording: original Whisper pass 152.94s / 205 segments; per-window
   multilingual pass 184.49s / 176 segments; chunked pass 166.71s / 194 segments. Romanian
   passages appear alongside Russian. No reference transcript, participant identities or
@@ -32,7 +37,9 @@ Pinned Parakeet and Community-1 assets downloaded; user accepted Community-1 acc
 Model cards, CC-BY-4.0 attribution/license and checksums are recorded separately. Weights and
 private recording data remain ignored. The first experimental NeMo/pyannote stack imported
 successfully offline, but a 208-package OSV scan identified advisories. A patched 232-package
-candidate resolves with no current OSV matches and is installing in an isolated environment.
+candidate installed with no current OSV matches and pip check passes. Its import test exposed
+a OneLogger/Lightning annotation incompatibility; a minimal experimental compatibility patch
+is under test. No production optional-runtime adoption is claimed.
 Neither model's actual inference or target fit is verified; application availability remains
 disabled. See DECISIONS/010-optional-model-preparation.md.
 

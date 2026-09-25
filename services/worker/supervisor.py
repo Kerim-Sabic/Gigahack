@@ -122,7 +122,7 @@ def run_stage(job, stage, spec):
     except OSError:
         pass  # Display artifacts do not authorize or block inference.
     log = open(folder / f"{stage}.log", "wb")
-    env = stage_environment()
+    env = {**stage_environment(), "MOM_STAGE_PARENT_PID": str(os.getpid())}
     from services.worker.resources import ResourceSampler
 
     sampler = ResourceSampler()

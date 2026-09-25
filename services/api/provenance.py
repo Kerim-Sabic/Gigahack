@@ -16,6 +16,7 @@ FILES = (
     "services/worker/supervisor.py",
     "services/worker/resources.py",
     "services/worker/process_identity.py",
+    "services/worker/ownership.py",
     "services/worker/assets.py",
     "services/api/domain.py",
     "services/api/quantities.py",
