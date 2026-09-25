@@ -109,3 +109,9 @@ Complete Linux isolated app rerun with native-file verification passed: 89.591 s
 browser flow, Whisper 26.629 s and extraction 19.617 s. IPv4/IPv6 blocked before/after; all services
 in one namespace; cleanup empty. Durable evidence retained under /var/tmp. Peak total GPU 9763 /
 9219 MiB, host RAM 7,388,778,496 / 9,062,539,264 bytes, GPU 72 / 61 C. Target budget not qualified.
+
+- Native-integrity implementation fc2cdd949c4071eb9a54d7760d1fb1c90c5a8a65 pushed and remote
+  hash verified; full GitHub CI passed (run 36173731710).
+- Deliverable-kit hardlink operation rejected by automatic approval review with only "blocked by policy".
+  Read-only inventory measured 9,284,695,078 asset bytes and 10,991,599,616 free bytes. A standalone
+  copy would violate the 5 GiB working reserve, so no current kit is claimed or existing data removed.

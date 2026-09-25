@@ -28,8 +28,8 @@ Development hardware: two RTX 5080 16 GB GPUs, 128 GiB RAM. Target RTX 3070 Ti L
   is included. This is not target-device resource qualification or isolated process VRAM attribution.
 
 Services: API/UI 8765, Mailpit UI 8025, SMTP 1025; extraction server 8081 only while needed.
-Latest pushed checkpoint before this milestone: 18256f3987e4adc6ec9ec03a392462b05d7acb4e;
-Previous checkpoint GitHub CI passed; current milestone CI is being checked.
+Latest implementation checkpoint: fc2cdd949c4071eb9a54d7760d1fb1c90c5a8a65;
+remote hash verified and full GitHub CI passed (run 36173731710).
 
 Next: long-window reconciliation and multilingual audio acceptance, clean kit refresh,
 native translation review, optional model preparation,
@@ -39,3 +39,8 @@ Fresh remote clone installation and real Windows workflow passed (25.257 s), usi
 prepared assets with a new environment/account. Format validation, T22 replay/deduplication, actual
 200% browser zoom/viewer controls and the real T26 silence branch now have executable passing checks.
 Latest verified CI: 2d6c0ec, run 36171610910.
+
+Current Windows deliverable-kit refresh remains incomplete. Automatic approval review rejected the
+hardlinked-kit creation with only "blocked by policy". A separate copy needs 9.285 GB of assets;
+11.0 GB was free, which would leave less than the required 5 GiB operating reserve. No replacement
+kit or destructive cleanup was performed. Existing prepared assets and the tested source remain intact.

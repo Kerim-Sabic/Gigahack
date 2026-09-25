@@ -92,3 +92,7 @@ Complete Linux isolated app rerun with native-file verification passed: 89.591 s
 browser flow, Whisper 26.629 s and extraction 19.617 s. IPv4/IPv6 blocked before/after; all services
 in one namespace; cleanup empty. Durable evidence retained under /var/tmp. Peak total GPU 9763 /
 9219 MiB, host RAM 7,388,778,496 / 9,062,539,264 bytes, GPU 72 / 61 C. Target budget not qualified.
+
+Final implementation checkpoint fc2cdd9: 80 backend tests, 6 frontend tests, strict build and lint
+pass. Full clean Ubuntu GitHub CI passed (36173731710), including the extended browser suite.
+This does not close the semantic, target hardware, native linguistic or optional model gates.
