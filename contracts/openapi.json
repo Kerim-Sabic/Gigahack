@@ -1860,6 +1860,19 @@
             "type": "integer",
             "title": "Revision"
           },
+          "subject": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 160,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject"
+          },
           "text": {
             "type": "string",
             "maxLength": 2000,

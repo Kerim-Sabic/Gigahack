@@ -27,3 +27,8 @@ WSL isolated production worker (synthetic input, no external route): 51.038 s to
 Whisper 27.723 s and Qwen 22.977 s. Peak sampled total GPU 0 memory 9769 MiB and
 9076 MiB respectively; WSL memory samples 6.668/8.274 GB. This total-VRAM result exceeds the
 requested 7 GiB gate. It includes Windows activity and does not qualify an 8 GB laptop.
+
+Latest complete Linux isolated app: 84.589 s overall, browser flow 56.394 s. Whisper 27.546 s,
+extraction 19.064 s. Peak total GPU 0: 9769 / 9078 MiB; host RAM: 7,570,644,992 /
+8,957,648,896 bytes; process-tree RAM: 3,158,491,136 / 3,187,544,064 bytes; GPU 69 / 59 C.
+This shared development GPU total exceeds the 7 GiB gate. No target-machine pass is claimed.

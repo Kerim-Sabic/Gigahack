@@ -29,3 +29,16 @@ Both IPv4 and IPv6 external probes failed with errno 101 (ENETUNREACH). With Lin
 prepared, `MOM_ISOLATE_WORKER=1 python -m scripts.mom start` uses that boundary for the inference worker.
 Mail delivery remains a separate process. The production Whisper and Qwen path subsequently completed in this namespace on WSL (51.038 s);
 API/browser/PDF/SMTP and Windows-host networking were outside that test.
+
+## Complete Linux app rehearsal
+
+After preparation, run `python -m scripts.qualify_isolated_app --path /path/to/synthetic.wav`.
+This creates its own unprivileged loopback-only namespace and fresh data under /var/tmp. It uses
+production models and the real browser/API/PDF/Mailpit path, checks external IPv4/IPv6 failure before
+and after, and verifies service cleanup. If your browser is prepared elsewhere, explicitly set
+PLAYWRIGHT_BROWSERS_PATH. No host interface/firewall change is made.
+
+Executed successfully on prepared Ubuntu 24.04 WSL: 84.589 s total, no owned services left.
+This supersedes the earlier worker-only scope for Linux, but says nothing about Windows host egress.
+Read the report at the printed data directory's proofs/isolated-app.json; keep it and the synthetic
+screenshots locally. Do not open a live Linux SQLite database from Windows.

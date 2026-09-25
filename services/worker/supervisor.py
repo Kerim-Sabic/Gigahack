@@ -17,20 +17,27 @@ from services.api import config
 from services.api.db import canonical, migrate, transaction, uid
 from services.api.domain import Candidate, event_key, validate_evidence
 from services.api.dates import resolve
+from services.api.provenance import runtime_identity
 
 
 def kill_tree(pid):
     try:
         parent = psutil.Process(pid)
         children = parent.children(recursive=True)
-        for child in children:
-            child.terminate()
-        parent.terminate()
-        _, alive = psutil.wait_procs([parent, *children], timeout=5)
-        for p in alive:
-            p.kill()
     except psutil.NoSuchProcess:
-        pass
+        return
+    for process in [*reversed(children), parent]:
+        try:
+            process.terminate()
+        except psutil.NoSuchProcess:
+            pass
+    _, alive = psutil.wait_procs([parent, *children], timeout=5)
+    for process in alive:
+        try:
+            process.kill()
+        except psutil.NoSuchProcess:
+            pass
+    psutil.wait_procs(alive, timeout=5)
 
 
 def stage_environment():
@@ -160,6 +167,9 @@ def retry_stage(job, stage, spec):
 
 
 def process(job):
+    queued_config = json.loads(job["config"])
+    if queued_config.get("implementation") and queued_config["implementation"] != runtime_identity():
+        raise RuntimeError("implementation_changed_queue_new_job")
     with transaction() as c:
         asset = dict(c.execute("SELECT * FROM assets WHERE id=?", (job["asset_id"],)).fetchone())
         meeting = dict(c.execute("SELECT * FROM meetings WHERE id=?", (job["meeting_id"],)).fetchone())
@@ -238,6 +248,8 @@ def process(job):
             current = c.execute("SELECT revision FROM segments WHERE id=?", (s["id"],)).fetchone()
             if not current or current["revision"] != s["revision"]:
                 raise RuntimeError("transcript_changed_during_extraction")
+        if queued_config.get("implementation") and queued_config["implementation"] != runtime_identity():
+            raise RuntimeError("implementation_changed_queue_new_job")
         c.execute(
             "UPDATE candidates SET review='excluded' WHERE review='needs_review' AND id IN (SELECT e.candidate_id FROM evidence e JOIN segments s ON s.id=e.segment_id WHERE s.asset_id=?)",
             (asset["id"],),

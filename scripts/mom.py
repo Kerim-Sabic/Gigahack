@@ -17,9 +17,10 @@ import psutil
 
 from services.api import config
 from services.api.db import migrate
+from services.worker.process_identity import identity, matches
 
 
-def doctor():
+def doctor(print_report=True):
     gpu = None
     try:
         gpu = subprocess.run(
@@ -47,7 +48,16 @@ def doctor():
         "network_observation": "not measured",
         "target_laptop": "not qualified",
     }
-    print(json.dumps(report, indent=2))
+    from scripts.preflight import checks
+
+    report["checks"] = checks(report)
+    report["readiness"] = (
+        "needs preparation"
+        if any(c["status"] == "fail" for c in report["checks"])
+        else "ready for local smoke test; qualification remains separate"
+    )
+    if print_report:
+        print(json.dumps(report, indent=2))
     return report
 
 
@@ -69,6 +79,20 @@ def verify_assets():
 
 def start():
     config.init_dirs()
+    readiness = doctor(print_report=False)
+    failures = [check for check in readiness["checks"] if check["status"] == "fail"]
+    if failures:
+        raise SystemExit(
+            "Preparation incomplete:\n"
+            + "\n".join(check["name"] + ": " + check["action"] for check in failures)
+        )
+    occupied = [str(port) for port, state in readiness["ports"].items() if state == "occupied"]
+    if occupied:
+        raise SystemExit(
+            "Required ports are occupied: "
+            + ", ".join(occupied)
+            + ". Stop the existing service before starting; unrelated processes are never killed."
+        )
     if not (config.ROOT / "apps/web/dist/index.html").exists():
         raise SystemExit("Frontend not prepared. Run npm ci and npm run build in apps/web.")
     verify_assets()
@@ -124,13 +148,20 @@ def start():
                     creationflags=flags,
                     start_new_session=os.name != "nt",
                 )
-            records.append({"pid": p.pid, "created": psutil.Process(p.pid).create_time(), "name": name})
+            records.append(
+                {
+                    "pid": p.pid,
+                    "created": psutil.Process(p.pid).create_time(),
+                    "identity": identity(p.pid),
+                    "name": name,
+                }
+            )
         pidfile.write_text(json.dumps(records))
         for _ in range(30):
             for record in records:
                 try:
                     process = psutil.Process(record["pid"])
-                    alive = process.is_running() and abs(process.create_time() - record["created"]) < 0.01
+                    alive = process.is_running() and matches(record)
                 except psutil.NoSuchProcess:
                     alive = False
                 if not alive:
@@ -156,14 +187,25 @@ def stop():
     from services.worker.supervisor import kill_tree
 
     path = config.DATA / "processes.json"
+    unresolved = []
     if path.exists():
         for record in reversed(json.loads(path.read_text())):
             try:
                 p = psutil.Process(record["pid"])
-                if abs(p.create_time() - record["created"]) < 0.01:
+                if matches(record):
                     kill_tree(p.pid)
+                    if p.is_running() and p.status() != psutil.STATUS_ZOMBIE:
+                        unresolved.append(record)
+                elif "identity" not in record and p.is_running():
+                    # Old timestamp-only records cannot distinguish PID reuse from a WSL clock correction.
+                    unresolved.append(record)
             except psutil.NoSuchProcess:
                 pass
+        if unresolved:
+            path.write_text(json.dumps(unresolved))
+            raise RuntimeError(
+                "Some recorded services could not be verified or stopped; process records retained for inspection"
+            )
         path.unlink()
     print("Managed services stopped; recordings and database retained.")
 
@@ -228,7 +270,8 @@ def main():
     parser.add_argument("--path")
     args = parser.parse_args()
     if args.command == "doctor":
-        doctor()
+        report = doctor()
+        raise SystemExit(1 if any(c["status"] == "fail" for c in report["checks"]) else 0)
     elif args.command == "prepare-models":
         from scripts.prepare_models import prepare
 

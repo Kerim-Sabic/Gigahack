@@ -46,16 +46,24 @@ def prepare(mail_only=False):
     if mail_only:
         assets = [asset for asset in assets if asset[0] == "mailpit"]
     records = []
+    manifest = ROOT / "manifests/tools.lock.json"
+    existing = json.loads(manifest.read_text()) if manifest.exists() else []
+    pinned = {r["url"]: r["sha256"] for r in existing}
     for name, url in assets:
         target = folder / url.rsplit("/", 1)[1]
         if not target.exists():
             print("Downloading", target.name, flush=True)
             with httpx.stream("GET", url, follow_redirects=True, timeout=120) as r:
                 r.raise_for_status()
-                with target.open("wb") as f:
+                partial = target.with_suffix(target.suffix + ".partial")
+                with partial.open("wb") as f:
                     for chunk in r.iter_bytes(1024 * 1024):
                         f.write(chunk)
-        h = hashlib.file_digest(target.open("rb"), "sha256").hexdigest()
+                partial.replace(target)
+        with target.open("rb") as f:
+            h = hashlib.file_digest(f, "sha256").hexdigest()
+        if url in pinned and h != pinned[url]:
+            raise RuntimeError(f"Pinned tool checksum mismatch: {target.name}; archive was not extracted")
         dest = folder / name
         dest.mkdir(exist_ok=True)
         if target.suffix == ".zip":
@@ -65,8 +73,6 @@ def prepare(mail_only=False):
             with tarfile.open(target) as t:
                 t.extractall(dest, filter="data")
         records.append(dict(url=url, sha256=h))
-    manifest = ROOT / "manifests/tools.lock.json"
-    existing = json.loads(manifest.read_text()) if manifest.exists() else []
     combined = {r["url"]: r for r in existing}
     combined.update({r["url"]: r for r in records})
     manifest.write_text(json.dumps(list(combined.values()), indent=2))

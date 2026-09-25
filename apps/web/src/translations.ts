@@ -2,6 +2,19 @@ import type { Lang } from './i18n';
 let language:Lang='en';
 export function setUiLanguage(value:Lang){language=value;document.documentElement.lang=value;}
 const rows:[string,string,string][]=[
+ ["The processing software changed. Start a new analysis from the saved audio.", "Programul de procesare s-a schimbat. Porniți o analiză nouă a înregistrării salvate.", "Программа обработки изменилась. Запустите новый анализ сохранённой записи."],
+ ["No meetings have been shared with you yet.", "Nicio ședință nu v-a fost partajată încă.", "Вам пока не предоставлен доступ к совещаниям."],
+ ["Edit recipient group", "Editează grupul de destinatari", "Изменить группу получателей"],
+ ["Group name", "Numele grupului", "Название группы"],
+ ["Updated addresses, one per line", "Adrese actualizate, câte una pe rând", "Обновлённые адреса, по одному в строке"],
+ ["Changes apply to new deliveries. Previously queued deliveries keep their original recipients.", "Modificările se aplică livrărilor noi. Livrările deja în coadă păstrează destinatarii inițiali.", "Изменения применяются к новым отправкам. Уже поставленные в очередь сохраняют исходных получателей."],
+ ["Save group changes", "Salvează modificările grupului", "Сохранить изменения группы"],
+
+ ["Topic / item key", "Cheia subiectului / elementului", "Ключ темы / пункта"],
+ ["Use the same key only for the same task and scope. A new key separates unrelated items. Explain the link or split below.", "Folosiți aceeași cheie doar pentru aceeași sarcină și același domeniu. O cheie nouă separă elementele fără legătură. Explicați mai jos asocierea sau separarea.", "Используйте один ключ только для одной задачи в одной области. Новый ключ отделяет несвязанные пункты. Объясните объединение или разделение ниже."],
+ ["subject", "subiect", "тема"],
+ ["uncertainties", "incertitudini", "неопределённости"],
+
  ['Participants, one per line','Participanți, câte unul pe rând','Участники, по одному в строке'],
  ["Recipients for this delivery", "Destinatarii acestei livrări", "Получатели этой отправки"],
  ["Retry this failed delivery", "Reîncearcă această livrare eșuată", "Повторить неудавшуюся отправку"],

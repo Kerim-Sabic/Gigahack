@@ -38,3 +38,25 @@ This exceeds the target total-VRAM budget and is not a target-laptop pass.
 Operator recovery milestone: 44 backend tests, 5 frontend tests, lint/build pass. Expanded fixture
 browser workflow 12.175 s with no page errors; metadata, account/grant and amendment-history assertions
 pass. Internal SMTP TLS/authentication uses test doubles; real local Mailpit delivery passes.
+
+## Current evidence/reconciliation milestone
+
+63 backend tests passed on Windows using the documented CLI's repository-local temporary directory;
+6 frontend tests, Python lint and strict production build passed. Direct pytest with the machine's
+shared default temporary directory encountered access-denied errors; explicit --basetemp resolved it.
+One Starlette test-client deprecation warning remains. Linux recovery subset: 14 passed.
+
+Latest text run 1790358152930512100: 23 PASS / 2 FAIL / 5 NOT RUN. T01 retains the old date
+because a correction was misclassified; T10 loses the unit. T08/T11/T26/T29 require actual audio,
+T22 requires stateful integration. Development corpus tuning is not held-out accuracy. Subsequent
+process-identity and canonical-dedup changes were unit tested, not a rerun of the entire model corpus.
+
+Complete real Linux isolated app passed: 56.394 s browser flow, 84.589 s total, no page errors,
+all services in one loopback-only namespace, IPv4/IPv6 ENETUNREACH before/after, cleanup list empty.
+Linux FFmpeg 6.1.1-3ubuntu5 and Playwright 1.63.0 Chromium revision 1243 were prepared.
+The original /tmp run directory vanished on WSL reboot; its complete console receipt was retained
+locally. Future rehearsals use /var/tmp so database, screenshots and receipts survive that reboot.
+
+Latest Linux fixture browser integration: 13.766 s, no page errors; metadata, account/grant, recipient
+group edits, manual topic link, retained amendments, real PDF and Mailpit passed. RO/RU preference,
+source preservation and localized recipient errors passed. This run uses explicit fixture inference.

@@ -1,38 +1,36 @@
 # Status
 
-Current stage: real local workflow implemented; acceptance gates remain open.
+Current stage: complete synthetic local workflow runs; acceptance gates remain open.
+Development hardware: two RTX 5080 16 GB GPUs, 128 GiB RAM. Target RTX 3070 Ti Laptop
+8 GB / 24 GB is not connected and has NOT RUN.
 
-Windows development host: two RTX 5080 16 GB GPUs, 128 GiB RAM, Python 3.12.10.
-Target RTX 3070 Ti 8 GB / 24 GB laptop is not connected and has NOT RUN.
+- 63 backend/domain/recovery/fault tests and 6 frontend tests pass; lint and strict build pass.
+- Real Linux browser → upload → FFmpeg → Whisper → Qwen → review → immutable minutes → PDF
+  → Mailpit passed in a loopback-only namespace. IPv4/IPv6 external probes return ENETUNREACH
+  before and after; all four services share the namespace; verified cleanup leaves no owned services.
+  Browser workflow 56.394 s; total rehearsal 84.589 s. Windows host is outside this boundary.
+- Latest fixed-corpus text evaluation: 23 PASS, 2 FAIL (T01 date correction; T10 missing unit),
+  5 NOT RUN (four audio cases and one stateful case). These are development checks, not held-out
+  multilingual accuracy. Separate canonical overlap/replay and mail idempotency tests pass.
+- Every generation pass checks its rendered token budget, persists raw responses before parsing,
+  and constrains citations to literal source spans. Bounded preceding context supports topic proposals;
+  manual topic linking/splitting retains original amendment history. Semantic review remains mandatory.
+- Queue identities include implementation/configuration hashes; changed implementations cannot silently
+  reuse or publish old queued work. Doctor checks real assets, packages, browser, GPU, space and ports.
+- Prepared revisions/checksums/license notices are tracked. Re-preparation rejects changed pinned assets.
+  No new dependency, model or framework was introduced in this milestone.
+- Stable Linux process start ticks prevent clock changes from breaking owned-process cleanup. Windows
+  retains creation-time identity. Unrelated occupied ports/processes are never terminated.
+- Synthetic microphone: 305-second capture and browser-loss recovery passed previously; physical device
+  not measured. Windows offline kit preparation/no-index install and real workflow passed previously;
+  current source changes have not yet been repackaged into that kit.
+- Latest Linux peak total GPU 0 memory 9769 MiB exceeds the requested 7 GiB gate. Shared desktop activity
+  is included. This is not target-device resource qualification or isolated process VRAM attribution.
 
-- 44 backend/domain/recovery/fault tests pass; 5 frontend tests pass; strict build and lint pass.
-- Real synthetic audio runs through Whisper, Qwen, evidence review, immutable minutes, PDF and Mailpit.
-- Model revisions/checksums, package lockfiles, copied license notices and provenance are tracked.
-- Schema upgrade, disk-write failure, child cancellation, OOM retry mechanism, backup/restore,
-  stale review and uncertain SMTP behavior have tests. Real GPU OOM is not induced.
-- Actual 30-input text extraction run produced 28 structurally valid outputs and 2 validation failures.
-  Structural validity is not semantic correctness. Known owner/date/category/reconciliation errors remain.
-  Acoustic/context-only fixtures in that earlier run are not valid audio qualification.
-- Synthetic Chromium microphone captured 305 seconds (307.648 seconds saved), pause/resume,
-  stop/flush and abrupt browser-loss recovery passed with no page errors. Physical device not measured.
-- Windows offline kit preparation and no-index wheel installation ran successfully. Fresh kit application workflow also passed (25.168 s). Complete disconnected
-  processing, Windows egress enforcement and Linux deployment are not verified.
-- Real Whisper/Qwen processing completed under a WSL namespace with IPv4/IPv6 blocked (51.038 s).
-  API/PDF/SMTP and Windows-host isolation remain outside that scoped proof.
-- Latest memory gate failed honestly on the shared development host: total RAM peaked at 31.27 GB
-  including unrelated processes; peak total GPU 0 memory was 4880 MiB. Target hardware remains unqualified.
+Services: API/UI 8765, Mailpit UI 8025, SMTP 1025; extraction server 8081 only while needed.
+Latest pushed checkpoint before this milestone: 3ad639c4119802688933a146ad2a3866d16e5e3a;
+GitHub Ubuntu CI passed (run 36165602226).
 
-Services: API/UI 8765, Mailpit UI 8025, SMTP 1025; model server 8081 only during extraction.
-Hardening milestone 4a7e607b86289ba54758c6d59140f4bd1113e3f9 pushed; exact remote hash verified.
-A follow-up tightens qualification failure reporting and records the final checks.
-
-Next release gates: multilingual semantic accuracy and long-window reconciliation; native review of translations;
-physical microphone failure/long recording; optional model assets and qualification; complete offline
-runtime rehearsal; target-laptop sustained performance. See REQUIREMENTS_MATRIX.md for all 39 requirements.
-
-UI language persistence and recipient errors passed real Romanian/Russian browser checks; evidence
-quotes remain unchanged. Conditions/values and explicit issue resolution now support human amendments.
-
-Operator metadata/access/delete controls and retained amendment timeline are implemented.
-Date edits invalidate job context; stale relative deadlines cannot be accepted unchanged.
-Explicit safe failed-mail retry and verified internal SMTP TLS/authentication have regression tests.
+Next: complete remaining fault/security and stateful acceptance checks, clean deployment/kit refresh,
+long-window and multilingual audio evaluation, native translation review, optional model preparation,
+physical microphone and sustained target-laptop measurements. See all 39 rows in REQUIREMENTS_MATRIX.md.

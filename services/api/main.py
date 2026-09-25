@@ -24,6 +24,7 @@ from .db import audit, canonical, migrate, transaction, uid
 from .dates import resolve as resolve_date
 from .domain import Strict, reduce_events
 from .schemas import AccountSummary, AccountView, MeetingDetail, MeetingView, SegmentView
+from .provenance import runtime_identity
 
 passwords = PasswordHasher()
 attempts = {}
@@ -660,6 +661,7 @@ def queue(ident: str, body: Queue, u=Depends(user)):
                 "parakeet": body.parakeet,
                 "diarization": body.diarization,
                 "prompt_hash": prompt_hash,
+                "implementation": runtime_identity(),
                 "contract": 1,
                 "source_versions": source_versions,
                 "glossary": json.loads(glossary["body"]) if glossary else [],
@@ -764,7 +766,7 @@ def edit_segment(ident: str, body: Edit, u=Depends(user)):
             (body.text, body.speaker, ident),
         )
         c.execute(
-            "UPDATE candidates SET review='needs_review' WHERE id IN (SELECT candidate_id FROM evidence WHERE segment_id=?)",
+            "UPDATE candidates SET review='needs_review' WHERE review!='excluded' AND id IN (SELECT candidate_id FROM evidence WHERE segment_id=?)",
             (ident,),
         )
         c.execute(
@@ -805,6 +807,7 @@ class Review(Strict):
 
 class Correction(Strict):
     revision: int
+    subject: str | None = Field(default=None, min_length=1, max_length=160)
     text: str = Field(min_length=1, max_length=2000)
     owner: str | None = Field(default=None, max_length=200)
     due: date | None = None
@@ -836,7 +839,11 @@ def correct_item(ident: str, body: Correction, u=Depends(user)):
             for f in ("text", "owner", "due")
             if e.get(f) != (str(body.due) if f == "due" and body.due else getattr(body, f))
         ]
-        for field in ("category", "kind"):
+        if body.subject is not None:
+            body.subject = body.subject.strip()
+            if not body.subject:
+                fail("invalid_subject")
+        for field in ("category", "kind", "subject"):
             if getattr(body, field) is not None and getattr(body, field) != e[field]:
                 changed.append(field)
         for field in ("condition", "value"):
@@ -856,6 +863,8 @@ def correct_item(ident: str, body: Correction, u=Depends(user)):
             "changed_fields": changed,
             "evidence": [x for x in e["evidence"] if x["field"] not in changed],
             "human_amendment": {
+                "previous_candidate": ident,
+                "previous_subject": e["subject"],
                 "actor": u["id"],
                 "reason": body.reason,
                 "fields": changed,
@@ -869,10 +878,12 @@ def correct_item(ident: str, body: Correction, u=Depends(user)):
             if field in body.model_fields_set:
                 new[field] = getattr(body, field)
         new["human_amendment"]["resolved_issues"] = body.resolved_issues
-        for field in ("category", "kind"):
+        for field in ("category", "kind", "subject"):
             value = getattr(body, field)
             if value is not None and value != e[field]:
                 new[field] = value
+        if new.get("value") and any("critical" in issue.lower() for issue in new["uncertainties"]):
+            fail("critical_value_unresolved", 409)
         new_id = uid()
         retained = c.execute(
             "SELECT e.*,s.revision AS current_revision FROM evidence e JOIN segments s ON s.id=e.segment_id WHERE e.candidate_id=?",
@@ -912,13 +923,30 @@ def item_history(ident: str, u=Depends(user)):
         if not row:
             fail("candidate_not_found", 404)
         access(c, row["meeting_id"], u)
-        return [
+        rows = [
             dict(r)
             for r in c.execute(
-                "SELECT * FROM candidates WHERE meeting_id=? AND subject=? ORDER BY created",
-                (row["meeting_id"], row["subject"]),
+                "SELECT * FROM candidates WHERE meeting_id=? ORDER BY created", (row["meeting_id"],)
             )
         ]
+        included = {r["id"] for r in rows if r["subject"] == row["subject"]}
+        edges = [
+            json.loads(r["payload"])
+            for r in c.execute(
+                "SELECT payload FROM audit WHERE meeting_id=? AND kind='secretary_amendment'",
+                (row["meeting_id"],),
+            )
+        ]
+        # Retain amendment ancestors/descendants even when a reviewer linked topics.
+        while True:
+            before = len(included)
+            for edge in edges:
+                pair = {edge["previous"], edge["replacement"]}
+                if pair & included:
+                    included.update(pair)
+            if len(included) == before:
+                break
+        return [r for r in rows if r["id"] in included]
 
 
 @app.post("/api/v1/review-issues/{ident}/resolve")

@@ -33,6 +33,14 @@ def main(*, fixture_inference=False):
             page.get_by_label("Addresses, one per line", exact=True).fill("reviewers@secure-mom.test")
             page.get_by_role("button", name="Save recipient group", exact=True).click()
             expect(page.get_by_text("Saved on this computer.", exact=True)).to_be_visible()
+            page.get_by_text("Edit recipient group: CI reviewers", exact=True).click()
+            page.locator("details[open]").get_by_label("Updated addresses, one per line", exact=True).fill(
+                "reviewers@secure-mom.test"
+            )
+            page.get_by_role("button", name="Save group changes", exact=True).last.click()
+            expect(
+                page.get_by_text("CI reviewers · version 2: reviewers@secure-mom.test", exact=True)
+            ).to_be_visible()
             page.get_by_label("Username", exact=True).fill("fixture-viewer")
             page.get_by_label("Password", exact=True).fill("synthetic-viewer-password")
             page.get_by_label("Role", exact=True).select_option("viewer")
@@ -99,6 +107,7 @@ def main(*, fixture_inference=False):
             page.set_viewport_size({"width": 1366, "height": 768})
             page.get_by_role("tab", name="Decisions & actions", exact=True).click()
             page.locator(".detail").get_by_text("Secretary amendment", exact=True).click()
+            page.get_by_label("Topic / item key", exact=True).fill("maintenance report")
             page.get_by_label("Text", exact=True).fill("Synthetic reviewed maintenance report")
             page.get_by_label("Reason for amendment", exact=True).fill("Synthetic browser correction reason")
             page.get_by_role("button", name="Save reviewed amendment", exact=True).click()
@@ -112,7 +121,14 @@ def main(*, fixture_inference=False):
         "kind": "fixture-inference-browser" if fixture_inference else "real-model-browser-synthetic",
         "elapsed_seconds": time.time() - started,
         "checks": (
-            ["metadata_edit", "account_create", "member_grant", "retained_amendment_history"]
+            [
+                "metadata_edit",
+                "account_create",
+                "member_grant",
+                "recipient_group_edit",
+                "manual_topic_link",
+                "retained_amendment_history",
+            ]
             if fixture_inference
             else []
         )

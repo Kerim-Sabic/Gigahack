@@ -1,6 +1,7 @@
 import { tr } from './translations';
 
 const messages: Record<string, string> = {
+  implementation_changed_queue_new_job: 'The processing software changed. Start a new analysis from the saved audio.',
   delivery_not_safe_to_retry: 'This delivery cannot be safely retried. Check its status on the mail server.',
   cancel_processing_before_metadata_edit: 'Cancel or finish processing before changing meeting details.',
   meeting_date_requires_reextraction: 'The meeting date changed. Process the audio again or correct the due date with a reason.',

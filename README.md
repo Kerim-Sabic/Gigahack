@@ -42,7 +42,8 @@ Clone onto the Linux filesystem. Create/activate `.venv` with `python3 -m venv .
 requirements and build web assets as above. Prepare models and Mailpit with the same CLI.
 The prepare-tools command installs pinned llama.cpp b11146 CUDA binaries for Windows x64 and
 Linux x64 (Ubuntu CUDA 12.8 build), plus Mailpit. Linux stage processes discover packaged CUDA library paths.
-This Linux installation path has not yet been rehearsed end-to-end. NVIDIA runtime packages and
+A prepared Ubuntu 24.04 WSL installation passed the full real workflow in a loopback-only namespace.
+An independent clean-clone preparation remains pending. NVIDIA runtime packages and
 driver compatibility must be checked by doctor and real qualification. Use the Windows browser on localhost
 for microphone capture; plain LAN HTTP is not a secure microphone context.
 
@@ -86,8 +87,8 @@ The platform-specific kit includes models, native tools, compiled UI/fonts, loca
 wheelhouse. It excludes accounts, meeting data and secrets. On the destination with matching Python 3.12,
 run `python install_offline.py` from the kit, then from `application` run
 `.venv\Scripts\python -m scripts.mom start`. FFmpeg/ffprobe and a compatible NVIDIA driver are
-external host prerequisites. Preparation and no-index installation were exercised; a disconnected full
-workflow has not been verified. The kit is an internal deployment artifact, not a public binary release.
+external host prerequisites. Preparation and no-index installation were exercised; a complete Linux
+isolated workflow also passed. The Windows kit has not been rehearsed with host egress blocked. The kit is an internal deployment artifact, not a public binary release.
 
 Synthetic browser microphone check (services running and qualification credentials set):
 `python -m scripts.recording_e2e`. It defaults to 305 seconds and exercises real AudioWorklet/chunk capture
@@ -102,3 +103,7 @@ from Windows; use the backup API or read the completed report instead.
 Fast fixture browser check: stop managed services, prepare Mailpit, then run
 `python -m tests.browser_fixture`. Only its test process replaces inference; the report is explicitly
 labeled fixture inference. It exercises the real UI/API/queue/evidence/PDF/SMTP plumbing.
+
+Complete Linux app offline rehearsal: `python -m scripts.qualify_isolated_app --path /path/to/synthetic.wav`.
+See [scope and evidence](docs/OFFLINE_RUNBOOK.md). Run `python -m scripts.mom doctor` before startup;
+it reports missing preparation with repair actions, not product or target-device qualification.

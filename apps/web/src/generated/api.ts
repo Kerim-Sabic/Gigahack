@@ -695,6 +695,8 @@ export interface components {
         Correction: {
             /** Revision */
             revision: number;
+            /** Subject */
+            subject?: string | null;
             /** Text */
             text: string;
             /** Owner */

@@ -245,6 +245,52 @@ def test_adversarial_spec_inventory():
     assert all(c["expected"] for c in cases)
 
 
+def test_manual_topic_link_keeps_original_history_and_exclusion(client):
+    m = new_meeting(client)
+    sid, cid, _ = seed_candidate(client, m)
+    result = client.post(
+        f"/api/v1/items/{cid}/corrections",
+        json={
+            "revision": 1,
+            "subject": "maintenance report",
+            "text": "Send report",
+            "owner": "Elena",
+            "reason": "Reviewer links the report to the same maintenance item",
+        },
+    )
+    assert result.status_code == 200, result.text
+    linked = result.json()["id"]
+    data = client.get(f"/api/v1/meetings/{m['id']}/items").json()
+    assert data["items"][0]["subject"] == "maintenance report"
+    history = client.get(f"/api/v1/items/{linked}/history").json()
+    assert {r["id"] for r in history} == {cid, linked}
+    original = next(r for r in history if r["id"] == cid)
+    assert original["review"] == "excluded" and original["subject"] == "report"
+    amendment = json.loads(next(r for r in history if r["id"] == linked)["body"])["human_amendment"]
+    assert amendment["previous_candidate"] == cid and amendment["fields"] == ["subject"]
+    client.post(
+        f"/api/v1/segments/{sid}/revisions",
+        json={"revision": 1, "text": "Elena sends a different report.", "speaker": None},
+    )
+    history = client.get(f"/api/v1/items/{linked}/history").json()
+    assert next(r for r in history if r["id"] == cid)["review"] == "excluded"
+    assert next(r for r in history if r["id"] == linked)["review"] == "needs_review"
+
+
+def test_unrelated_manual_edit_cannot_bypass_critical_quantity_review(client):
+    m = new_meeting(client)
+    _, cid, _ = seed_candidate(client, m)
+    with transaction() as c:
+        event = json.loads(c.execute("SELECT body FROM candidates WHERE id=?", (cid,)).fetchone()[0])
+        event.update(value="5 mg", uncertainties=["Critical quantity ambiguous"])
+        c.execute("UPDATE candidates SET body=? WHERE id=?", (canonical(event), cid))
+    result = client.post(
+        f"/api/v1/items/{cid}/corrections",
+        json={"revision": 1, "text": "Send report", "owner": "Andrei", "reason": "Change only the owner"},
+    )
+    assert result.status_code == 409 and result.json()["code"] == "critical_value_unresolved"
+
+
 def test_metadata_edit_invalidates_job_context_and_old_relative_date(client):
     m = new_meeting(client)
     _, cid, asset = seed_candidate(client, m)

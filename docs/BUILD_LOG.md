@@ -69,3 +69,14 @@
 - Expanded fixture browser flow passed in 12.175 s, with metadata edit, account creation/access grant,
   retained amendment reason, actual PDF and Mailpit receipt. RO/RU persistence/source checks also pass.
 - Final operator browser regression after checkbox/selection fixes passed in 9.889 s, zero page errors.
+
+- Preserved architecture and pinned components; added source-constrained citations/literal fields,
+  rendered token checks on every model pass, retained raw failures, bounded prior-topic retrieval,
+  explicit human link/split and implementation-aware queue identity.
+- Real semantic corpus progression retained locally: 18/25, 17/25, 19/25, then 23/25 passes.
+  Removed a description-rewriting experiment that regressed checks. T01/T10 remain failures.
+- Added preflight repairs and pinned preparation integrity checks. No new external dependency/model.
+- Fixed service cleanup after WSL clock changes using Linux process start ticks. First offline rehearsal
+  exposed the defect; only positively identified owned services were cleaned. Rerun passed cleanup.
+- Complete production Linux offline workflow passed in 84.589 s; Windows scope and target excluded.
+- Canonical citation dedup preserves distinct raw dates/amendments. 63 backend and 6 frontend tests pass.

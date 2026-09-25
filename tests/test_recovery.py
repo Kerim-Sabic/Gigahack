@@ -31,6 +31,58 @@ def test_backup_never_overwrites(tmp_path, monkeypatch):
         backup(config.DATA)
 
 
+def test_stop_uses_stable_identity_even_if_legacy_timestamp_drifts(tmp_path, monkeypatch):
+    import json
+    import subprocess
+    import sys
+    from scripts.mom import stop
+    from services.worker.process_identity import identity
+
+    monkeypatch.setattr(config, "DATA", tmp_path)
+    child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"])
+    try:
+        (tmp_path / "processes.json").write_text(
+            json.dumps(
+                [{"pid": child.pid, "created": 0, "identity": identity(child.pid), "name": "test-child"}]
+            )
+        )
+        stop()
+        assert child.wait(timeout=5) is not None
+        assert not (tmp_path / "processes.json").exists()
+    finally:
+        if child.poll() is None:
+            child.kill()
+            child.wait()
+
+
+def test_stop_does_not_kill_a_reused_pid(tmp_path, monkeypatch):
+    import json
+    import subprocess
+    import sys
+    from scripts.mom import stop
+
+    monkeypatch.setattr(config, "DATA", tmp_path)
+    child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"])
+    try:
+        (tmp_path / "processes.json").write_text(
+            json.dumps(
+                [
+                    {
+                        "pid": child.pid,
+                        "created": 0,
+                        "identity": {"kind": "different", "value": "old-process"},
+                        "name": "test-child",
+                    }
+                ]
+            )
+        )
+        stop()
+        assert child.poll() is None
+    finally:
+        child.kill()
+        child.wait()
+
+
 @pytest.mark.parametrize(
     ("raw", "expected"),
     [

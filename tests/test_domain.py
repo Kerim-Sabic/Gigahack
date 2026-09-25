@@ -1,6 +1,26 @@
 import pytest
 
 from services.api.domain import Candidate, reduce_events, validate_evidence, withhold_uncited_fields
+from services.api.domain import locate_literal_fields
+from services.api.domain import event_key
+
+
+def test_overlap_identity_is_canonical_but_preserves_amendments():
+    from copy import deepcopy
+
+    first = event("confirm", 1, raw_due="tomorrow")
+    a = {"segment_id": "s1", "revision": 1, "field": "text", "quote": "Send it"}
+    b = {"segment_id": "s2", "revision": 1, "field": "due", "quote": "tomorrow"}
+    first["body"]["evidence"] = [a, b]
+    repeated = deepcopy(first)
+    repeated["id"] = "overlap"
+    repeated["body"]["evidence"] = deepcopy([b, a, b])
+    assert event_key(first["body"]) == event_key(repeated["body"])
+    assert len(reduce_events([first, repeated])[0]["history"]) == 1
+    for changed in ({"raw_due": "next day"}, {"changed_fields": ["due"]}):
+        assert event_key(first["body"]) != event_key({**first["body"], **changed})
+    repeated["body"]["evidence"][0]["revision"] = 2
+    assert event_key(first["body"]) != event_key(repeated["body"])
 
 
 def event(kind, order, **kwargs):
@@ -67,6 +87,39 @@ def test_evidence_unicode_and_ambiguity():
         validate_evidence(candidate, {"s": {"revision": 1, "text": "ședința ședința"}})
     with pytest.raises(ValueError):
         validate_evidence(candidate, {"s": {"revision": 2, "text": "ședința"}})
+
+
+@pytest.mark.parametrize(("field", "value"), [("condition", "If everyone agrees"), ("raw_due", "tomorrow")])
+def test_field_quote_presence_does_not_support_an_invented_value(field, value):
+    body = event("confirm", 1)["body"]
+    body[field] = value
+    evidence_field = "due" if field == "raw_due" else field
+    body["evidence"] = [
+        {"segment_id": "s", "revision": 1, "field": f, "quote": "Elena sends the report"}
+        for f in ("text", evidence_field)
+    ]
+    candidate = Candidate.model_validate(body)
+    with pytest.raises(ValueError, match="unsupported_"):
+        validate_evidence(candidate, {"s": {"revision": 1, "text": "Elena sends the report"}})
+    withhold_uncited_fields(candidate)
+    assert getattr(candidate, field) is None
+
+
+def test_literal_linker_uses_cited_text_and_withholds_ambiguous_mentions():
+    body = event("confirm", 1, owner="Elena")["body"]
+    body["evidence"] = [
+        {"segment_id": "s", "revision": 1, "field": "text", "quote": "Elena sends the report"}
+    ]
+    sources = {"s": {"revision": 1, "text": "Elena sends the report"}}
+    candidate = locate_literal_fields(Candidate.model_validate(body), sources)
+    assert any(r.field == "owner" and r.quote == "Elena" for r in candidate.evidence)
+    validate_evidence(candidate, sources)
+    assert candidate.uncertainties
+    sources["s"]["text"] += "; ask Elena later"
+    candidate = locate_literal_fields(Candidate.model_validate(body), sources)
+    assert not any(r.field == "owner" for r in candidate.evidence)
+    withhold_uncited_fields(candidate)
+    assert candidate.owner is None
 
 
 def test_partial_amendment_keeps_unchanged_field_citations():

@@ -23,7 +23,7 @@ def prepare():
         ("whisper", "Systran/faster-whisper-large-v3", ["*.json", "*.bin", "*.txt", "README.md"], "MIT"),
         ("qwen", "unsloth/Qwen3.5-4B-GGUF", ["*Q4_K_M.gguf", "README.md"], "Apache-2.0"),
     ]
-    manifest = {}
+    manifest = dict(previous)
     for name, repo, patterns, license_name in specs:
         revision = previous.get(name, {}).get("revision") or HfApi().model_info(repo).sha
         print(f"Preparing {name} at {revision}", flush=True)
@@ -34,10 +34,15 @@ def prepare():
             for p in folder.rglob("*")
             if p.is_file() and ".cache" not in p.parts
         }
+        for filename, expected in previous.get(name, {}).get("files", {}).items():
+            if files.get(filename) != expected:
+                raise RuntimeError(f"Pinned model checksum mismatch: {name}/{filename}; manifest unchanged")
         manifest[name] = dict(
             repo=repo, revision=revision, license=license_name, files=files, qualification="not measured"
         )
-        lockpath.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    temporary = lockpath.with_suffix(".json.partial")
+    temporary.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    temporary.replace(lockpath)
     print("Prepared immutable model manifest. Runtime performs no downloads.")
 
 

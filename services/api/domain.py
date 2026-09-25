@@ -37,6 +37,39 @@ class Extraction(Strict):
     events: list[Candidate] = Field(max_length=12)
 
 
+def locate_literal_fields(candidate, segments):
+    """Locate proposed literals only inside already cited text spans.
+
+    This supplies traceable offsets, not semantic verification. Ambiguous/missing
+    occurrences remain unsupported; a reviewer must still confirm responsibility.
+    """
+    for field in ("owner", "due", "condition", "value"):
+        value = candidate.raw_due if field == "due" else getattr(candidate, field)
+        if not value or any(r.field == field for r in candidate.evidence):
+            continue
+        matches = {}
+        for ref in candidate.evidence:
+            source = segments.get(ref.segment_id)
+            if (
+                ref.field != "text"
+                or value not in ref.quote
+                or not source
+                or source["revision"] != ref.revision
+            ):
+                continue
+            if source["text"].count(ref.quote) == 1 and source["text"].count(value) == 1:
+                matches[ref.segment_id] = ref
+        if len(matches) == 1:
+            ref = next(iter(matches.values()))
+            candidate.evidence.append(
+                Citation(segment_id=ref.segment_id, revision=ref.revision, field=field, quote=value)
+            )
+            candidate.uncertainties.append(
+                f"{field}: literal span located in cited text; reviewer must confirm interpretation"
+            )
+    return candidate
+
+
 def withhold_uncited_fields(candidate):
     """Retain reviewable text while refusing optional values without field support.
 
@@ -46,7 +79,7 @@ def withhold_uncited_fields(candidate):
         value = candidate.raw_due if field == "due" else getattr(candidate, field)
         refs = [e for e in candidate.evidence if e.field == field]
         supported = bool(refs)
-        if field in ("owner", "value") and value is not None:
+        if value is not None:
             supported = any(value.casefold() in e.quote.casefold() for e in refs)
         if value is not None and not supported:
             setattr(candidate, field, None)
@@ -75,8 +108,8 @@ def validate_evidence(candidate, segments):
             raise ValueError(f"missing_{field}_evidence")
     if candidate.raw_due is not None and "due" not in fields:
         raise ValueError("missing_raw_due_evidence")
-    for field in ("owner", "value"):
-        value = getattr(candidate, field)
+    for field in ("owner", "value", "condition", "due"):
+        value = candidate.raw_due if field == "due" else getattr(candidate, field)
         if value is not None and not any(
             value.casefold() in e.quote.casefold() for e in candidate.evidence if e.field == field
         ):
@@ -85,10 +118,16 @@ def validate_evidence(candidate, segments):
 
 
 def event_key(event):
+    # Citation order and repeated citations are incidental to overlapping windows.
+    # Different source revisions and field amendments must remain distinct.
     content = {
-        k: event[k]
-        for k in ("subject", "category", "kind", "text", "owner", "due", "condition", "value", "evidence")
+        k: event.get(k)
+        for k in ("subject", "category", "kind", "text", "owner", "due", "raw_due", "condition", "value")
     }
+    content["changed_fields"] = sorted(set(event.get("changed_fields", [])))
+    content["evidence"] = sorted(
+        {json.dumps(ref, sort_keys=True, ensure_ascii=False) for ref in event["evidence"]}
+    )
     return hashlib.sha256(json.dumps(content, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
 
 
