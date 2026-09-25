@@ -144,6 +144,9 @@ def main():
         from scripts.ui_language_e2e import main as check_languages
 
         check_languages()
+        from scripts.ui_accessibility_e2e import main as check_accessibility
+
+        check_accessibility()
     finally:
         for process in reversed(processes):
             kill_tree(process.pid)

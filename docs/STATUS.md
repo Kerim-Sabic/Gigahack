@@ -4,7 +4,7 @@ Current stage: complete synthetic local workflow runs; acceptance gates remain o
 Development hardware: two RTX 5080 16 GB GPUs, 128 GiB RAM. Target RTX 3070 Ti Laptop
 8 GB / 24 GB is not connected and has NOT RUN.
 
-- 72 backend/domain/recovery/fault tests and 6 frontend tests pass; lint and strict build pass.
+- 79 backend/domain/recovery/fault tests and 6 frontend tests pass; lint and strict build pass.
 - Real Linux browser → upload → FFmpeg → Whisper → Qwen → review → immutable minutes → PDF
   → Mailpit passed in a loopback-only namespace. IPv4/IPv6 external probes return ENETUNREACH
   before and after; all four services share the namespace; verified cleanup leaves no owned services.
@@ -31,6 +31,11 @@ Services: API/UI 8765, Mailpit UI 8025, SMTP 1025; extraction server 8081 only w
 Latest pushed checkpoint before this milestone: 18256f3987e4adc6ec9ec03a392462b05d7acb4e;
 Previous checkpoint GitHub CI passed; current milestone CI is being checked.
 
-Next: complete remaining fault/security and stateful acceptance checks, clean deployment/kit refresh,
-long-window and multilingual audio evaluation, native translation review, optional model preparation,
+Next: long-window reconciliation and multilingual audio acceptance, clean kit refresh,
+native translation review, optional model preparation,
 physical microphone and sustained target-laptop measurements. See all 39 rows in REQUIREMENTS_MATRIX.md.
+
+Fresh remote clone installation and real Windows workflow passed (25.257 s), using existing pinned
+prepared assets with a new environment/account. Format validation, T22 replay/deduplication, actual
+200% browser zoom/viewer controls and the real T26 silence branch now have executable passing checks.
+Latest verified CI: 2d6c0ec, run 36171610910.

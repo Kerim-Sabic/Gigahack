@@ -83,3 +83,22 @@
 
 - Expanded authorization and malformed-upload/export tests; revoked live streams now close cleanly.
 - Checksummed stopped backups and strict empty restore destinations; full reviewed workflow state and outbox identity survive restore. 72 backend tests pass.
+
+Deployment and acceptance follow-up: 79 backend tests pass. Fresh remote clone 2d6c0ec installed
+all 57 pinned Python wheels with --no-index into a new environment, ran npm ci/build and 72 then-current
+tests, passed doctor and real first-account browser workflow (25.257 s; complete lifecycle 37.671 s).
+Models/native tools/browser files were reused from the existing prepared kit using local hardlinks;
+no accounts, meeting database or results were copied. This was not another internet model download
+or an isolated Windows networking test. Services stopped successfully.
+
+Real supported-format decoding tests cover WAV, MP3, M4A, OGG, FLAC and WebM, including actual decoded
+sample counts and size/duration/type/path rejection. T22 stateful production worker with explicit test
+inference handles reordered/repeated citations and replay: one candidate, item and outbox delivery.
+T26 real CUDA/Whisper 20-second generated silence: 5.594 s, zero observed segments/candidates/deliveries.
+Music and ambiguous/overlapping speech remain unqualified. Run `python -m scripts.evaluate_silence`.
+
+Actual Chromium settings page zoom at 200% measured devicePixelRatio=2, innerWidth=675, outerWidth=1366.
+Review/minutes horizontal-overflow and keyboard checks pass; authorized viewer sees source with
+mutation controls disabled. This is not a full assistive-technology audit. The first test assertion
+incorrectly asked Playwright whether a fieldset was disabled; checking its actual upload input fixes
+the test. No product access-control defect was involved.

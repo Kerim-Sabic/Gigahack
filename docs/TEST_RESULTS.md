@@ -62,3 +62,26 @@ group edits, manual topic link, retained amendments, real PDF and Mailpit passed
 source preservation and localized recipient errors passed. This run uses explicit fixture inference.
 
 Security/recovery follow-up: 72 backend tests passed. Denied admin cannot read ranges/evidence/search/history/exports/SSE; valid byte ranges work; expired/logout/revoked streams terminate; malformed uploads create no assets; paths remain server-owned; HTML escapes source content. Restore retains source, reviewed evidence, immutable approval and delivery deduplication. Corruption and nonempty destinations are refused before writing.
+
+Deployment and acceptance follow-up: 79 backend tests pass. Fresh remote clone 2d6c0ec installed
+all 57 pinned Python wheels with --no-index into a new environment, ran npm ci/build and 72 then-current
+tests, passed doctor and real first-account browser workflow (25.257 s; complete lifecycle 37.671 s).
+Models/native tools/browser files were reused from the existing prepared kit using local hardlinks;
+no accounts, meeting database or results were copied. This was not another internet model download
+or an isolated Windows networking test. Services stopped successfully.
+
+Real supported-format decoding tests cover WAV, MP3, M4A, OGG, FLAC and WebM, including actual decoded
+sample counts and size/duration/type/path rejection. T22 stateful production worker with explicit test
+inference handles reordered/repeated citations and replay: one candidate, item and outbox delivery.
+T26 real CUDA/Whisper 20-second generated silence: 5.594 s, zero observed segments/candidates/deliveries.
+Music and ambiguous/overlapping speech remain unqualified. Run `python -m scripts.evaluate_silence`.
+
+Actual Chromium settings page zoom at 200% measured devicePixelRatio=2, innerWidth=675, outerWidth=1366.
+Review/minutes horizontal-overflow and keyboard checks pass; authorized viewer sees source with
+mutation controls disabled. This is not a full assistive-technology audit. The first test assertion
+incorrectly asked Playwright whether a fieldset was disabled; checking its actual upload input fixes
+the test. No product access-control defect was involved.
+
+Zoom evidence scope: browser settings, pixel ratio, DOM layout and controls were checked. Headless
+zoom screenshot captures were blank/cropped and are not accepted as visual proof. Normal-scale
+screenshots remain separate; a human visual/assistive-technology review is still pending.

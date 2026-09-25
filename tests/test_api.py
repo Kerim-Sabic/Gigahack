@@ -618,3 +618,98 @@ def test_restore_retains_evidence_approval_audio_and_delivery_identity(client, t
     with transaction() as db:
         assert db.execute("SELECT COUNT(*) FROM outbox").fetchone()[0] == 1
         assert db.execute("SELECT COUNT(*) FROM approvals").fetchone()[0] == 1
+
+
+@pytest.mark.parametrize(
+    ("suffix", "codec"),
+    [(".mp3", "libmp3lame"), (".m4a", "aac"), (".ogg", "libopus"), (".flac", "flac"), (".webm", "libopus")],
+)
+def test_supported_formats_decode_real_audio_with_sample_clock(client, tmp_path, suffix, codec):
+    import subprocess
+
+    source = tmp_path / "input.wav"
+    source.write_bytes(audio())
+    encoded = tmp_path / ("encoded" + suffix)
+    subprocess.run(
+        ["ffmpeg", "-nostdin", "-v", "error", "-i", str(source), "-c:a", codec, str(encoded)],
+        check=True,
+        timeout=30,
+    )
+    m = new_meeting(client)
+    result = client.post(
+        f"/api/v1/meetings/{m['id']}/uploads",
+        files={"file": (encoded.name, encoded.read_bytes(), "application/octet-stream")},
+    )
+    assert result.status_code == 200, result.text
+    meta = result.json()
+    assert meta["sample_rate"] == 16000
+    # Lossy formats may retain codec padding. Canonical clock describes actual decoded PCM.
+    assert 31000 <= meta["samples"] <= 34000
+    saved = client.get(f"/api/v1/assets/{meta['id']}/audio")
+    with wave.open(io.BytesIO(saved.content)) as w:
+        assert w.getnframes() == meta["samples"] and w.getframerate() == 16000
+        assert w.getnchannels() == 1 and w.getsampwidth() == 2
+
+
+def test_upload_duration_and_size_limits_are_enforced(client, monkeypatch):
+    m = new_meeting(client)
+    url = f"/api/v1/meetings/{m['id']}/uploads"
+    monkeypatch.setattr(config, "MAX_SECONDS", 1)
+    assert (
+        client.post(url, files={"file": ("too-long.wav", audio(), "audio/wav")}).json()["code"]
+        == "audio_decode_failed"
+    )
+    monkeypatch.setattr(config, "MAX_SECONDS", 7200)
+    monkeypatch.setattr(config, "MAX_BYTES", 100)
+    result = client.post(url, files={"file": ("too-big.wav", audio(), "audio/wav")})
+    assert result.status_code == 413 and result.json()["code"] == "upload_too_large"
+    with transaction() as db:
+        assert db.execute("SELECT COUNT(*) FROM assets").fetchone()[0] == 0
+
+
+def test_t22_overlapping_worker_results_and_replay_create_one_item_and_delivery(client, monkeypatch):
+    from copy import deepcopy
+    from services.worker import supervisor
+    from tests.browser_fixture import fixture_stage
+
+    m = new_meeting(client)
+    upload = client.post(
+        f"/api/v1/meetings/{m['id']}/uploads", files={"file": ("overlap.wav", audio(), "audio/wav")}
+    ).json()
+    queued = client.post(f"/api/v1/meetings/{m['id']}/jobs", json={"asset_id": upload["id"], "device": "cpu"})
+    assert queued.status_code == 200, queued.text
+    with transaction() as db:
+        job = dict(db.execute("SELECT * FROM jobs WHERE id=?", (queued.json()["id"],)).fetchone())
+
+    def overlapping(job, stage, spec):
+        output = fixture_stage(job, stage, spec)
+        if stage == "extract":
+            duplicate = deepcopy(output["events"][0])
+            duplicate["evidence"].reverse()
+            duplicate["evidence"].append(deepcopy(duplicate["evidence"][0]))
+            output["events"].append(duplicate)
+        return output
+
+    monkeypatch.setattr(supervisor, "run_stage", overlapping)
+    supervisor.process(job)
+    supervisor.process(job)
+    with transaction() as db:
+        rows = db.execute("SELECT id FROM candidates WHERE meeting_id=?", (m["id"],)).fetchall()
+        assert len(rows) == 1
+    revision = client.get(f"/api/v1/meetings/{m['id']}").json()["revision"]
+    accepted = client.post(
+        f"/api/v1/review-issues/{rows[0][0]}/resolve", json={"revision": revision, "action": "accepted"}
+    )
+    assert accepted.status_code == 200, accepted.text
+    assert len(client.get(f"/api/v1/meetings/{m['id']}/items").json()["items"]) == 1
+    revision = accepted.json()["revision"]
+    snap = client.post(f"/api/v1/meetings/{m['id']}/snapshots", json={"revision": revision}).json()["id"]
+    client.post(f"/api/v1/snapshots/{snap}/approve", json={"revision": revision})
+    group = client.get("/api/v1/recipient-groups").json()[0]
+    body = {"group_id": group["id"], "group_version": group["version"]}
+    first = client.post(f"/api/v1/snapshots/{snap}/deliveries", json=body)
+    second = client.post(f"/api/v1/snapshots/{snap}/deliveries", json=body)
+    assert first.status_code == second.status_code == 200
+    assert first.json()["id"] == second.json()["id"]
+    with transaction() as db:
+        assert db.execute("SELECT COUNT(*) FROM outbox").fetchone()[0] == 1

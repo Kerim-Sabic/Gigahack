@@ -43,7 +43,8 @@ requirements and build web assets as above. Prepare models and Mailpit with the 
 The prepare-tools command installs pinned llama.cpp b11146 CUDA binaries for Windows x64 and
 Linux x64 (Ubuntu CUDA 12.8 build), plus Mailpit. Linux stage processes discover packaged CUDA library paths.
 A prepared Ubuntu 24.04 WSL installation passed the full real workflow in a loopback-only namespace.
-An independent clean-clone preparation remains pending. NVIDIA runtime packages and
+A fresh remote Windows clone also passed new-environment installation, build and real workflow
+using the previously prepared pinned assets (25.257 s browser workflow). NVIDIA runtime packages and
 driver compatibility must be checked by doctor and real qualification. Use the Windows browser on localhost
 for microphone capture; plain LAN HTTP is not a secure microphone context.
 
@@ -107,3 +108,7 @@ labeled fixture inference. It exercises the real UI/API/queue/evidence/PDF/SMTP 
 Complete Linux app offline rehearsal: `python -m scripts.qualify_isolated_app --path /path/to/synthetic.wav`.
 See [scope and evidence](docs/OFFLINE_RUNBOOK.md). Run `python -m scripts.mom doctor` before startup;
 it reports missing preparation with repair actions, not product or target-device qualification.
+
+Real silence regression: `python -m scripts.evaluate_silence` (requires prepared GPU models, no active GPU job).
+This covers 20 seconds of generated silence only. The fixture browser suite also checks actual 200%
+Chromium zoom and viewer controls; it does not replace human accessibility or language review.
