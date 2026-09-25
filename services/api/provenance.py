@@ -11,10 +11,12 @@ FILES = (
     "services/worker/optional.py",
     "services/worker/supervisor.py",
     "services/worker/process_identity.py",
+    "services/worker/assets.py",
     "services/api/domain.py",
     "services/api/dates.py",
     "manifests/models.lock.json",
     "manifests/tools.lock.json",
+    "manifests/tool-files.lock.json",
     "requirements.lock.txt",
 )
 

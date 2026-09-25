@@ -20,3 +20,9 @@ Use /var/tmp for durable local qualification artifacts. This scope excludes Wind
 Existing FFmpeg OS prerequisite (Ubuntu package 6.1.1-3ubuntu5) is not redistributed; browser revision
 1243 corresponds to pinned Playwright 1.63.0. Existing licenses/locks remain authoritative.
 Resource tradeoff: shared development GPU total exceeds 7 GiB; target 8 GB laptop remains unqualified.
+
+Native executable/library files now have per-platform hashes in manifests/tool-files.lock.json,
+derived only after verifying their pinned archive hashes. Startup and verify-assets verify these files
+without downloads. Re-preparation rejects changed file hashes. This detects corruption/modification
+against the tracked manifest, not malicious changes to both repository and manifest. Doctor performs
+a temporary write/flush probe on the data volume and removes it on close to test actual permissions.

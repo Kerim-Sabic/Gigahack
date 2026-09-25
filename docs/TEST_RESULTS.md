@@ -85,3 +85,10 @@ the test. No product access-control defect was involved.
 Zoom evidence scope: browser settings, pixel ratio, DOM layout and controls were checked. Headless
 zoom screenshot captures were blank/cropped and are not accepted as visual proof. Normal-scale
 screenshots remain separate; a human visual/assistive-technology review is still pending.
+
+Native integrity follow-up: 80 backend tests pass; Windows preparation and model/native-file verification passed. All native file hashes derive from existing pinned archives; no new dependency or model. Latest completed CI at 4429a54 passed, including Linux format/overlap/200% zoom/viewer checks (run 36173011090).
+
+Complete Linux isolated app rerun with native-file verification passed: 89.591 s total, 56.172 s
+browser flow, Whisper 26.629 s and extraction 19.617 s. IPv4/IPv6 blocked before/after; all services
+in one namespace; cleanup empty. Durable evidence retained under /var/tmp. Peak total GPU 9763 /
+9219 MiB, host RAM 7,388,778,496 / 9,062,539,264 bytes, GPU 72 / 61 C. Target budget not qualified.

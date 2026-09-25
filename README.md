@@ -112,3 +112,7 @@ it reports missing preparation with repair actions, not product or target-device
 Real silence regression: `python -m scripts.evaluate_silence` (requires prepared GPU models, no active GPU job).
 This covers 20 seconds of generated silence only. The fixture browser suite also checks actual 200%
 Chromium zoom and viewer controls; it does not replace human accessibility or language review.
+
+Native tools are verified against `manifests/tool-files.lock.json` at startup. Existing prepared
+installations must run `prepare-tools` once for that manifest; cached pinned archives can be reused.
+Doctor tests data-volume permissions using a temporary file that it closes and removes.

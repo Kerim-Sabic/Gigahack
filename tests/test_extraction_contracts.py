@@ -187,3 +187,25 @@ def test_network_proof_requires_no_external_interface_and_unreachable_errors(mon
         isolated.subprocess, "check_output", lambda *a, **k: '[{"ifname":"lo"},{"ifname":"eth0"}]'
     )
     assert not isolated.network_proof()["enforced"]
+
+
+def test_native_binary_tamper_blocks_prepared_runtime(tmp_path, monkeypatch):
+    import hashlib
+    import json
+    import platform
+    from services.api import config
+    from services.worker.assets import verify_tools
+
+    monkeypatch.setattr(config, "ROOT", tmp_path)
+    (tmp_path / "manifests").mkdir()
+    files = {}
+    for name in ("llama/server", "mailpit/server"):
+        path = tmp_path / ".runtime/tools" / name
+        path.parent.mkdir(parents=True)
+        path.write_bytes(b"prepared archive content")
+        files[name] = hashlib.sha256(path.read_bytes()).hexdigest()
+    (tmp_path / "manifests/tool-files.lock.json").write_text(json.dumps({platform.system(): files}))
+    verify_tools()
+    (tmp_path / ".runtime/tools/llama/server").write_bytes(b"modified binary")
+    with pytest.raises(SystemExit, match="checksum mismatch"):
+        verify_tools()

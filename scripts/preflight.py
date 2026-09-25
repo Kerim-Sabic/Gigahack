@@ -1,10 +1,11 @@
-"""Read-only, actionable checks; readiness is not hardware/accuracy qualification."""
+"""Actionable checks; a temporary data-volume probe verifies actual write access."""
 
 import importlib.metadata
 import json
 import os
 from pathlib import Path
 import sys
+import tempfile
 
 from services.api import config
 
@@ -29,6 +30,23 @@ def checks(report):
         report["python"],
     )
     add("FFmpeg", report["ffmpeg"], "Install the documented local FFmpeg prerequisite and put it on PATH.")
+    probe_root = config.DATA
+    while not probe_root.exists():
+        probe_root = probe_root.parent
+    write_error = None
+    try:
+        with tempfile.TemporaryFile(dir=probe_root) as probe:
+            probe.write(b"Secure MOM preflight")
+            probe.flush()
+            os.fsync(probe.fileno())
+    except OSError as exc:
+        write_error = type(exc).__name__
+    add(
+        "data volume write access",
+        write_error is None,
+        "Choose a writable MOM_DATA directory and check its OS permissions and free space.",
+        {"probe": "temporary file write/flush; removed on close", "error": write_error},
+    )
     add(
         "prepared interface",
         (config.ROOT / "apps/web/dist/index.html").is_file(),

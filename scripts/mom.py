@@ -75,6 +75,10 @@ def verify_assets():
             if actual != expected:
                 raise SystemExit(f"Asset checksum mismatch: {name}/{filename}")
     print("All prepared model checksums verified.")
+    from services.worker.assets import verify_tools
+
+    verify_tools()
+    print("All prepared native tool checksums verified.")
 
 
 def start():

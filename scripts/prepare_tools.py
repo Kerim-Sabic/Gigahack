@@ -49,6 +49,9 @@ def prepare(mail_only=False):
     manifest = ROOT / "manifests/tools.lock.json"
     existing = json.loads(manifest.read_text()) if manifest.exists() else []
     pinned = {r["url"]: r["sha256"] for r in existing}
+    files_manifest = ROOT / "manifests/tool-files.lock.json"
+    all_files = json.loads(files_manifest.read_text()) if files_manifest.exists() else {}
+    platform_files = dict(all_files.get(platform.system(), {}))
     for name, url in assets:
         target = folder / url.rsplit("/", 1)[1]
         if not target.exists():
@@ -69,13 +72,31 @@ def prepare(mail_only=False):
         if target.suffix == ".zip":
             with zipfile.ZipFile(target) as z:
                 z.extractall(dest)
+                members = [info.filename for info in z.infolist() if not info.is_dir()]
         else:
             with tarfile.open(target) as t:
                 t.extractall(dest, filter="data")
+                members = [
+                    info.name for info in t.getmembers() if info.isfile() or info.issym() or info.islnk()
+                ]
+        for member in members:
+            path = dest / member
+            if not path.resolve().is_relative_to(dest.resolve()) or not path.is_file():
+                raise RuntimeError("Extracted tool member escaped its destination or is missing")
+            relative = path.relative_to(folder).as_posix()
+            with path.open("rb") as stream:
+                digest = hashlib.file_digest(stream, "sha256").hexdigest()
+            if relative in platform_files and platform_files[relative] != digest:
+                raise RuntimeError("Extracted tool differs from its pinned file checksum")
+            platform_files[relative] = digest
         records.append(dict(url=url, sha256=h))
     combined = {r["url"]: r for r in existing}
     combined.update({r["url"]: r for r in records})
     manifest.write_text(json.dumps(list(combined.values()), indent=2))
+    all_files[platform.system()] = platform_files
+    partial = files_manifest.with_suffix(".partial")
+    partial.write_text(json.dumps(all_files, indent=2), encoding="utf-8")
+    partial.replace(files_manifest)
 
 
 if __name__ == "__main__":

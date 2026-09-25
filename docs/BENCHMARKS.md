@@ -32,3 +32,8 @@ Latest complete Linux isolated app: 84.589 s overall, browser flow 56.394 s. Whi
 extraction 19.064 s. Peak total GPU 0: 9769 / 9078 MiB; host RAM: 7,570,644,992 /
 8,957,648,896 bytes; process-tree RAM: 3,158,491,136 / 3,187,544,064 bytes; GPU 69 / 59 C.
 This shared development GPU total exceeds the 7 GiB gate. No target-machine pass is claimed.
+
+Complete Linux isolated app rerun with native-file verification passed: 89.591 s total, 56.172 s
+browser flow, Whisper 26.629 s and extraction 19.617 s. IPv4/IPv6 blocked before/after; all services
+in one namespace; cleanup empty. Durable evidence retained under /var/tmp. Peak total GPU 9763 /
+9219 MiB, host RAM 7,388,778,496 / 9,062,539,264 bytes, GPU 72 / 61 C. Target budget not qualified.
