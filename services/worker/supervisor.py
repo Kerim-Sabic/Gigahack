@@ -69,6 +69,9 @@ def run_stage(job, stage, spec):
         )
     log = open(folder / f"{stage}.log", "wb")
     env = stage_environment()
+    from services.worker.resources import ResourceSampler
+
+    sampler = ResourceSampler()
     proc = subprocess.Popen(
         [sys.executable, "-m", "services.worker.stage", stage, str(source), str(target)],
         stdout=log,
@@ -76,11 +79,8 @@ def run_stage(job, stage, spec):
         cwd=config.ROOT,
         env=env,
     )
-    started, peak_ram = time.time(), 0
-    peak_host_ram = 0
-    peak_vram = None
-    peak_temperature = None
-    last_gpu_sample = 0
+    started = time.time()
+    last_resource_sample = 0
     try:
         while proc.poll() is None:
             with transaction() as c:
@@ -90,35 +90,9 @@ def run_stage(job, stage, spec):
                 raise RuntimeError("cancelled")
             if time.time() - started > 7200:
                 raise RuntimeError("stage_timeout")
-            try:
-                parent = psutil.Process(proc.pid)
-                peak_ram = max(
-                    peak_ram, sum(p.memory_info().rss for p in [parent, *parent.children(recursive=True)])
-                )
-            except psutil.Error:
-                pass
-            memory = psutil.virtual_memory()
-            peak_host_ram = max(peak_host_ram, memory.total - memory.available)
-            if time.time() - last_gpu_sample >= 1:
-                last_gpu_sample = time.time()
-                try:
-                    sample = subprocess.run(
-                        [
-                            "nvidia-smi",
-                            "--id=0",
-                            "--query-gpu=memory.used,temperature.gpu",
-                            "--format=csv,noheader,nounits",
-                        ],
-                        capture_output=True,
-                        text=True,
-                        timeout=3,
-                        check=True,
-                    )
-                    used, temp = [float(x.strip()) for x in sample.stdout.strip().split(",")]
-                    peak_vram = max(peak_vram or 0, used)
-                    peak_temperature = max(peak_temperature or 0, temp)
-                except (OSError, ValueError, subprocess.SubprocessError):
-                    pass
+            if time.monotonic() - last_resource_sample >= 1:
+                last_resource_sample = time.monotonic()
+                sampler.sample(proc.pid)
             time.sleep(0.5)
         if proc.returncode != 0:
             log.flush()
@@ -127,18 +101,21 @@ def run_stage(job, stage, spec):
                 raise RuntimeError(stage + "_oom")
             raise RuntimeError(stage + "_failed_see_local_log")
         output = json.loads(target.read_text(encoding="utf-8"))
+        resources = sampler.report()
+        gpu0 = next((d for d in resources["gpu_devices"] if d["index"] == "0"), {})
         receipt.write_text(
             canonical(
                 {
                     "input_hash": digest,
                     "output_hash": hashlib.sha256(target.read_bytes()).hexdigest(),
                     "elapsed_seconds": time.time() - started,
-                    "peak_process_ram_bytes": peak_ram,
-                    "peak_total_gpu0_mib": peak_vram,
-                    "peak_host_ram_bytes": peak_host_ram,
-                    "peak_gpu_temperature_c": peak_temperature,
+                    "peak_process_ram_bytes": resources["peak_process_tree_rss_bytes"],
+                    "peak_total_gpu0_mib": gpu0.get("peak_total_mib"),
+                    "peak_host_ram_bytes": resources["peak_host_used_bytes"],
+                    "peak_gpu_temperature_c": gpu0.get("peak_temperature_c"),
                     "memory_scope": "GPU 0 total includes desktop; host RAM includes unrelated processes",
-                    "contract_version": 1,
+                    "resources": resources,
+                    "contract_version": 2,
                 }
             ),
             encoding="utf-8",
@@ -149,6 +126,10 @@ def run_stage(job, stage, spec):
             kill_tree(proc.pid)
         proc.wait()
         log.close()
+        try:
+            (folder / f"{stage}-resources.json").write_text(canonical(sampler.report()), encoding="utf-8")
+        except OSError:
+            pass  # A failed diagnostics write must not mask the stage failure or cleanup.
 
 
 def retry_stage(job, stage, spec):
@@ -231,6 +212,7 @@ def process(job):
                         event.uncertainties.append("Two recognizers disagree; inspect complete hypotheses")
                         if event.value is not None:
                             event.value = None
+                            event.quantity = None
                             event.uncertainties.append(
                                 "Critical numeric value withheld pending review of ASR disagreement"
                             )

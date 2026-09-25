@@ -10,6 +10,7 @@ FILES = (
     "services/worker/reconcile.py",
     "services/worker/optional.py",
     "services/worker/supervisor.py",
+    "services/worker/resources.py",
     "services/worker/process_identity.py",
     "services/worker/assets.py",
     "services/api/domain.py",

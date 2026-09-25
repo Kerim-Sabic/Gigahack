@@ -45,6 +45,9 @@ def test_stage_cancel_terminates_actual_child_process(tmp_path, monkeypatch):
         processes.append(p)
         return p
 
+    from services.worker import resources
+
+    monkeypatch.setattr(resources, "query_gpu", lambda: {"devices": {}, "processes": [], "errors": []})
     monkeypatch.setattr(supervisor.subprocess, "Popen", popen)
     with pytest.raises(RuntimeError, match="cancelled"):
         supervisor.run_stage({"id": "j", "meeting_id": "m"}, "whisper", {"config": {"device": "cpu"}})

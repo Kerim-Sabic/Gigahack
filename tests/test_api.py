@@ -769,3 +769,66 @@ def test_quantity_survives_review_snapshot_and_human_replacement(client):
     assert corrected["quantity"] is None
     # Immutable earlier exports keep their original literal quantity after correction.
     assert client.get(base + "json").json()["items"][0]["quantity"] == body["quantity"]
+
+
+def test_asr_disagreement_withholds_structured_quantity_through_review(client, monkeypatch):
+    from services.worker import supervisor
+    from services.api.quantities import enrich_quantity
+
+    meeting = new_meeting(client)
+    sid, _, asset = seed_candidate(client, meeting)
+    text = "The protocol mentions 7 mg."
+    with transaction() as db:
+        db.execute(
+            "UPDATE segments SET text=?, alternatives=? WHERE id=?",
+            (
+                text,
+                canonical([{"engine": "explicit test alternative", "text": "The protocol mentions 1 mg."}]),
+                sid,
+            ),
+        )
+    queued = client.post(f"/api/v1/meetings/{meeting['id']}/jobs", json={"asset_id": asset, "device": "cpu"})
+    assert queued.status_code == 200, queued.text
+    with transaction() as db:
+        job = dict(db.execute("SELECT * FROM jobs WHERE id=?", (queued.json()["id"],)).fetchone())
+
+    def fixture(job, stage, spec):
+        if stage == "whisper":
+            return {"segments": []}
+        source = spec["segments"][0]
+        event = {
+            "subject": "protocol numeric fact",
+            "category": "information",
+            "kind": "inform",
+            "text": text,
+            "owner": None,
+            "due": None,
+            "raw_due": None,
+            "condition": None,
+            "value": "7 mg",
+            "changed_fields": [],
+            "uncertainties": [],
+            "evidence": [
+                {"segment_id": source["id"], "revision": source["revision"], "field": "text", "quote": text}
+            ],
+        }
+        enrich_quantity(event, {source["id"]: source})
+        assert event["quantity"]["unit"] == "mg"
+        return {"events": [event]}
+
+    monkeypatch.setattr(supervisor, "run_stage", fixture)
+    supervisor.process(job)
+    response = client.get(f"/api/v1/meetings/{meeting['id']}/items").json()
+    item = next(c for c in response["candidates"] if c["subject"] == "protocol numeric fact")
+    assert item["body"]["value"] is None and item["body"]["quantity"] is None
+    accepted = client.post(
+        f"/api/v1/review-issues/{item['id']}/resolve",
+        json={"revision": response["revision"], "action": "accepted"},
+    )
+    # The contract permits reviewed unresolved information, but not a resolved numeric claim.
+    assert accepted.status_code == 200, accepted.text
+    projected = client.get(f"/api/v1/meetings/{meeting['id']}/items").json()["items"]
+    fact = next(i for i in projected if i["subject"] == "protocol numeric fact")
+    assert fact["category"] == "information" and fact["status"] == "information"
+    assert fact["value"] is None and fact["quantity"] is None
+    assert any("Critical numeric value withheld" in issue for issue in fact["uncertainties"])

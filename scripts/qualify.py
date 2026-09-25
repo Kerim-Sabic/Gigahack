@@ -45,6 +45,21 @@ def qualify(audio):
         gpu = [r["peak_total_gpu0_mib"] for r in receipts if r.get("peak_total_gpu0_mib") is not None]
         ram = [r["peak_host_ram_bytes"] for r in receipts if r.get("peak_host_ram_bytes") is not None]
         report["stage_measurements"] = receipts
+        report["resource_attribution"] = [
+            {
+                "input_hash": receipt.get("input_hash"),
+                "resources": receipt.get("resources"),
+                "status": "legacy receipt: attribution not measured"
+                if not receipt.get("resources")
+                else receipt["resources"]["process_gpu_attribution"],
+            }
+            for receipt in receipts
+        ]
+        report["memory_gate_scope"] = (
+            "Sampled device-0 total and host-used memory: conservative operational headroom, "
+            "including unrelated activity. A failure does not prove the model itself exceeds "
+            "8 GB. Process attribution and idle-subtraction estimates are reported separately."
+        )
         report["checks"]["target_memory_budgets"] = (
             bool(gpu and ram) and max(gpu) < 7168 and max(ram) < 20 * 1024**3
         )
