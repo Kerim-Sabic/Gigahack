@@ -5,7 +5,7 @@ Current stage: real local workflow implemented; acceptance gates remain open.
 Windows development host: two RTX 5080 16 GB GPUs, 128 GiB RAM, Python 3.12.10.
 Target RTX 3070 Ti 8 GB / 24 GB laptop is not connected and has NOT RUN.
 
-- 32 backend/domain/recovery/fault tests pass; 4 frontend tests pass; strict build and lint pass.
+- 33 backend/domain/recovery/fault tests pass; 4 frontend tests pass; strict build and lint pass.
 - Real synthetic audio runs through Whisper, Qwen, evidence review, immutable minutes, PDF and Mailpit.
 - Model revisions/checksums, package lockfiles, copied license notices and provenance are tracked.
 - Schema upgrade, disk-write failure, child cancellation, OOM retry mechanism, backup/restore,
@@ -22,7 +22,8 @@ Target RTX 3070 Ti 8 GB / 24 GB laptop is not connected and has NOT RUN.
   including unrelated processes; peak total GPU 0 memory was 4880 MiB. Target hardware remains unqualified.
 
 Services: API/UI 8765, Mailpit UI 8025, SMTP 1025; model server 8081 only during extraction.
-Initial milestone f1998b7 pushed and verified; follow-up hardening milestone is being prepared.
+Hardening milestone 4a7e607b86289ba54758c6d59140f4bd1113e3f9 pushed; exact remote hash verified.
+A follow-up tightens qualification failure reporting and records the final checks.
 
 Next release gates: multilingual semantic accuracy and long-window reconciliation; complete localization;
 physical microphone failure/long recording; optional model assets and qualification; complete offline

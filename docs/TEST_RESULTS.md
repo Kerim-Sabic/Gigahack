@@ -4,7 +4,7 @@ Environment: Windows development host, Python 3.12.10, two RTX 5080 16 GB, 128 G
 
 | Check | Observed result |
 |---|---|
-| Backend/domain/recovery tests | 32 passed; 0 skipped; one Starlette httpx deprecation warning |
+| Backend/domain/recovery tests | 33 passed; 0 skipped; one Starlette httpx deprecation warning |
 | Frontend component/capture queue tests | 4 passed |
 | Python lint | Passed |
 | Frontend strict TypeScript + production build | Passed |

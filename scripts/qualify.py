@@ -27,6 +27,10 @@ def qualify(audio):
     try:
         verify_assets()
         report["checks"]["assets"] = True
+        report["checks"]["target_hardware"] = (
+            "RTX 3070 Ti Laptop GPU" in (report["environment"].get("gpu") or "")
+            and 23 * 1024**3 <= report["environment"]["ram_bytes"] <= 25 * 1024**3
+        )
         if not os.environ.get("MOM_QUALIFY_USER") or not os.environ.get("MOM_QUALIFY_PASSWORD"):
             raise RuntimeError(
                 "Set MOM_QUALIFY_USER and MOM_QUALIFY_PASSWORD for the local synthetic test account."
@@ -57,5 +61,18 @@ def qualify(audio):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(report, indent=2))
         print(json.dumps(report, indent=2))
-    if not report["checks"] or not all(report["checks"].values()):
+    if not qualification_passed(report):
         raise SystemExit(1)
+
+
+def qualification_passed(report):
+    required = {"assets", "real_browser_workflow", "target_memory_budgets", "target_hardware"}
+    return (
+        not report.get("error")
+        and not report.get("unverified")
+        and required.issubset(report.get("checks", {}))
+        and all(report["checks"].values())
+        and report.get("human_accuracy") not in (None, "not measured")
+        and report.get("host_egress") not in (None, "not measured")
+        and report.get("thermals") not in (None, "not measured")
+    )

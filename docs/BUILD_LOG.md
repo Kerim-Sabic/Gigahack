@@ -34,10 +34,13 @@
 - Added capture queue backpressure/retries, flush acknowledgements and interrupted-recording recovery UI.
 - Added scoped unprivileged Linux namespace launcher and executed IPv4/IPv6 isolation probe.
 - Added Windows offline-kit preparation; actually installed all pinned wheels with --no-index.
-- Latest verification: 32 backend tests, 4 frontend tests, lint, generated API types and production build pass.
+- Latest verification: 33 backend tests, 4 frontend tests, lint, generated API types and production build pass.
 - Real text extraction retains semantic failures; no full accuracy or target-hardware acceptance claim.
 - Five-minute synthetic browser microphone rehearsal passed: 307.648 seconds saved; pause/resume,
   stop/flush, abrupt browser close and sealing acknowledged audio; zero page errors.
 - Latest model run exposed an uncited owner; strict validation rejected it. Added conservative optional-field
   withholding, retained strict quote validation, and tested the behavior. Fresh offline-kit environment then
   completed the real browser workflow in 25.168 s. Network isolation was not enabled for this run.
+- Published hardening commit 4a7e607b86289ba54758c6d59140f4bd1113e3f9 and verified remote equality.
+- Qualification now explicitly fails if hardware differs or mandatory accuracy, egress or sustained thermal
+  measurements remain unknown, even when a smoke workflow and memory samples pass.
