@@ -36,6 +36,7 @@ gpu_compute_type = "int8_float16"
 cpu_compute_type = "int8"
 
 [optional]
+runtime_prefix = "" # Prepared Linux/WSL environment; MOM_OPTIONAL_RUNTIME may override this at queue time.
 parakeet_audio_fraction = 1.0 # Compare every transcript segment when the optional check is selected.
 parakeet_batch_size = 1
 diarization_batch_size = 16

@@ -109,3 +109,21 @@ clips, about 2.42s remaining for that phase); this is not an estimate for later 
 None of these experiments approved minutes, sent email, established native-language accuracy,
 qualified target hardware or completed production API/UI integration. Import/model startup
 accounts for most observed wall time in this environment and needs separate profiling.
+
+
+## Actual isolated app integration, 2026-09-26
+
+Run app-optional-1790375165684521014 used the production supervisor/retry dispatcher and optional
+adapters with the registered clean Linux environment. External networking was unavailable.
+The earlier real 194-segment Whisper output was replayed into a new private database; this is
+not a fresh full-pipeline or browser run. Parakeet processed those clips and persisted 194
+alternative records (including empty hypotheses); diarization processed the entire canonical
+recording and persisted a cluster/unknown label for all 194 segments. No participant identity,
+meeting date or timezone was invented. No approval or delivery was performed.
+
+The integration took 130.67 seconds: supervisor receipts recorded 98.92 seconds for Parakeet
+and 30.96 seconds for diarization. Peak process-tree RSS was 3,780,259,840 and 2,472,194,048 bytes.
+GPU totals include unrelated services starting on the host and cannot establish application
+VRAM or target-laptop fit. Source/config hashes, raw hypotheses, turns, progress and receipts
+remain in the ignored private run directory. Earlier coverage/empty-window failures remain
+unresolved; successful persistence is not an acoustic accuracy result.

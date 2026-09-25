@@ -295,6 +295,7 @@ def main():
             "prepare-tools",
             "prepare-offline",
             "verify-assets",
+            "verify-optional",
             "start",
             "stop",
             "test",
@@ -322,6 +323,13 @@ def main():
         prepare(args.path)
     elif args.command == "verify-assets":
         verify_assets()
+    elif args.command == "verify-optional":
+        if sys.platform != "linux" or not args.path or not Path(args.path).is_absolute():
+            raise SystemExit("Use Linux/WSL and --path to the prepared optional environment.")
+        python = Path(args.path) / "bin/python"
+        if not python.is_file():
+            raise SystemExit("Prepared optional Python executable not found.")
+        raise SystemExit(subprocess.call([str(python), "-m", "scripts.verify_optional"], cwd=config.ROOT))
     elif args.command == "start":
         start()
     elif args.command == "stop":

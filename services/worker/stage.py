@@ -716,10 +716,19 @@ if __name__ == "__main__":
     model_lock.acquire()
     spec = json.loads(Path(sys.argv[2]).read_text(encoding="utf-8"))
     started = time.time()
+    optional_runtime = None
+    if sys.argv[1] in ("parakeet", "diarize"):
+        from services.worker.assets import verify_optional_assets
+        from services.worker.optional_runtime import verify_runtime
+
+        optional_runtime = verify_runtime()
+        verify_optional_assets(sys.argv[1], ProgressReporter(spec["run_dir"], sys.argv[1]))
     result = {"whisper": whisper, "extract": extract, "parakeet": parakeet, "diarize": diarize}[sys.argv[1]](
         spec
     )
     result["elapsed_seconds"] = time.time() - started
+    if optional_runtime:
+        result["optional_runtime"] = optional_runtime
     from services.api.audio import atomic_write
 
     atomic_write(Path(sys.argv[3]), json.dumps(result, ensure_ascii=False).encode("utf-8"))

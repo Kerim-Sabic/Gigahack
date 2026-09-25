@@ -41,10 +41,10 @@ def kill_tree(pid):
     psutil.wait_procs(alive, timeout=5)
 
 
-def stage_environment():
+def stage_environment(runtime_prefix=None):
     env = {**os.environ, "HF_HUB_OFFLINE": "1", "CUDA_VISIBLE_DEVICES": "0"}
     if sys.platform == "linux":
-        libraries = sorted(Path(sys.prefix).glob("lib/python*/site-packages/nvidia/*/lib"))
+        libraries = sorted(Path(runtime_prefix or sys.prefix).glob("lib/python*/site-packages/nvidia/*/lib"))
         libraries += sorted({p.parent for p in (config.ROOT / ".runtime/tools/llama").rglob("*.so*")})
         existing = env.get("LD_LIBRARY_PATH", "")
         env["LD_LIBRARY_PATH"] = ":".join([*(str(p) for p in libraries), *([existing] if existing else [])])
@@ -121,20 +121,31 @@ def run_stage(job, stage, spec):
         (folder / "progress.json").unlink(missing_ok=True)
     except OSError:
         pass  # Display artifacts do not authorize or block inference.
-    log = open(folder / f"{stage}.log", "wb")
-    env = {**stage_environment(), "MOM_STAGE_PARENT_PID": str(os.getpid())}
+    from services.worker.settings import settings_for
+
+    runtime_prefix = settings_for(spec).optional.runtime_prefix if stage in ("parakeet", "diarize") else None
+    python = sys.executable
+    if stage in ("parakeet", "diarize"):
+        from services.worker.optional_runtime import stage_python
+
+        python = stage_python(runtime_prefix)
+    env = {**stage_environment(runtime_prefix), "MOM_STAGE_PARENT_PID": str(os.getpid())}
     from services.worker.resources import ResourceSampler
 
     sampler = ResourceSampler()
-    proc = subprocess.Popen(
-        [sys.executable, "-m", "services.worker.stage", stage, str(source), str(target)],
-        stdout=log,
-        stderr=log,
-        cwd=config.ROOT,
-        env=env,
-    )
+    log = open(folder / f"{stage}.log", "wb")
+    try:
+        proc = subprocess.Popen(
+            [python, "-m", "services.worker.stage", stage, str(source), str(target)],
+            stdout=log,
+            stderr=log,
+            cwd=config.ROOT,
+            env=env,
+        )
+    except BaseException:
+        log.close()
+        raise
     started = time.time()
-    from services.worker.settings import settings_for
     from services.api.progress import read_progress
 
     activity = StageActivity(settings_for(spec).worker.no_activity_timeout_seconds)

@@ -1,15 +1,16 @@
 # Current implementation status
 
 Complete mission remains active. The last verified remote checkpoint is
-2f6341a457d0e83a5e4156540aeb33b7a9817f2c (CI 36192494740 PASS). It contains multilingual
+aa25c9285aa46fb3bd6ffaaa00447847ab954584 (CI 36194268266 PASS). It contains multilingual
 transcription, frozen developer settings, current-step ETA and bounded ASR checkpoints.
 It also includes atomic recording/stage recovery and kernel-backed model-process ownership.
 Exact bounded audio clips and optional-model excerpt results are included. Full-recording
-experimental results and the separate license inventory form the next checkpoint.
+experimental results and the separate license inventory are recorded. Current changes connect
+the verified isolated optional runtime to the API and supervisor.
 
 ## Current evidence
 
-- 143 backend tests pass locally with one Linux-only check skipped; that check and the actual
+- 152 backend tests pass locally with one Linux-only check skipped; that check and the actual
   child cleanup test pass in Linux. Last frontend checkpoint: 10 tests and strict build pass.
 - Hard-killing a model stage now terminates its owned child through Windows Job Objects or
   Linux parent-death binding; the actual tests preserve an unrelated running process.
@@ -47,11 +48,15 @@ qualification or an accuracy score. Full-recording experiments also completed: 1
 24-window entire-timeline Parakeet pass and 262 diarized turns / five clusters. The independent
 pass returned no text in three windows with substantial model-detected speech; 92 word
 hypotheses fall outside Whisper clips. These are review signals, not gold accuracy results.
-Complete API/UI integration and target fit remain unqualified; application availability remains
-disabled. The optional inventory now contains 233 components including pinned pip 26.2.1;
+Actual production supervisor/adapter integration passed offline using prior real Whisper
+segments: all 194 alternatives and speaker labels persisted. Availability now requires verified
+Linux/WSL runtime registration. Full UI flow and target fit remain unqualified. The optional inventory now contains 233 components including pinned pip 26.2.1;
 all 233 have no current OSV matches. Supplied/upstream notices are retained; release linkage
 and remaining distribution-notice review are still open.
-See DECISIONS/010-optional-model-preparation.md.
+A fresh 182-package candidate plus pip removes 50 unused packages. Worker startup verifies exact
+installed versions, reviewed patch hashes and pinned model files. The metadata-only API check
+imports no model frameworks. Clean-runtime whole-recording diarization reproduced the same
+262 turns/five clusters. See DECISIONS/010-optional-model-preparation.md.
 
 ## Remaining acceptance
 

@@ -1,6 +1,7 @@
 """Validated developer controls, serialized into jobs instead of mutable globals."""
 
 import tomllib
+import os
 from pathlib import Path
 from typing import Literal
 
@@ -76,9 +77,17 @@ class ASRSettings(LocalModelSettings):
 
 
 class OptionalSettings(FrozenSettings):
+    runtime_prefix: str = Field(default="", max_length=4096)
     parakeet_audio_fraction: float = Field(gt=0, le=1)
     parakeet_batch_size: int = Field(ge=1, le=8)
     diarization_batch_size: int = Field(ge=1, le=64)
+
+    @field_validator("runtime_prefix")
+    @classmethod
+    def local_runtime(cls, value):
+        if value and ("\0" in value or not value.startswith("/")):
+            raise ValueError("optional_runtime_requires_an_absolute_linux_path")
+        return value
 
 
 class WorkerSettings(FrozenSettings):
@@ -95,7 +104,10 @@ class InferenceSettings(FrozenSettings):
 
 def load_settings(path: Path | None = None):
     with (path or ROOT / "config/inference.toml").open("rb") as source:
-        return InferenceSettings.model_validate(tomllib.load(source))
+        values = tomllib.load(source)
+    if os.environ.get("MOM_OPTIONAL_RUNTIME"):
+        values["optional"]["runtime_prefix"] = os.environ["MOM_OPTIONAL_RUNTIME"]
+    return InferenceSettings.model_validate(values)
 
 
 def settings_for(spec):

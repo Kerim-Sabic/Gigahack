@@ -1,0 +1,19 @@
+{
+  "package": "tensorboard-data-server",
+  "version": "0.7.2",
+  "repository": "tensorflow/tensorboard",
+  "revision": "474d3eeff366a4217899be2814e9b25dc9067083",
+  "license": {
+    "key": "apache-2.0",
+    "name": "Apache License 2.0",
+    "spdx_id": "Apache-2.0",
+    "url": "https://api.github.com/licenses/apache-2.0",
+    "node_id": "MDc6TGljZW5zZTI="
+  },
+  "license_path": "manifests/optional-runtime-experiment/licenses/tensorboard-data-server-upstream-LICENSE",
+  "license_sha256": "d7c9068d896188264b60827b8cd1e25fdb9f5b5cad0b1589e90b96c87729c404",
+  "source_version_matches": false,
+  "source_url": "https://github.com/tensorflow/tensorboard/blob/474d3eeff366a4217899be2814e9b25dc9067083/tensorboard/data/server/Cargo.toml",
+  "license_url": "https://github.com/tensorflow/tensorboard/blob/474d3eeff366a4217899be2814e9b25dc9067083/LICENSE",
+  "distribution_scope": "publisher wheel, Apache-2.0 notice retained; no claim of reproducible native build"
+}

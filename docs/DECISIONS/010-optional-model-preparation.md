@@ -78,3 +78,31 @@ The cuda-toolkit distribution contains dependency metadata only; individual NVID
 notices are retained. Full release linkage and native redistribution-notice review, notably
 TensorBoard's data-server binary, remain open before a distributable optional-runtime package.
 No weights, transcripts, recordings or package archives enter Git.
+
+
+## Clean isolated candidate and application routing (2026-09-26)
+
+A fresh Linux-filesystem environment resolves 182 packages plus pip 26.2.1, removing 50 unused
+packages from the merged experiment, including the older CUDA 12 stack. Exact artifact URLs,
+SHA-256 hashes and roots are in optional-runtime-candidate.json and its hash lock. The two
+reviewed compatibility changes remain required and are checked byte-for-byte at worker start.
+Core application dependencies and architecture are preserved. This environment was installed
+with resolved version pins; a complete hash-enforced offline installer remains an acceptance gap.
+
+Actual offline inference with this clean environment reproduced the full recording's 262
+speaker turns/five clusters exactly; the measured stage took 39.47 seconds versus 216.54 in
+the older environment. These development measurements include different startup/cache conditions
+and are not a controlled speed benchmark or target-hardware result. Shorter Parakeet windows
+recovered some hypotheses in the previously empty intervals, but every tested window size still
+had empty outputs. More words are not evidence of higher accuracy; no automatic replacement
+or claim of perfect language detection follows from these experiments.
+
+A metadata-only readiness record allows the core API to expose verified optional prerequisites.
+The supervisor selects the recorded Linux interpreter for optional stages only, with its CUDA
+library paths. Each stage independently rechecks exact packages, compatibility patches and
+model checksums before heavy imports. A changed manifest invalidates readiness. Runtime selection
+is frozen with each queued job. Malformed registration and missing executables fail closed.
+
+TensorBoard's upstream Apache-2.0 notice is additionally preserved at a pinned source revision;
+its source Cargo version does not match the native wheel version. That mismatch is explicitly
+recorded in tensorboard-notice-provenance.json and remains a distribution review limitation.

@@ -54,3 +54,23 @@ Upload duration/container limits and full-pipeline long-file qualification are n
 A long stage is not stopped merely because two hours elapsed. Advancing work or observed CPU
 computation in its process tree keeps it alive; timestamp-only updates do not. This cannot
 identify every logical busy loop. Cancellation and bounded model-request timeouts remain.
+
+
+Optional models use a separate pinned Linux x86_64 Python 3.12 environment. The API stays in
+its core environment. After preparing the candidate packages and exact reviewed patches,
+register it locally with `python -m scripts.mom verify-optional --path /absolute/environment`.
+This checks the complete installed package/version set, patched source hashes and every pinned
+model file hash without downloading or importing inference frameworks. It writes a readiness
+record inside that environment. Run the Linux/WSL app with `MOM_OPTIONAL_RUNTIME` set to the
+same absolute prefix, or set `optional.runtime_prefix` in the TOML. The environment override
+is resolved when a job is queued and is frozen with that job's configuration.
+
+The API checks this record and asset presence; actual optional workers repeat package, patch
+and model hash verification before loading. Missing/stale registration disables the optional
+controls. Native Windows does not dispatch work across an implicit WSL boundary. Both the API
+and supervisor must run in Linux/WSL to use this optional setup. Prepared status establishes
+local prerequisites, not linguistic accuracy or compatibility with the target laptop.
+
+The candidate lock records 182 package artifacts; pip 26.2.1 is separate bootstrap tooling.
+The complete reproducible installer/offline distribution is still pending. Do not point the
+application at the historical merged experimental environment, which contains extra packages.

@@ -680,7 +680,7 @@ def queue(ident: str, body: Queue, u=Depends(user)):
     from services.worker.settings import load_settings
 
     inference_settings = load_settings().model_dump()
-    available = capabilities()
+    available = capabilities(inference_settings)
     for name in ("parakeet", "diarization"):
         if getattr(body, name) and not available[name]["available"]:
             fail(name + "_not_prepared", 409)
