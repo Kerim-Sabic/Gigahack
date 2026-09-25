@@ -1,0 +1,179 @@
+{
+  "$defs": {
+    "Citation": {
+      "additionalProperties": false,
+      "properties": {
+        "segment_id": {
+          "title": "Segment Id",
+          "type": "string"
+        },
+        "revision": {
+          "title": "Revision",
+          "type": "integer"
+        },
+        "field": {
+          "enum": [
+            "text",
+            "owner",
+            "due",
+            "condition",
+            "value",
+            "kind"
+          ],
+          "title": "Field",
+          "type": "string"
+        },
+        "quote": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Quote",
+          "type": "string"
+        }
+      },
+      "required": [
+        "segment_id",
+        "revision",
+        "field",
+        "quote"
+      ],
+      "title": "Citation",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "subject": {
+      "maxLength": 160,
+      "minLength": 1,
+      "title": "Subject",
+      "type": "string"
+    },
+    "category": {
+      "enum": [
+        "action",
+        "decision",
+        "information"
+      ],
+      "title": "Category",
+      "type": "string"
+    },
+    "kind": {
+      "enum": [
+        "propose",
+        "confirm",
+        "amend",
+        "reject",
+        "cancel",
+        "reopen",
+        "inform"
+      ],
+      "title": "Kind",
+      "type": "string"
+    },
+    "text": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "title": "Text",
+      "type": "string"
+    },
+    "owner": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Owner"
+    },
+    "due": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Due"
+    },
+    "raw_due": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Raw Due"
+    },
+    "condition": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Condition"
+    },
+    "value": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Value"
+    },
+    "changed_fields": {
+      "items": {
+        "enum": [
+          "text",
+          "owner",
+          "due",
+          "condition",
+          "value"
+        ],
+        "type": "string"
+      },
+      "title": "Changed Fields",
+      "type": "array"
+    },
+    "uncertainties": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Uncertainties",
+      "type": "array"
+    },
+    "evidence": {
+      "items": {
+        "$ref": "#/$defs/Citation"
+      },
+      "maxItems": 20,
+      "minItems": 1,
+      "title": "Evidence",
+      "type": "array"
+    }
+  },
+  "required": [
+    "subject",
+    "category",
+    "kind",
+    "text",
+    "evidence"
+  ],
+  "title": "Candidate",
+  "type": "object"
+}

@@ -1,0 +1,17 @@
+[
+  {
+    "file": "llama-b11146-LICENSE",
+    "source": "https://raw.githubusercontent.com/ggml-org/llama.cpp/b11146/LICENSE",
+    "sha256": "94f29bbed6a22c35b992c5c6ebf0e7c92f13b836b90f36f461c9cf2f0f1d010d"
+  },
+  {
+    "file": "mailpit-v1.31.2-LICENSE",
+    "source": "https://raw.githubusercontent.com/axllent/mailpit/v1.31.2/LICENSE",
+    "sha256": "9dade1b3ace5dd6c36ca58eef466ae7dd9afe52bfb978deffa44645f6f0a2aa9"
+  },
+  {
+    "file": "cuda-12.4.1-EULA.html",
+    "source": "https://docs.nvidia.com/cuda/archive/12.4.1/eula/index.html",
+    "sha256": "c0e213c4c53fbc9b29dc3e8cea0fb06b0498a28eca01858d3611d975dd70f585"
+  }
+]

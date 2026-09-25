@@ -2,6 +2,7 @@ import asyncio
 import hashlib
 import json
 import secrets
+import sqlite3
 import time
 import wave
 from contextlib import asynccontextmanager
@@ -21,6 +22,7 @@ from . import config
 from .audio import atomic_write, decode, sha
 from .db import audit, canonical, migrate, transaction, uid
 from .domain import Strict, reduce_events
+from .schemas import AccountView, MeetingDetail, MeetingView, SegmentView
 
 passwords = PasswordHasher()
 attempts = {}
@@ -38,28 +40,58 @@ app = FastAPI(title="Secure MOM", version="0.1.0", lifespan=lifespan)
 @app.middleware("http")
 async def safety(request, call_next):
     request.state.request_id = uid()
+    if request.method in ("POST", "PUT", "PATCH"):
+        length = request.headers.get("content-length")
+        if length is None or request.headers.get("transfer-encoding"):
+            return JSONResponse({"code": "content_length_required"}, 411)
+        if not length.isdecimal():
+            return JSONResponse({"code": "invalid_content_length"}, 400)
+        limit = config.MAX_BYTES + 1024 * 1024 if request.url.path.endswith("/uploads") else 8 * 1024 * 1024
+        if int(length) > limit:
+            return JSONResponse({"code": "request_too_large"}, 413)
     if request.method not in ("GET", "HEAD", "OPTIONS"):
         origin = request.headers.get("origin")
         if origin and origin != config.ORIGIN:
             return JSONResponse({"code": "origin_denied", "request_id": request.state.request_id}, 403)
         if request.cookies.get("mom_session"):
             with transaction() as c:
-                s = c.execute("SELECT csrf FROM sessions WHERE id=?", (request.cookies["mom_session"],)).fetchone()
+                s = c.execute(
+                    "SELECT csrf FROM sessions WHERE id=?", (request.cookies["mom_session"],)
+                ).fetchone()
             if not s or not secrets.compare_digest(s["csrf"], request.headers.get("x-csrf-token", "")):
                 return JSONResponse({"code": "csrf_denied", "request_id": request.state.request_id}, 403)
-    response = await call_next(request)
+    try:
+        response = await call_next(request)
+    except Exception:
+        # Generic operational logs never include request bodies or transcript search strings.
+        print(canonical({"code": "internal_error", "request_id": request.state.request_id}), flush=True)
+        response = JSONResponse({"code": "internal_error", "request_id": request.state.request_id}, 500)
     response.headers["X-Request-ID"] = request.state.request_id
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Referrer-Policy"] = "no-referrer"
-    response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; media-src 'self' blob:; connect-src 'self'; frame-ancestors 'none'"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; media-src 'self' blob:; connect-src 'self'; frame-ancestors 'none'"
+    )
     response.headers["Cache-Control"] = "no-store"
     return response
 
 
 @app.exception_handler(HTTPException)
 async def error(request, exc):
-    return JSONResponse({"code": str(exc.detail), "message": str(exc.detail),
-                         "request_id": request.state.request_id}, exc.status_code)
+    return JSONResponse(
+        {"code": str(exc.detail), "message": str(exc.detail), "request_id": request.state.request_id},
+        exc.status_code,
+    )
+
+
+@app.exception_handler(sqlite3.IntegrityError)
+async def integrity_error(request, exc):
+    return JSONResponse({"code": "data_conflict", "request_id": request.state.request_id}, 409)
+
+
+@app.exception_handler(Exception)
+async def internal_error(request, exc):
+    return JSONResponse({"code": "internal_error", "request_id": request.state.request_id}, 500)
 
 
 def fail(code, status=400):
@@ -68,16 +100,20 @@ def fail(code, status=400):
 
 def user(request: Request):
     with transaction() as c:
-        u = c.execute("SELECT u.*,s.csrf FROM users u JOIN sessions s ON s.user_id=u.id WHERE s.id=? AND s.expires>?",
-                      (request.cookies.get("mom_session", ""), time.time())).fetchone()
+        u = c.execute(
+            "SELECT u.*,s.csrf FROM users u JOIN sessions s ON s.user_id=u.id WHERE s.id=? AND s.expires>?",
+            (request.cookies.get("mom_session", ""), time.time()),
+        ).fetchone()
     if not u:
         fail("authentication_required", 401)
     return dict(u)
 
 
 def access(c, meeting, u, write=False):
-    m = c.execute("SELECT m.* FROM meetings m JOIN members x ON x.meeting_id=m.id WHERE m.id=? AND x.user_id=?",
-                  (meeting, u["id"])).fetchone()
+    m = c.execute(
+        "SELECT m.* FROM meetings m JOIN members x ON x.meeting_id=m.id WHERE m.id=? AND x.user_id=?",
+        (meeting, u["id"]),
+    ).fetchone()
     if not m:
         fail("meeting_not_found", 404)
     if write and u["role"] == "viewer":
@@ -103,10 +139,21 @@ class Account(Credentials):
 def session(c, u, response):
     token, csrf = secrets.token_urlsafe(32), secrets.token_urlsafe(32)
     c.execute("INSERT INTO sessions VALUES(?,?,?,?)", (token, u["id"], time.time() + 8 * 3600, csrf))
-    response.set_cookie("mom_session", token, httponly=True, secure=config.ORIGIN.startswith("https:"),
-                        samesite="strict", max_age=28800)
-    return {"id": u["id"], "name": u["name"], "role": u["role"], "csrf": csrf,
-            "language": u.get("language", "en")}
+    response.set_cookie(
+        "mom_session",
+        token,
+        httponly=True,
+        secure=config.ORIGIN.startswith("https:"),
+        samesite="strict",
+        max_age=28800,
+    )
+    return {
+        "id": u["id"],
+        "name": u["name"],
+        "role": u["role"],
+        "csrf": csrf,
+        "language": u.get("language", "en"),
+    }
 
 
 @app.get("/api/v1/setup")
@@ -115,7 +162,7 @@ def setup_status():
         return {"required": not c.execute("SELECT 1 FROM users LIMIT 1").fetchone()}
 
 
-@app.post("/api/v1/setup")
+@app.post("/api/v1/setup", response_model=AccountView)
 def setup(body: Credentials, response: Response, request: Request):
     if request.client.host not in ("127.0.0.1", "::1", "testclient"):
         fail("setup_requires_loopback", 403)
@@ -124,12 +171,17 @@ def setup(body: Credentials, response: Response, request: Request):
         if c.execute("SELECT 1 FROM users LIMIT 1").fetchone():
             fail("setup_already_complete", 409)
         u = {"id": uid(), "name": body.name, "role": "admin"}
-        c.execute("INSERT INTO users(id,name,password,role) VALUES(?,?,?,?)", (u["id"], u["name"], hashed, "admin"))
-        c.execute("INSERT INTO recipient_groups VALUES(?,?,?,?)", (uid(), "Local demo", 1, '["secretary@secure-mom.test"]'))
+        c.execute(
+            "INSERT INTO users(id,name,password,role) VALUES(?,?,?,?)", (u["id"], u["name"], hashed, "admin")
+        )
+        c.execute(
+            "INSERT INTO recipient_groups VALUES(?,?,?,?)",
+            (uid(), "Local demo", 1, '["secretary@secure-mom.test"]'),
+        )
         return session(c, u, response)
 
 
-@app.post("/api/v1/sessions")
+@app.post("/api/v1/sessions", response_model=AccountView)
 def login(body: Credentials, request: Request, response: Response):
     key = request.client.host
     attempts[key] = [t for t in attempts.get(key, []) if t > time.time() - 60]
@@ -154,7 +206,7 @@ def logout(request: Request, response: Response, u=Depends(user)):
     return {"ok": True}
 
 
-@app.get("/api/v1/me")
+@app.get("/api/v1/me", response_model=AccountView)
 def me(u=Depends(user)):
     return {k: u[k] for k in ("id", "name", "role", "language", "csrf")}
 
@@ -176,8 +228,10 @@ def account(body: Account, u=Depends(user)):
         fail("admin_required", 403)
     with transaction() as c:
         ident = uid()
-        c.execute("INSERT INTO users(id,name,password,role) VALUES(?,?,?,?)",
-                  (ident, body.name, passwords.hash(body.password), body.role))
+        c.execute(
+            "INSERT INTO users(id,name,password,role) VALUES(?,?,?,?)",
+            (ident, body.name, passwords.hash(body.password), body.role),
+        )
         return {"id": ident}
 
 
@@ -190,8 +244,8 @@ class Meeting(Strict):
     participants: list[str] = Field(default_factory=list, max_length=100)
 
 
-@app.post("/api/v1/meetings")
-def create_meeting(body: Meeting, u=Depends(user)):
+@app.post("/api/v1/meetings", response_model=MeetingView)
+def create_meeting(body: Meeting, request: Request, u=Depends(user)):
     if u["role"] == "viewer":
         fail("read_only", 403)
     try:
@@ -199,31 +253,219 @@ def create_meeting(body: Meeting, u=Depends(user)):
     except (KeyError, ValueError):
         fail("invalid_timezone")
     with transaction() as c:
+        key = request.headers.get("idempotency-key")
+        digest = hashlib.sha256(canonical(body.model_dump(mode="json")).encode()).hexdigest()
+        if key:
+            if len(key) > 100:
+                fail("invalid_idempotency_key")
+            prior = c.execute(
+                "SELECT * FROM idempotency WHERE user_id=? AND key=? AND route='create_meeting'",
+                (u["id"], key),
+            ).fetchone()
+            if prior:
+                if prior["body_hash"] != digest:
+                    fail("idempotency_conflict", 409)
+                return json.loads(prior["response"])
         ident = uid()
-        c.execute("INSERT INTO meetings(id,title,date,timezone,language,classification,created) VALUES(?,?,?,?,?,?,?)",
-                  (ident, body.title, str(body.date), body.timezone, body.language, body.classification, time.time()))
+        c.execute(
+            "INSERT INTO meetings(id,title,date,timezone,language,classification,created) VALUES(?,?,?,?,?,?,?)",
+            (
+                ident,
+                body.title,
+                str(body.date),
+                body.timezone,
+                body.language,
+                body.classification,
+                time.time(),
+            ),
+        )
         c.execute("INSERT INTO members VALUES(?,?)", (ident, u["id"]))
         for name in body.participants:
             c.execute("INSERT INTO participants VALUES(?,?,?)", (uid(), ident, name[:200]))
         audit(c, ident, u["id"], "meeting_created")
-        return access(c, ident, u)
+        result = access(c, ident, u)
+        if key:
+            c.execute(
+                "INSERT INTO idempotency VALUES(?,?,'create_meeting',?,?)",
+                (u["id"], key, digest, canonical(result)),
+            )
+        return result
 
 
-@app.get("/api/v1/meetings")
+@app.get("/api/v1/meetings", response_model=list[MeetingView])
 def meetings(u=Depends(user)):
     with transaction() as c:
-        return [dict(r) for r in c.execute("SELECT m.* FROM meetings m JOIN members x ON x.meeting_id=m.id WHERE x.user_id=? ORDER BY created DESC", (u["id"],))]
+        return [
+            dict(r)
+            for r in c.execute(
+                "SELECT m.* FROM meetings m JOIN members x ON x.meeting_id=m.id WHERE x.user_id=? ORDER BY created DESC",
+                (u["id"],),
+            )
+        ]
 
 
-@app.get("/api/v1/meetings/{ident}")
+@app.get("/api/v1/meetings/{ident}", response_model=MeetingDetail)
 def meeting(ident: str, u=Depends(user)):
     with transaction() as c:
         m = access(c, ident, u)
-        for table in ("participants", "assets", "jobs"):
+        for table in ("participants", "assets", "jobs", "recordings"):
             m[table] = [dict(r) for r in c.execute(f"SELECT * FROM {table} WHERE meeting_id=?", (ident,))]
         for a in m["assets"]:
             a.pop("path")
+        for r in m["recordings"]:
+            stats = c.execute(
+                "SELECT COUNT(*),COALESCE(SUM(samples),0),MAX(sequence) FROM chunks WHERE recording_id=?",
+                (r["id"],),
+            ).fetchone()
+            r["acknowledged_chunks"], r["acknowledged_samples"], r["last_sequence"] = tuple(stats)
         return m
+
+
+class MeetingEdit(Meeting):
+    revision: int
+
+
+@app.patch("/api/v1/meetings/{ident}")
+def update_meeting(ident: str, body: MeetingEdit, u=Depends(user)):
+    try:
+        ZoneInfo(body.timezone)
+    except (KeyError, ValueError):
+        fail("invalid_timezone")
+    with transaction() as c:
+        m = access(c, ident, u, True)
+        revision(c, m, body.revision)
+        c.execute(
+            "UPDATE meetings SET title=?,date=?,timezone=?,language=?,classification=? WHERE id=?",
+            (body.title, str(body.date), body.timezone, body.language, body.classification, ident),
+        )
+        if str(body.date) != m["date"] or body.timezone != m["timezone"]:
+            c.execute("UPDATE candidates SET review='needs_review' WHERE meeting_id=?", (ident,))
+        c.execute("DELETE FROM participants WHERE meeting_id=?", (ident,))
+        for name in body.participants:
+            c.execute("INSERT INTO participants VALUES(?,?,?)", (uid(), ident, name[:200]))
+        audit(c, ident, u["id"], "metadata_updated")
+        return access(c, ident, u)
+
+
+class DeleteMeeting(Strict):
+    revision: int
+    confirm_title: str
+
+
+@app.delete("/api/v1/meetings/{ident}")
+def delete_meeting(ident: str, body: DeleteMeeting, u=Depends(user)):
+    import shutil
+    from uuid import UUID
+
+    try:
+        UUID(ident)
+    except ValueError:
+        fail("invalid_meeting_id")
+    if u["role"] != "admin":
+        fail("member_admin_required", 403)
+    source = (config.DATA / "audio" / ident).resolve()
+    expected_parent = (config.DATA / "audio").resolve()
+    if source.parent != expected_parent:
+        fail("storage_boundary_error", 500)
+    trash_parent = (config.DATA / "deleted").resolve()
+    trash_parent.mkdir(parents=True, exist_ok=True)
+    trash = trash_parent / ident
+    moved = False
+    exports = []
+    jobs = []
+    try:
+        with transaction() as c:
+            m = access(c, ident, u, True)
+            if m["revision"] != body.revision or m["title"] != body.confirm_title:
+                fail("deletion_confirmation_conflict", 409)
+            if c.execute(
+                "SELECT 1 FROM jobs WHERE meeting_id=? AND state IN ('queued','running')", (ident,)
+            ).fetchone():
+                fail("cancel_processing_before_deletion", 409)
+            exports = [r[0] for r in c.execute("SELECT hash FROM snapshots WHERE meeting_id=?", (ident,))]
+            jobs = [r[0] for r in c.execute("SELECT id FROM jobs WHERE meeting_id=?", (ident,))]
+            if source.exists():
+                source.rename(trash)
+                moved = True
+            c.execute(
+                "DELETE FROM outbox WHERE snapshot_id IN (SELECT id FROM snapshots WHERE meeting_id=?)",
+                (ident,),
+            )
+            c.execute(
+                "DELETE FROM approvals WHERE snapshot_id IN (SELECT id FROM snapshots WHERE meeting_id=?)",
+                (ident,),
+            )
+            c.execute(
+                "DELETE FROM segment_history WHERE segment_id IN (SELECT id FROM segments WHERE meeting_id=?)",
+                (ident,),
+            )
+            c.execute(
+                "DELETE FROM chunks WHERE recording_id IN (SELECT id FROM recordings WHERE meeting_id=?)",
+                (ident,),
+            )
+            for table in (
+                "evidence",
+                "accepted_events",
+                "candidates",
+                "segments",
+                "jobs",
+                "snapshots",
+                "recordings",
+                "assets",
+                "participants",
+                "members",
+                "audit",
+            ):
+                c.execute(f"DELETE FROM {table} WHERE meeting_id=?", (ident,))
+            c.execute("DELETE FROM meetings WHERE id=?", (ident,))
+            audit(
+                c,
+                ident,
+                u["id"],
+                "meeting_deleted",
+                {"backups": "operator retention policy applies separately"},
+            )
+    except BaseException:
+        if moved and trash.exists():
+            trash.rename(source)
+        raise
+    try:
+        if trash.exists() and trash.resolve().parent == trash_parent:
+            shutil.rmtree(trash)
+        for job in jobs:
+            folder = (config.DATA / "jobs" / job).resolve()
+            if folder.parent != (config.DATA / "jobs").resolve():
+                raise OSError("job cleanup boundary mismatch")
+            if folder.exists():
+                shutil.rmtree(folder)
+        for digest in exports:
+            path = (config.DATA / "exports" / (digest + ".pdf")).resolve()
+            if path.parent == (config.DATA / "exports").resolve():
+                path.unlink(missing_ok=True)
+    except OSError:
+        with transaction() as c:
+            audit(c, ident, u["id"], "deletion_file_cleanup_pending")
+        return {"deleted": True, "file_cleanup": "pending_operator_action"}
+    return {
+        "deleted": True,
+        "file_cleanup": "complete",
+        "backups": "not deleted; apply backup retention separately",
+    }
+
+
+class Grant(Strict):
+    user_id: str
+
+
+@app.post("/api/v1/meetings/{ident}/members")
+def grant(ident: str, body: Grant, u=Depends(user)):
+    with transaction() as c:
+        access(c, ident, u, True)
+        if u["role"] != "admin":
+            fail("member_admin_required", 403)
+        c.execute("INSERT OR IGNORE INTO members VALUES(?,?)", (ident, body.user_id))
+        audit(c, ident, u["id"], "member_granted", {"user": body.user_id})
+        return {"ok": True}
 
 
 @app.post("/api/v1/meetings/{ident}/uploads")
@@ -248,6 +490,7 @@ def upload(ident: str, file: UploadFile, u=Depends(user)):
             f.write(chunk)
         f.flush()
         import os
+
         os.fsync(f.fileno())
     target = folder / "source.wav"
     try:
@@ -256,8 +499,19 @@ def upload(ident: str, file: UploadFile, u=Depends(user)):
         fail("audio_decode_failed")
     with transaction() as c:
         access(c, ident, u, True)
-        c.execute("INSERT INTO assets VALUES(?,?,?,?,?,?,?,?)", (asset, ident, str(target), sha(original),
-            metadata["sample_rate"], metadata["samples"], 1, canonical({**json.loads(metadata["original"]), "file": original.name})))
+        c.execute(
+            "INSERT INTO assets VALUES(?,?,?,?,?,?,?,?)",
+            (
+                asset,
+                ident,
+                str(target),
+                sha(original),
+                metadata["sample_rate"],
+                metadata["samples"],
+                1,
+                canonical({**json.loads(metadata["original"]), "file": original.name}),
+            ),
+        )
     return {"id": asset, "samples": metadata["samples"], "sample_rate": 16000}
 
 
@@ -291,7 +545,9 @@ async def chunk(ident: str, sequence: int, request: Request, u=Depends(user)):
         if not r:
             fail("recording_not_found", 404)
         access(c, r["meeting_id"], u, True)
-        prior = c.execute("SELECT * FROM chunks WHERE recording_id=? AND sequence=?", (ident, sequence)).fetchone()
+        prior = c.execute(
+            "SELECT * FROM chunks WHERE recording_id=? AND sequence=?", (ident, sequence)
+        ).fetchone()
         if prior and prior["hash"] != digest:
             fail("chunk_content_conflict", 409)
         if r["state"] != "recording":
@@ -299,7 +555,10 @@ async def chunk(ident: str, sequence: int, request: Request, u=Depends(user)):
         if not prior:
             path = config.DATA / "audio" / r["meeting_id"] / ident / f"{sequence}.pcm"
             atomic_write(path, content)
-            c.execute("INSERT INTO chunks VALUES(?,?,?,?,?)", (ident, sequence, digest, len(content)//2, str(path)))
+            c.execute(
+                "INSERT INTO chunks VALUES(?,?,?,?,?)",
+                (ident, sequence, digest, len(content) // 2, str(path)),
+            )
         saved = c.execute("SELECT SUM(samples) FROM chunks WHERE recording_id=?", (ident,)).fetchone()[0]
         return {"sequence": sequence, "hash": digest, "acknowledged_samples": saved, "sample_rate": r["rate"]}
 
@@ -330,8 +589,19 @@ def finish(ident: str, body: Finish, u=Depends(user)):
                 w.writeframes(Path(ch["path"]).read_bytes())
         target = path.with_name("source.wav")
         metadata = decode(path, target)
-        c.execute("INSERT INTO assets VALUES(?,?,?,?,?,?,?,?)", (ident, r["meeting_id"], str(target), sha(path),
-                  16000, metadata["samples"], 1, canonical({"rate": r["rate"], "gaps": body.gaps})))
+        c.execute(
+            "INSERT INTO assets VALUES(?,?,?,?,?,?,?,?)",
+            (
+                ident,
+                r["meeting_id"],
+                str(target),
+                sha(path),
+                16000,
+                metadata["samples"],
+                1,
+                canonical({"rate": r["rate"], "gaps": body.gaps}),
+            ),
+        )
         c.execute("UPDATE recordings SET state='sealed',gaps=? WHERE id=?", (canonical(body.gaps), ident))
         return {"id": ident, "samples": metadata["samples"], "sample_rate": 16000}
 
@@ -339,21 +609,59 @@ def finish(ident: str, body: Finish, u=Depends(user)):
 class Queue(Strict):
     asset_id: str
     device: Literal["cuda", "cpu"] = "cuda"
+    parakeet: bool = False
+    diarization: bool = False
 
 
 @app.post("/api/v1/meetings/{ident}/jobs")
 def queue(ident: str, body: Queue, u=Depends(user)):
+    from .capabilities import capabilities
+
+    available = capabilities()
+    for name in ("parakeet", "diarization"):
+        if getattr(body, name) and not available[name]["available"]:
+            fail(name + "_not_prepared", 409)
     with transaction() as c:
         access(c, ident, u, True)
-        if not c.execute("SELECT 1 FROM assets WHERE id=? AND meeting_id=?", (body.asset_id, ident)).fetchone():
+        if not c.execute(
+            "SELECT 1 FROM assets WHERE id=? AND meeting_id=?", (body.asset_id, ident)
+        ).fetchone():
             fail("asset_not_found", 404)
-        settings = canonical({"device": body.device, "prompt_version": "1", "contract": 1})
-        old = c.execute("SELECT * FROM jobs WHERE meeting_id=? AND asset_id=? AND config=?", (ident, body.asset_id, settings)).fetchone()
+        prompt_hash = hashlib.sha256((config.ROOT / "services/worker/stage.py").read_bytes()).hexdigest()
+        model_manifest = config.ROOT / "manifests/models.lock.json"
+        source_versions = [
+            tuple(r)
+            for r in c.execute(
+                "SELECT id,revision FROM segments WHERE asset_id=? ORDER BY start,id", (body.asset_id,)
+            )
+        ]
+        glossary = c.execute("SELECT version,body FROM settings WHERE key='glossary'").fetchone()
+        settings = canonical(
+            {
+                "device": body.device,
+                "parakeet": body.parakeet,
+                "diarization": body.diarization,
+                "prompt_hash": prompt_hash,
+                "contract": 1,
+                "source_versions": source_versions,
+                "glossary": json.loads(glossary["body"]) if glossary else [],
+                "glossary_version": glossary["version"] if glossary else 0,
+                "models_hash": hashlib.sha256(model_manifest.read_bytes()).hexdigest()
+                if model_manifest.exists()
+                else None,
+            }
+        )
+        old = c.execute(
+            "SELECT * FROM jobs WHERE meeting_id=? AND asset_id=? AND config=?",
+            (ident, body.asset_id, settings),
+        ).fetchone()
         if old:
             return dict(old)
         job = uid()
-        c.execute("INSERT INTO jobs(id,meeting_id,asset_id,state,stage,config,created) VALUES(?,?,?,'queued','queued',?,?)",
-                  (job, ident, body.asset_id, settings, time.time()))
+        c.execute(
+            "INSERT INTO jobs(id,meeting_id,asset_id,state,stage,config,created) VALUES(?,?,?,'queued','queued',?,?)",
+            (job, ident, body.asset_id, settings, time.time()),
+        )
         c.execute("UPDATE meetings SET status='queued' WHERE id=?", (ident,))
         return {"id": job, "state": "queued"}
 
@@ -374,12 +682,14 @@ def job_action(ident: str, action: Literal["cancel", "retry"], u=Depends(user)):
         return {"ok": True}
 
 
-@app.get("/api/v1/meetings/{ident}/transcript")
+@app.get("/api/v1/meetings/{ident}/transcript", response_model=list[SegmentView])
 def transcript(ident: str, q: str = "", offset: int = 0, limit: int = 100, u=Depends(user)):
     with transaction() as c:
         access(c, ident, u)
-        rows = c.execute("SELECT * FROM segments WHERE meeting_id=? AND instr(lower(text),lower(?))>0 ORDER BY start LIMIT ? OFFSET ?",
-                          (ident, q[:200], min(max(limit, 1), 200), max(offset, 0))).fetchall()
+        rows = c.execute(
+            "SELECT * FROM segments WHERE meeting_id=? AND instr(lower(text),lower(?))>0 ORDER BY start LIMIT ? OFFSET ?",
+            (ident, q[:200], min(max(limit, 1), 200), max(offset, 0)),
+        ).fetchall()
         return [dict(r) for r in rows]
 
 
@@ -387,6 +697,32 @@ class Edit(Strict):
     revision: int
     text: str = Field(min_length=1, max_length=10000)
     speaker: str | None = Field(default=None, max_length=200)
+
+
+@app.get("/api/v1/segments/{ident}", response_model=SegmentView)
+def get_segment(ident: str, u=Depends(user)):
+    with transaction() as c:
+        s = c.execute("SELECT * FROM segments WHERE id=?", (ident,)).fetchone()
+        if not s:
+            fail("segment_not_found", 404)
+        access(c, s["meeting_id"], u)
+        return dict(s)
+
+
+@app.get("/api/v1/segments/{ident}/history")
+def segment_history(ident: str, u=Depends(user)):
+    with transaction() as c:
+        s = c.execute("SELECT * FROM segments WHERE id=?", (ident,)).fetchone()
+        if not s:
+            fail("segment_not_found", 404)
+        access(c, s["meeting_id"], u)
+        return [
+            dict(r)
+            for r in c.execute(
+                "SELECT revision,text,actor,created FROM segment_history WHERE segment_id=? ORDER BY revision",
+                (ident,),
+            )
+        ]
 
 
 @app.post("/api/v1/segments/{ident}/revisions")
@@ -398,16 +734,30 @@ def edit_segment(ident: str, body: Edit, u=Depends(user)):
         access(c, s["meeting_id"], u, True)
         if s["revision"] != body.revision:
             fail("revision_conflict", 409)
-        c.execute("INSERT INTO segment_history VALUES(?,?,?,?,?,?)", (uid(), ident, s["revision"], s["text"], u["id"], time.time()))
-        c.execute("UPDATE segments SET revision=revision+1,text=?,speaker=? WHERE id=?", (body.text, body.speaker, ident))
-        c.execute("UPDATE candidates SET review='needs_review' WHERE id IN (SELECT candidate_id FROM evidence WHERE segment_id=?)", (ident,))
-        c.execute("UPDATE meetings SET revision=revision+1,status='awaiting_review' WHERE id=?", (s["meeting_id"],))
+        c.execute(
+            "INSERT INTO segment_history VALUES(?,?,?,?,?,?)",
+            (uid(), ident, s["revision"], s["text"], u["id"], time.time()),
+        )
+        c.execute(
+            "UPDATE segments SET revision=revision+1,text=?,speaker=? WHERE id=?",
+            (body.text, body.speaker, ident),
+        )
+        c.execute(
+            "UPDATE candidates SET review='needs_review' WHERE id IN (SELECT candidate_id FROM evidence WHERE segment_id=?)",
+            (ident,),
+        )
+        c.execute(
+            "UPDATE meetings SET revision=revision+1,status='awaiting_review' WHERE id=?", (s["meeting_id"],)
+        )
         audit(c, s["meeting_id"], u["id"], "transcript_corrected", {"segment": ident})
         return {"revision": s["revision"] + 1}
 
 
 def projections(c, ident):
-    rows = c.execute("SELECT e.* FROM accepted_events e JOIN candidates x ON x.id=e.candidate_id WHERE e.meeting_id=? AND x.review='accepted'", (ident,)).fetchall()
+    rows = c.execute(
+        "SELECT e.* FROM accepted_events e JOIN candidates x ON x.id=e.candidate_id WHERE e.meeting_id=? AND x.review='accepted'",
+        (ident,),
+    ).fetchall()
     return reduce_events([dict(r) for r in rows])
 
 
@@ -415,16 +765,117 @@ def projections(c, ident):
 def items(ident: str, u=Depends(user)):
     with transaction() as c:
         m = access(c, ident, u)
-        candidates = [dict(r) for r in c.execute("SELECT * FROM candidates WHERE meeting_id=? ORDER BY source_order", (ident,))]
+        candidates = [
+            dict(r)
+            for r in c.execute("SELECT * FROM candidates WHERE meeting_id=? ORDER BY source_order", (ident,))
+        ]
         for row in candidates:
             row["body"] = json.loads(row["body"])
-            row["evidence"] = [dict(e) for e in c.execute("SELECT * FROM evidence WHERE candidate_id=?", (row["id"],))]
+            row["evidence"] = [
+                dict(e) for e in c.execute("SELECT * FROM evidence WHERE candidate_id=?", (row["id"],))
+            ]
         return {"revision": m["revision"], "candidates": candidates, "items": projections(c, ident)}
 
 
 class Review(Strict):
     revision: int
     action: Literal["accepted", "excluded"]
+
+
+class Correction(Strict):
+    revision: int
+    text: str = Field(min_length=1, max_length=2000)
+    owner: str | None = Field(default=None, max_length=200)
+    due: date | None = None
+    reason: str = Field(min_length=3, max_length=1000)
+    category: Literal["action", "decision", "information"] | None = None
+    kind: Literal["propose", "confirm", "amend", "reject", "cancel", "reopen", "inform"] | None = None
+
+
+@app.post("/api/v1/items/{ident}/corrections")
+def correct_item(ident: str, body: Correction, u=Depends(user)):
+    with transaction() as c:
+        old = c.execute("SELECT * FROM candidates WHERE id=?", (ident,)).fetchone()
+        if not old:
+            fail("candidate_not_found", 404)
+        m = access(c, old["meeting_id"], u, True)
+        revision(c, m, body.revision)
+        e = json.loads(old["body"])
+        changed = [
+            f
+            for f in ("text", "owner", "due")
+            if e.get(f) != (str(body.due) if f == "due" and body.due else getattr(body, f))
+        ]
+        for field in ("category", "kind"):
+            if getattr(body, field) is not None and getattr(body, field) != e[field]:
+                changed.append(field)
+        if not changed:
+            fail("no_changes")
+        new = {
+            **e,
+            "text": body.text,
+            "owner": body.owner,
+            "due": str(body.due) if body.due else None,
+            "changed_fields": changed,
+            "evidence": [x for x in e["evidence"] if x["field"] not in changed],
+            "human_amendment": {
+                "actor": u["id"],
+                "reason": body.reason,
+                "fields": changed,
+                "created": time.time(),
+            },
+            "uncertainties": [x for x in e["uncertainties"] if not x.startswith("Date normalization")],
+        }
+        for field in ("category", "kind"):
+            value = getattr(body, field)
+            if value is not None and value != e[field]:
+                new[field] = value
+        new_id = uid()
+        retained = c.execute(
+            "SELECT e.*,s.revision AS current_revision FROM evidence e JOIN segments s ON s.id=e.segment_id WHERE e.candidate_id=?",
+            (ident,),
+        ).fetchall()
+        retained = [r for r in retained if r["field"] not in changed]
+        if any(r["revision"] != r["current_revision"] for r in retained):
+            fail("stale_evidence_requires_reextraction", 409)
+        c.execute("UPDATE candidates SET review='excluded' WHERE id=?", (ident,))
+        c.execute(
+            "INSERT INTO candidates(id,meeting_id,subject,body,review,source_order,actor,created) VALUES(?,?,?,?,'accepted',?,?,?)",
+            (new_id, m["id"], new["subject"], canonical(new), old["source_order"], u["id"], time.time()),
+        )
+        for ref in retained:
+            c.execute(
+                "INSERT INTO evidence SELECT ?,meeting_id,?,segment_id,revision,field,quote,start,end FROM evidence WHERE id=?",
+                (uid(), new_id, ref["id"]),
+            )
+        c.execute(
+            "INSERT INTO accepted_events VALUES(?,?,?,?,?,?,?)",
+            (uid(), m["id"], new_id, canonical(new), old["source_order"], u["id"], time.time()),
+        )
+        audit(
+            c,
+            m["id"],
+            u["id"],
+            "secretary_amendment",
+            {"previous": ident, "replacement": new_id, "fields": changed},
+        )
+        return {"id": new_id, "revision": m["revision"] + 1}
+
+
+@app.get("/api/v1/items/{ident}/history")
+def item_history(ident: str, u=Depends(user)):
+    with transaction() as c:
+        row = c.execute("SELECT * FROM candidates WHERE id=?", (ident,)).fetchone()
+        if not row:
+            fail("candidate_not_found", 404)
+        access(c, row["meeting_id"], u)
+        return [
+            dict(r)
+            for r in c.execute(
+                "SELECT * FROM candidates WHERE meeting_id=? AND subject=? ORDER BY created",
+                (row["meeting_id"], row["subject"]),
+            )
+        ]
 
 
 @app.post("/api/v1/review-issues/{ident}/resolve")
@@ -436,13 +887,19 @@ def review(ident: str, body: Review, u=Depends(user)):
         m = access(c, event["meeting_id"], u, True)
         revision(c, m, body.revision)
         if body.action == "accepted":
-            stale = c.execute("SELECT 1 FROM evidence e JOIN segments s ON s.id=e.segment_id WHERE e.candidate_id=? AND e.revision<>s.revision", (ident,)).fetchone()
+            stale = c.execute(
+                "SELECT 1 FROM evidence e JOIN segments s ON s.id=e.segment_id WHERE e.candidate_id=? AND e.revision<>s.revision",
+                (ident,),
+            ).fetchone()
             if stale:
                 fail("stale_evidence_requires_reextraction", 409)
             e = json.loads(event["body"])
             if any("critical" in issue.lower() for issue in e["uncertainties"]) and e.get("value"):
                 fail("critical_value_unresolved", 409)
-            c.execute("INSERT INTO accepted_events VALUES(?,?,?,?,?,?,?)", (uid(), m["id"], ident, event["body"], event["source_order"], u["id"], time.time()))
+            c.execute(
+                "INSERT INTO accepted_events VALUES(?,?,?,?,?,?,?)",
+                (uid(), m["id"], ident, event["body"], event["source_order"], u["id"], time.time()),
+            )
         c.execute("UPDATE candidates SET review=?,actor=? WHERE id=?", (body.action, u["id"], ident))
         audit(c, m["id"], u["id"], "review_" + body.action, {"candidate": ident})
         return {"revision": m["revision"] + 1}
@@ -461,7 +918,10 @@ def audio(ident: str, u=Depends(user)):
 @app.get("/api/v1/evidence/{ident}/audio")
 def evidence_audio(ident: str, u=Depends(user)):
     with transaction() as c:
-        e = c.execute("SELECT e.*,s.asset_id FROM evidence e JOIN segments s ON s.id=e.segment_id WHERE e.id=?", (ident,)).fetchone()
+        e = c.execute(
+            "SELECT e.*,s.asset_id FROM evidence e JOIN segments s ON s.id=e.segment_id WHERE e.id=?",
+            (ident,),
+        ).fetchone()
         if not e:
             fail("evidence_not_found", 404)
         access(c, e["meeting_id"], u)
@@ -477,10 +937,18 @@ async def stream(ident: str, request: Request, u=Depends(user)):
     async def events():
         while not await request.is_disconnected():
             with transaction() as c:
+                if not c.execute(
+                    "SELECT 1 FROM sessions WHERE id=? AND expires>?",
+                    (request.cookies.get("mom_session", ""), time.time()),
+                ).fetchone():
+                    return
                 access(c, ident, u)
-                state = [dict(r) for r in c.execute("SELECT id,state,stage FROM jobs WHERE meeting_id=?", (ident,))]
+                state = [
+                    dict(r) for r in c.execute("SELECT id,state,stage FROM jobs WHERE meeting_id=?", (ident,))
+                ]
             yield "data: " + canonical(state) + "\n\n"
             await asyncio.sleep(2)
+
     return StreamingResponse(events(), media_type="text/event-stream")
 
 
@@ -489,7 +957,9 @@ def actions(u=Depends(user)):
     with transaction() as c:
         result = []
         for m in c.execute("SELECT meeting_id FROM members WHERE user_id=?", (u["id"],)).fetchall():
-            result.extend({**i, "meeting_id": m[0]} for i in projections(c, m[0]) if i["category"] == "action")
+            result.extend(
+                {**i, "meeting_id": m[0]} for i in projections(c, m[0]) if i["category"] == "action"
+            )
         return result
 
 
@@ -500,16 +970,24 @@ def health():
 
 @app.get("/api/v1/system/proof")
 def proof(u=Depends(user)):
-    return {"inference": "local only", "network_observation": "Not measured",
-            "target_laptop": "NOT RUN — TARGET MACHINE REQUIRED",
-            "models": {n: (config.MODELS / n).exists() for n in ("whisper", "qwen")},
-            "translation_review": "Romanian and Russian need native review"}
+    from .capabilities import capabilities
+
+    return {
+        "inference": "local only",
+        "network_observation": "Not measured",
+        "target_laptop": "NOT RUN — TARGET MACHINE REQUIRED",
+        "models": {n: (config.MODELS / n).exists() for n in ("whisper", "qwen")},
+        "translation_review": "Romanian and Russian need native review",
+        "capabilities": capabilities(),
+    }
 
 
 from .minutes import router as minutes_router  # noqa: E402
 
 app.include_router(minutes_router)
+from .settings import router as settings_router  # noqa: E402
+
+app.include_router(settings_router)
 web = config.ROOT / "apps/web/dist"
 if web.exists():
     app.mount("/", StaticFiles(directory=web, html=True), name="web")
-

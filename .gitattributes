@@ -1,0 +1,2 @@
+* text=auto
+manifests/licenses/** -text -whitespace

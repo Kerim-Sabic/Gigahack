@@ -8,4 +8,5 @@ export async function api<T = any>(path: string, method = 'GET', body?: unknown)
   if (!r.ok) throw new Error(z.object({code: z.string().optional(), detail: z.unknown().optional()}).parse(json).code || 'Request failed');
   return json;
 }
-export type Meeting = {id: string; title: string; date: string; language: string; timezone: string; classification: string; revision: number; status: string; assets?: any[]; jobs?: any[]; participants?: any[]};
+import type { components } from './generated/api';
+export type Meeting = components['schemas']['MeetingView'] & Partial<Pick<components['schemas']['MeetingDetail'], 'assets'|'jobs'|'participants'|'recordings'>>;

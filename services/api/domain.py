@@ -1,4 +1,5 @@
 """Evidence validation and source-ordered, field-preserving event reduction."""
+
 import hashlib
 import json
 from typing import Literal
@@ -36,6 +37,25 @@ class Extraction(Strict):
     events: list[Candidate] = Field(max_length=12)
 
 
+def withhold_uncited_fields(candidate):
+    """Retain reviewable text while refusing optional values without field support.
+
+    This does not repair quotes or invent citations. validate_evidence must still run.
+    """
+    for field in ("owner", "due", "condition", "value"):
+        value = candidate.raw_due if field == "due" else getattr(candidate, field)
+        refs = [e for e in candidate.evidence if e.field == field]
+        supported = bool(refs)
+        if field in ("owner", "value") and value is not None:
+            supported = any(value.casefold() in e.quote.casefold() for e in refs)
+        if value is not None and not supported:
+            setattr(candidate, field, None)
+            if field == "due":
+                candidate.raw_due = None
+            candidate.uncertainties.append(f"{field} withheld: field-specific source support missing")
+    return candidate
+
+
 def validate_evidence(candidate, segments):
     refs = []
     for e in candidate.evidence:
@@ -48,14 +68,27 @@ def validate_evidence(candidate, segments):
             raise ValueError("quote_missing_or_ambiguous")
         refs.append({**e.model_dump(), "start": start, "end": start + len(e.quote)})
     fields = {e.field for e in candidate.evidence}
+    if "text" not in fields:
+        raise ValueError("missing_text_evidence")
     for field in ("owner", "due", "condition", "value"):
         if getattr(candidate, field) is not None and field not in fields:
             raise ValueError(f"missing_{field}_evidence")
+    if candidate.raw_due is not None and "due" not in fields:
+        raise ValueError("missing_raw_due_evidence")
+    for field in ("owner", "value"):
+        value = getattr(candidate, field)
+        if value is not None and not any(
+            value.casefold() in e.quote.casefold() for e in candidate.evidence if e.field == field
+        ):
+            raise ValueError(f"unsupported_{field}_value")
     return refs
 
 
 def event_key(event):
-    content = {k: event[k] for k in ("subject", "category", "kind", "text", "owner", "due", "condition", "value", "evidence")}
+    content = {
+        k: event[k]
+        for k in ("subject", "category", "kind", "text", "owner", "due", "condition", "value", "evidence")
+    }
     return hashlib.sha256(json.dumps(content, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
 
 
@@ -70,11 +103,28 @@ def reduce_events(events):
             continue
         seen.add(key)
         subject = e["subject"]
-        item = subjects.setdefault(subject, {"subject": subject, "category": e["category"],
-            "status": "proposed", "text": e["text"], "owner": None, "due": None,
-            "condition": None, "value": None, "history": [], "pending": [], "evidence": []})
+        item = subjects.setdefault(
+            subject,
+            {
+                "subject": subject,
+                "category": e["category"],
+                "status": "proposed",
+                "text": e["text"],
+                "owner": None,
+                "due": None,
+                "condition": None,
+                "value": None,
+                "history": [],
+                "pending": [],
+                "evidence": [],
+            },
+        )
         item["history"].append({**e, "event_id": row["id"]})
         kind = e["kind"]
+        if e.get("human_amendment"):
+            item["category"] = e["category"]
+        if kind == "inform" and item["status"] in ("confirmed", "cancelled", "rejected"):
+            continue
         if kind == "propose":
             item["pending"].append(e)
             if item["status"] != "proposed":
@@ -90,15 +140,24 @@ def reduce_events(events):
             item["status"] = "cancelled"
             continue
         if kind == "amend":
+            updated_fields = set(e["changed_fields"])
             for f in e["changed_fields"]:
                 item[f] = e[f]
         else:
+            updated_fields = set()
             for f in ("text", "owner", "due", "condition", "value"):
                 if e[f] is not None or f == "text":
                     item[f] = e[f]
-        item["evidence"] = e["evidence"]
+                    updated_fields.add(f)
+        item["category"] = e["category"]
+        # A partial amendment must keep the source of every unchanged projected field.
+        # In particular, changing an owner cannot erase the approved date's citation.
+        updated_fields.add("kind")
+        item["evidence"] = [r for r in item["evidence"] if r["field"] not in updated_fields] + [
+            r for r in e["evidence"] if r["field"] in updated_fields
+        ]
         item["uncertainties"] = e["uncertainties"]
-        if kind in ("confirm", "reopen"):
+        if kind in ("confirm", "reopen", "amend"):
             item["status"] = "confirmed"
         elif kind == "inform":
             item["status"] = "information"

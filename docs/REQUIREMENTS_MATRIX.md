@@ -1,45 +1,45 @@
 # Requirements matrix
 
-Environment: Windows development host; target RTX 3070 Ti qualification not run.
+Only named successful checks justify VERIFIED. Development host is not the 8 GB target laptop.
 
-| ID | Requirement | Status | Implementation | Evidence / prerequisite |
+| ID | Requirement | Status | Implementation | Actual evidence / prerequisite |
 |---|---|---|---|---|
-| R01 | Clean clone → documented preparation → app starts through one implemented command | NOT STARTED | — | Not run |
-| R02 | Actual GPU/RAM/disk/dependency/model doctor with actionable failures | NOT STARTED | — | Not run |
-| R03 | Reproducible model preparation, immutable revisions/checksums, license manifest; offline startup | NOT STARTED | — | Not run |
-| R04 | Local first-run account; authentication, logout, role and per-meeting authorization | NOT STARTED | — | Not run |
-| R05 | Persisted meeting metadata, participants, classification, timezone and output language | NOT STARTED | — | Not run |
-| R06 | Supported-file upload with bounded decoding, type/duration/size checks and durable original | NOT STARTED | — | Not run |
-| R07 | Real microphone recording, acknowledged chunks, pause/stop, visible gaps and recovery | NOT STARTED | — | Not run |
-| R08 | Durable job queue, leases, restart recovery, cancellation and idempotent retry | NOT STARTED | — | Not run |
-| R09 | Single GPU admission, subprocess cleanup, bounded memory and truthful fallback behavior | NOT STARTED | — | Not run |
-| R10 | Real local multilingual ASR with source-relative times and preserved raw output | NOT STARTED | — | Not run |
-| R11 | Transcript search, word/segment playback, pagination and revision history | NOT STARTED | — | Not run |
-| R12 | Speaker labeling/manual roster mapping; real optional diarization with capability status | NOT STARTED | — | Not run |
-| R13 | Real optional second-ASR adapter; disagreement evidence; no silent transcript fusion | NOT STARTED | — | Not run |
-| R14 | Real 4B local LLM extraction with token budgets, JSON constraints and parse validation | NOT STARTED | — | Not run |
-| R15 | Decision/action separation; proposal, confirmation, amendment, rejection, cancellation/reopening | NOT STARTED | — | Not run |
-| R16 | Field-level source references with meeting/revision/quote/offset integrity | NOT STARTED | — | Not run |
-| R17 | Unknown owner/date, ambiguous numbers, conditional actions and overlap remain explicit | NOT STARTED | — | Not run |
-| R18 | Subject reconciliation and semantic duplicate handling across overlapping windows | NOT STARTED | — | Not run |
-| R19 | Review queue with accept/correct/exclude, human provenance and conflict detection | NOT STARTED | — | Not run |
-| R20 | Transcript edits invalidate dependencies and stale approvals without erasing history | NOT STARTED | — | Not run |
-| R21 | Complete review workspace with field-specific evidence and amendment timeline | NOT STARTED | — | Not run |
-| R22 | Deterministic professional minutes, real PDF and structured JSON exports | NOT STARTED | — | Not run |
-| R23 | Immutable snapshots; atomic approval revision check; no automatic publication | NOT STARTED | — | Not run |
-| R24 | Explicit allowed recipients; separate send command; transactional outbox and honest SMTP state | NOT STARTED | — | Not run |
-| R25 | Real local Mailpit receipt through the UI flow; configurable internal SMTP adapter | NOT STARTED | — | Not run |
-| R26 | English/Romanian/Russian UI localization, source-language preservation and font coverage | NOT STARTED | — | Not run |
-| R27 | Meeting/action views, templates/settings, useful empty/loading/error states | NOT STARTED | — | Not run |
-| R28 | Keyboard, focus, zoom and responsive-layout verification on target sizes | NOT STARTED | — | Not run |
-| R29 | Authorized media/SSE/export/search, CSRF/Origin defenses, safe uploads and rendering | NOT STARTED | — | Not run |
-| R30 | Runtime external calls prevented by scoped policy; offline evidence status truthful | NOT STARTED | — | Not run |
-| R31 | Prepared offline package, disconnected startup/run, scoped networking test/runbook | NOT STARTED | — | Not run |
-| R32 | Consistent backup and demonstrated restore; documented retention/deletion behavior | NOT STARTED | — | Not run |
-| R33 | Fast CI plus separate real-inference and target-hardware qualification commands | NOT STARTED | — | Not run |
-| R34 | Thirty adversarial cases encoded with exact expected results; outcomes not fabricated | NOT STARTED | — | Not run |
-| R35 | Fault tests: disk/mic loss, worker crash, malformed model output, stale edit, SMTP timeout | NOT STARTED | — | Not run |
-| R36 | Synthetic demo with real processing and evidence; no hidden canned results | NOT STARTED | — | Not run |
-| R37 | Honest stage timing, peak-memory and accuracy reports tied to exact model/config/input | NOT STARTED | — | Not run |
-| R38 | Repository notes, lockfiles, setup/recovery/operator docs match the actual implementation | NOT STARTED | — | Not run |
-| R39 | Coherent commits and verified remote push; otherwise exact local commit and access blocker | NOT STARTED | — | Not run |
+| R01 | Clean clone → documented preparation → app starts through one implemented command | IN PROGRESS | scripts/mom.py; README.md | Windows start/browser verified; clean-clone and Linux full rehearsal pending |
+| R02 | Actual GPU/RAM/disk/dependency/model doctor with actionable failures | IN PROGRESS | scripts/mom.py::doctor | Actual host inventory executed; full actionable preflight pending |
+| R03 | Reproducible model preparation, immutable revisions/checksums, license manifest; offline startup | IMPLEMENTED / UNVERIFIED | scripts/prepare_models.py; manifests/models.lock.json | Pinned models downloaded; hashes recorded; cold disconnected startup pending |
+| R04 | Local first-run account; authentication, logout, role and per-meeting authorization | VERIFIED | services/api/main.py; tests/test_api.py | Windows API tests: local setup/session/logout; explicit membership including admin denial |
+| R05 | Persisted meeting metadata, participants, classification, timezone and output language | IMPLEMENTED / UNVERIFIED | services/api/main.py; services/api/db.py | Meeting creation/persistence browser tested; metadata edit coverage pending |
+| R06 | Supported-file upload with bounded decoding, type/duration/size checks and durable original | IMPLEMENTED / UNVERIFIED | services/api/audio.py; services/api/main.py | Real WAV upload/FFmpeg decode verified; all formats/bounds not yet exercised |
+| R07 | Real microphone recording, acknowledged chunks, pause/stop, visible gaps and recovery | IN PROGRESS | apps/web/public/pcm-worklet.js; features/Recorder.tsx | 305-second synthetic Chromium microphone and browser-loss recovery passed; physical microphone/target restart pending |
+| R08 | Durable job queue, leases, restart recovery, cancellation and idempotent retry | IN PROGRESS | services/worker/supervisor.py | Durable jobs exercised in real browser flow; lease recovery and actual child cancellation tests pass; full crash rehearsal pending |
+| R09 | Single GPU admission, subprocess cleanup, bounded memory and truthful fallback behavior | IN PROGRESS | services/worker/supervisor.py; stage.py | Sequential real stages exercised; OOM retry mechanism and child cancellation tests pass; real GPU OOM and orphan rehearsal pending |
+| R10 | Real local multilingual ASR with source-relative times and preserved raw output | IMPLEMENTED / UNVERIFIED | services/worker/stage.py::whisper | Real English synthetic CUDA run passed; RO/RU/code-switch audio qualification pending |
+| R11 | Transcript search, word/segment playback, pagination and revision history | IN PROGRESS | main.py transcript/revisions; features/Workspace.tsx | Search/API pagination and history implemented; UI previous/next pages implemented; long-transcript browser check pending |
+| R12 | Speaker labeling/manual roster mapping; real optional diarization with capability status | IN PROGRESS | capabilities.py; worker/optional.py; stage.py | Manual speaker edits implemented; pyannote gated assets/dependencies unprepared |
+| R13 | Real optional second-ASR adapter; disagreement evidence; no silent transcript fusion | IN PROGRESS | capabilities.py; worker/optional.py; stage.py | Real NeMo adapter/selective clip path authored; optional environment and model unqualified |
+| R14 | Real 4B local LLM extraction with token budgets, JSON constraints and parse validation | IMPLEMENTED / UNVERIFIED | worker/stage.py; domain.py | Real Qwen GPU JSON extraction, rendered token budget, validation/retry executed; broad semantic gate fails |
+| R15 | Decision/action separation; proposal, confirmation, amendment, rejection, cancellation/reopening | IN PROGRESS | domain.py; tests/test_domain.py | Reducer invariant tests pass; actual model speech-act errors remain |
+| R16 | Field-level source references with meeting/revision/quote/offset integrity | VERIFIED | domain.py::validate_evidence; db.py | Windows Unicode/revision/ambiguous-quote tests plus real field citations |
+| R17 | Unknown owner/date, ambiguous numbers, conditional actions and overlap remain explicit | IN PROGRESS | dates.py; domain.py; main.py | Conservative dates and nulls tested; ambiguity/overlap extraction incomplete |
+| R18 | Subject reconciliation and semantic duplicate handling across overlapping windows | IN PROGRESS | domain.py::event_key; worker/stage.py | Exact semantic-key dedup and source replay; long-window topic reconciliation pending |
+| R19 | Review queue with accept/correct/exclude, human provenance and conflict detection | VERIFIED | main.py review/corrections; tests/test_api.py | Windows accept/exclude/revision conflicts and human amendment provenance tests |
+| R20 | Transcript edits invalidate dependencies and stale approvals without erasing history | IMPLEMENTED / UNVERIFIED | main.py revisions/jobs; worker/supervisor.py | Stale approval/invalidation tests pass; updated re-extraction path not yet browser-tested |
+| R21 | Complete review workspace with field-specific evidence and amendment timeline | IN PROGRESS | features/Workspace.tsx | Real field evidence and review browser flow; richer history/conflict presentation pending |
+| R22 | Deterministic professional minutes, real PDF and structured JSON exports | VERIFIED | minutes.py; scripts/browser_e2e.py | Real deterministic JSON/HTML/PDF generated and PDF signature checked in browser workflow |
+| R23 | Immutable snapshots; atomic approval revision check; no automatic publication | VERIFIED | minutes.py; tests/test_api.py | Atomic revision checks and retained immutable snapshot after correction tested |
+| R24 | Explicit allowed recipients; separate send command; transactional outbox and honest SMTP state | IMPLEMENTED / UNVERIFIED | minutes.py; settings.py; supervisor.py | Outbox/group version/idempotency/uncertain SMTP tests; new recipient settings tests pending |
+| R25 | Real local Mailpit receipt through the UI flow; configurable internal SMTP adapter | VERIFIED | supervisor.py::deliver_one; browser_e2e.py | Real local SMTP accepted and Mailpit receipt observed via approved-send UI |
+| R26 | English/Romanian/Russian UI localization, source-language preservation and font coverage | IN PROGRESS | src/i18n.ts; main.tsx; minutes.py | Language switch/persistence and bundled fonts; secondary strings/native review incomplete |
+| R27 | Meeting/action views, templates/settings, useful empty/loading/error states | IN PROGRESS | features/*; settings.py | Meeting/actions/review views active; full settings/templates UX pending |
+| R28 | Keyboard, focus, zoom and responsive-layout verification on target sizes | IN PROGRESS | scripts/browser_e2e.py; style.css | 1366/1920 screenshots, 683px overflow, keyboard focus pass; zoom/a11y audit pending |
+| R29 | Authorized media/SSE/export/search, CSRF/Origin defenses, safe uploads and rendering | IN PROGRESS | main.py; audio.py; minutes.py | Membership/CSRF/Origin tested; additional upload/render/SSE security fault checks pending |
+| R30 | Runtime external calls prevented by scoped policy; offline evidence status truthful | IN PROGRESS | worker/netns.py; scripts/offline_probe.py | WSL ephemeral namespace IPv4/IPv6 returned ENETUNREACH; complete runtime boundary unverified |
+| R31 | Prepared offline package, disconnected startup/run, scoped networking test/runbook | IN PROGRESS | scripts/mom.py; OFFLINE_RUNBOOK.md | Local assets prepared; Windows kit no-index installation and fresh-account real workflow passed; disconnected workflow pending |
+| R32 | Consistent backup and demonstrated restore; documented retention/deletion behavior | IN PROGRESS | scripts/mom.py backup/restore; tests/test_recovery.py | Stopped backup/restore test passed; confirmed deletion/tombstone and migration tests pass; automated retention scheduling absent |
+| R33 | Fast CI plus separate real-inference and target-hardware qualification commands | IN PROGRESS | .github/workflows/ci.yml; scripts/qualify.py | CLI exists; unit/build runs local; GPU qualification and fixture browser CI pending |
+| R34 | Thirty adversarial cases encoded with exact expected results; outcomes not fabricated | IN PROGRESS | tests/fixtures/adversarial.json; scripts/evaluate_text.py | All 30 actual text inputs evaluated; 28 structural outputs, 2 validation failures; semantic failures remain |
+| R35 | Fault tests: disk/mic loss, worker crash, malformed model output, stale edit, SMTP timeout | IN PROGRESS | tests/test_recovery.py; test_api.py | SMTP timeout, stale edits, chunk conflict tests; disk-write failure, worker cancellation and OOM retry mechanism tests pass; physical mic loss pending |
+| R36 | Synthetic demo with real processing and evidence; no hidden canned results | VERIFIED | scripts/browser_e2e.py; docs/DEMO.md | Real synthetic English audio through actual models to Mailpit; no canned production answers |
+| R37 | Honest stage timing, peak-memory and accuracy reports tied to exact model/config/input | IN PROGRESS | supervisor.py receipts; scripts/qualify.py | Stage elapsed/RAM receipts; GPU/host sampler exercised; total-host RAM budget gate failed; accuracy not measured |
+| R38 | Repository notes, lockfiles, setup/recovery/operator docs match the actual implementation | IN PROGRESS | docs/; manifests/; requirements*.txt | Notes/locks/license notices present; synchronize with remaining implementation |
+| R39 | Coherent commits and verified remote push; otherwise exact local commit and access blocker | VERIFIED | Git main | f1998b75e1f88fa12404228da52cee49ea18bbc4 pushed and remote hash verified; later changes pending next milestone |

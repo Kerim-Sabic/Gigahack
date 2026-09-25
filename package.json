@@ -1,0 +1,10 @@
+{
+  "name": "secure-mom-verification",
+  "private": true,
+  "scripts": {
+    "test": "npm test --prefix apps/web"
+  },
+  "devDependencies": {
+    "agent-browser": "^0.27.0"
+  }
+}

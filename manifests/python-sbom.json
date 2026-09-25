@@ -1,0 +1,789 @@
+[
+  {
+    "name": "alembic",
+    "version": "1.20.0",
+    "license": "MIT",
+    "home": null,
+    "notices": [
+      "manifests/licenses/alembic-alembic-1.20.0.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "annotated-doc",
+    "version": "0.0.5",
+    "license": "MIT",
+    "home": null,
+    "notices": [
+      "manifests/licenses/annotated-doc-annotated_doc-0.0.5.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "annotated-types",
+    "version": "0.8.0",
+    "license": "MIT",
+    "home": null,
+    "notices": [
+      "manifests/licenses/annotated-types-annotated_types-0.8.0.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "anyio",
+    "version": "4.15.1",
+    "license": "MIT",
+    "home": null,
+    "notices": [
+      "manifests/licenses/anyio-anyio-4.15.1.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "argon2-cffi",
+    "version": "25.1.0",
+    "license": "MIT",
+    "home": null,
+    "notices": [
+      "manifests/licenses/argon2-cffi-argon2_cffi-25.1.0.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "argon2-cffi-bindings",
+    "version": "26.1.0",
+    "license": "MIT",
+    "home": null,
+    "notices": [
+      "manifests/licenses/argon2-cffi-bindings-argon2_cffi_bindings-26.1.0.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "av",
+    "version": "18.1.0",
+    "license": "BSD-3-Clause",
+    "home": null,
+    "notices": [
+      "manifests/licenses/av-av-18.1.0.dist-info_licenses_AUTHORS.py",
+      "manifests/licenses/av-av-18.1.0.dist-info_licenses_AUTHORS.rst",
+      "manifests/licenses/av-av-18.1.0.dist-info_licenses_LICENSE.txt"
+    ]
+  },
+  {
+    "name": "boolean.py",
+    "version": "5.0",
+    "license": "BSD-2-Clause",
+    "home": "https://github.com/bastikr/boolean.py",
+    "notices": [
+      "manifests/licenses/boolean.py-boolean_py-5.0.dist-info_licenses_CHANGELOG.rst",
+      "manifests/licenses/boolean.py-boolean_py-5.0.dist-info_licenses_LICENSE.txt",
+      "manifests/licenses/boolean.py-boolean_py-5.0.dist-info_licenses_README.rst"
+    ]
+  },
+  {
+    "name": "CacheControl",
+    "version": "0.14.4",
+    "license": "Apache-2.0",
+    "home": null,
+    "notices": [
+      "manifests/licenses/CacheControl-cachecontrol-0.14.4.dist-info_licenses_LICENSE.txt"
+    ]
+  },
+  {
+    "name": "certifi",
+    "version": "2026.7.22",
+    "license": "MPL-2.0",
+    "home": "https://github.com/certifi/python-certifi",
+    "notices": [
+      "manifests/licenses/certifi-certifi-2026.7.22.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "cffi",
+    "version": "2.1.1",
+    "license": "MIT-0",
+    "home": null,
+    "notices": [
+      "manifests/licenses/cffi-cffi-2.1.1.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "charset-normalizer",
+    "version": "3.5.1",
+    "license": "MIT",
+    "home": null,
+    "notices": [
+      "manifests/licenses/charset-normalizer-charset_normalizer-3.5.1.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "click",
+    "version": "8.5.0",
+    "license": "BSD-3-Clause",
+    "home": null,
+    "notices": [
+      "manifests/licenses/click-click-8.5.0.dist-info_licenses_LICENSE.txt"
+    ]
+  },
+  {
+    "name": "colorama",
+    "version": "0.4.6",
+    "license": null,
+    "home": null,
+    "notices": [
+      "manifests/licenses/colorama-colorama-0.4.6.dist-info_licenses_LICENSE.txt"
+    ]
+  },
+  {
+    "name": "ctranslate2",
+    "version": "4.8.2",
+    "license": "MIT",
+    "home": "https://opennmt.net",
+    "notices": []
+  },
+  {
+    "name": "cyclonedx-python-lib",
+    "version": "11.12.0",
+    "license": "Apache-2.0",
+    "home": null,
+    "notices": [
+      "manifests/licenses/cyclonedx-python-lib-cyclonedx_python_lib-11.12.0.dist-info_licenses_LICENSE",
+      "manifests/licenses/cyclonedx-python-lib-cyclonedx_python_lib-11.12.0.dist-info_licenses_NOTICE"
+    ]
+  },
+  {
+    "name": "defusedxml",
+    "version": "0.7.1",
+    "license": "PSFL",
+    "home": "https://github.com/tiran/defusedxml",
+    "notices": [
+      "manifests/licenses/defusedxml-defusedxml-0.7.1.dist-info_LICENSE"
+    ]
+  },
+  {
+    "name": "fastapi",
+    "version": "0.141.1",
+    "license": "MIT",
+    "home": null,
+    "notices": [
+      "manifests/licenses/fastapi-fastapi-0.141.1.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "faster-whisper",
+    "version": "1.2.1",
+    "license": "MIT",
+    "home": "https://github.com/SYSTRAN/faster-whisper",
+    "notices": [
+      "manifests/licenses/faster-whisper-faster_whisper-1.2.1.dist-info_LICENSE"
+    ]
+  },
+  {
+    "name": "filelock",
+    "version": "4.0.3",
+    "license": "MIT",
+    "home": null,
+    "notices": [
+      "manifests/licenses/filelock-filelock-4.0.3.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "flatbuffers",
+    "version": "25.12.19",
+    "license": "Apache 2.0",
+    "home": "https://google.github.io/flatbuffers/",
+    "notices": []
+  },
+  {
+    "name": "fsspec",
+    "version": "2026.9.0",
+    "license": "BSD-3-Clause",
+    "home": null,
+    "notices": [
+      "manifests/licenses/fsspec-fsspec-2026.9.0.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "greenlet",
+    "version": "3.5.6",
+    "license": "MIT AND PSF-2.0",
+    "home": null,
+    "notices": [
+      "manifests/licenses/greenlet-greenlet-3.5.6.dist-info_licenses_LICENSE",
+      "manifests/licenses/greenlet-greenlet-3.5.6.dist-info_licenses_LICENSE.PSF"
+    ]
+  },
+  {
+    "name": "h11",
+    "version": "0.16.0",
+    "license": "MIT",
+    "home": "https://github.com/python-hyper/h11",
+    "notices": [
+      "manifests/licenses/h11-h11-0.16.0.dist-info_licenses_LICENSE.txt"
+    ]
+  },
+  {
+    "name": "hf-xet",
+    "version": "1.6.0",
+    "license": "Apache-2.0",
+    "home": null,
+    "notices": [
+      "manifests/licenses/hf-xet-hf_xet-1.6.0.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "httpcore",
+    "version": "1.0.9",
+    "license": "BSD-3-Clause",
+    "home": null,
+    "notices": [
+      "manifests/licenses/httpcore-httpcore-1.0.9.dist-info_licenses_LICENSE.md"
+    ]
+  },
+  {
+    "name": "httpx",
+    "version": "0.28.1",
+    "license": "BSD-3-Clause",
+    "home": null,
+    "notices": [
+      "manifests/licenses/httpx-httpx-0.28.1.dist-info_licenses_LICENSE.md"
+    ]
+  },
+  {
+    "name": "huggingface_hub",
+    "version": "1.33.0",
+    "license": "Apache-2.0",
+    "home": "https://github.com/huggingface/huggingface_hub",
+    "notices": [
+      "manifests/licenses/huggingface_hub-huggingface_hub-1.33.0.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "idna",
+    "version": "3.20",
+    "license": "BSD-3-Clause",
+    "home": null,
+    "notices": [
+      "manifests/licenses/idna-idna-3.20.dist-info_licenses_LICENSE.md"
+    ]
+  },
+  {
+    "name": "iniconfig",
+    "version": "2.3.0",
+    "license": "MIT",
+    "home": null,
+    "notices": [
+      "manifests/licenses/iniconfig-iniconfig-2.3.0.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "Jinja2",
+    "version": "3.1.6",
+    "license": null,
+    "home": null,
+    "notices": [
+      "manifests/licenses/Jinja2-jinja2-3.1.6.dist-info_licenses_LICENSE.txt"
+    ]
+  },
+  {
+    "name": "license-expression",
+    "version": "30.4.4",
+    "license": "Apache-2.0",
+    "home": "https://github.com/aboutcode-org/license-expression",
+    "notices": [
+      "manifests/licenses/license-expression-license_expression-30.4.4.dist-info_licenses_AUTHORS.rst",
+      "manifests/licenses/license-expression-license_expression-30.4.4.dist-info_licenses_CHANGELOG.rst",
+      "manifests/licenses/license-expression-license_expression-30.4.4.dist-info_licenses_CODE_OF_CONDUCT.rst",
+      "manifests/licenses/license-expression-license_expression-30.4.4.dist-info_licenses_NOTICE",
+      "manifests/licenses/license-expression-license_expression-30.4.4.dist-info_licenses_README.rst",
+      "manifests/licenses/license-expression-license_expression-30.4.4.dist-info_licenses_apache-2.0.LICENSE"
+    ]
+  },
+  {
+    "name": "Mako",
+    "version": "1.4.3",
+    "license": "MIT",
+    "home": null,
+    "notices": [
+      "manifests/licenses/Mako-mako-1.4.3.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "markdown-it-py",
+    "version": "4.2.0",
+    "license": null,
+    "home": null,
+    "notices": [
+      "manifests/licenses/markdown-it-py-markdown_it_py-4.2.0.dist-info_licenses_LICENSE",
+      "manifests/licenses/markdown-it-py-markdown_it_py-4.2.0.dist-info_licenses_LICENSE.markdown-it"
+    ]
+  },
+  {
+    "name": "MarkupSafe",
+    "version": "3.0.3",
+    "license": "BSD-3-Clause",
+    "home": null,
+    "notices": [
+      "manifests/licenses/MarkupSafe-markupsafe-3.0.3.dist-info_licenses_LICENSE.txt"
+    ]
+  },
+  {
+    "name": "mdurl",
+    "version": "0.1.2",
+    "license": null,
+    "home": null,
+    "notices": [
+      "manifests/licenses/mdurl-mdurl-0.1.2.dist-info_LICENSE"
+    ]
+  },
+  {
+    "name": "msgpack",
+    "version": "1.2.2",
+    "license": "Apache-2.0",
+    "home": null,
+    "notices": [
+      "manifests/licenses/msgpack-msgpack-1.2.2.dist-info_licenses_COPYING"
+    ]
+  },
+  {
+    "name": "numpy",
+    "version": "2.5.3",
+    "license": "BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0",
+    "home": null,
+    "notices": [
+      "manifests/licenses/numpy-numpy-2.5.3.dist-info_licenses_LICENSE.txt",
+      "manifests/licenses/numpy-numpy-2.5.3.dist-info_licenses_numpy__core_include_numpy_libdivide_LICENSE.txt",
+      "manifests/licenses/numpy-numpy-2.5.3.dist-info_licenses_numpy__core_src_common_pythoncapi-compat_COPYING",
+      "manifests/licenses/numpy-numpy-2.5.3.dist-info_licenses_numpy__core_src_highway_LICENSE",
+      "manifests/licenses/numpy-numpy-2.5.3.dist-info_licenses_numpy__core_src_multiarray_dragon4_LICENSE.txt",
+      "manifests/licenses/numpy-numpy-2.5.3.dist-info_licenses_numpy__core_src_npysort_x86-simd-sort_LICENSE.md",
+      "manifests/licenses/numpy-numpy-2.5.3.dist-info_licenses_numpy__core_src_umath_svml_LICENSE",
+      "manifests/licenses/numpy-numpy-2.5.3.dist-info_licenses_numpy_fft_pocketfft_LICENSE.md",
+      "manifests/licenses/numpy-numpy-2.5.3.dist-info_licenses_numpy_linalg_lapack_lite_LICENSE.txt",
+      "manifests/licenses/numpy-numpy-2.5.3.dist-info_licenses_numpy_ma_LICENSE",
+      "manifests/licenses/numpy-numpy-2.5.3.dist-info_licenses_numpy_random_LICENSE.md",
+      "manifests/licenses/numpy-numpy-2.5.3.dist-info_licenses_numpy_random_src_distributions_LICENSE.md",
+      "manifests/licenses/numpy-numpy-2.5.3.dist-info_licenses_numpy_random_src_mt19937_LICENSE.md",
+      "manifests/licenses/numpy-numpy-2.5.3.dist-info_licenses_numpy_random_src_pcg64_LICENSE.md",
+      "manifests/licenses/numpy-numpy-2.5.3.dist-info_licenses_numpy_random_src_philox_LICENSE.md",
+      "manifests/licenses/numpy-numpy-2.5.3.dist-info_licenses_numpy_random_src_sfc64_LICENSE.md",
+      "manifests/licenses/numpy-numpy-2.5.3.dist-info_licenses_numpy_random_src_splitmix64_LICENSE.md",
+      "manifests/licenses/numpy-numpy__core_include_numpy_random_LICENSE.txt",
+      "manifests/licenses/numpy-numpy_ma_LICENSE"
+    ]
+  },
+  {
+    "name": "nvidia-cublas-cu12",
+    "version": "12.9.2.10",
+    "license": "LicenseRef-NVIDIA-Proprietary",
+    "home": "https://developer.nvidia.com/cuda-zone",
+    "notices": [
+      "manifests/licenses/nvidia-cublas-cu12-nvidia_cublas_cu12-12.9.2.10.dist-info_licenses_License.txt"
+    ]
+  },
+  {
+    "name": "nvidia-cuda-nvrtc-cu12",
+    "version": "12.9.86",
+    "license": "LicenseRef-NVIDIA-Proprietary",
+    "home": "https://developer.nvidia.com/cuda-zone",
+    "notices": [
+      "manifests/licenses/nvidia-cuda-nvrtc-cu12-nvidia_cuda_nvrtc_cu12-12.9.86.dist-info_licenses_License.txt"
+    ]
+  },
+  {
+    "name": "nvidia-cudnn-cu12",
+    "version": "9.26.0.51",
+    "license": "LicenseRef-NVIDIA-Proprietary",
+    "home": "https://developer.nvidia.com/cuda-zone",
+    "notices": [
+      "manifests/licenses/nvidia-cudnn-cu12-nvidia_cudnn_cu12-9.26.0.51.dist-info_licenses_License.txt"
+    ]
+  },
+  {
+    "name": "onnxruntime",
+    "version": "1.30.0",
+    "license": "MIT License",
+    "home": "https://onnxruntime.ai",
+    "notices": [
+      "manifests/licenses/onnxruntime-onnxruntime_LICENSE"
+    ]
+  },
+  {
+    "name": "packageurl-python",
+    "version": "0.17.6",
+    "license": "MIT",
+    "home": "https://github.com/package-url/packageurl-python",
+    "notices": []
+  },
+  {
+    "name": "packaging",
+    "version": "26.3",
+    "license": "Apache-2.0 OR BSD-2-Clause",
+    "home": null,
+    "notices": [
+      "manifests/licenses/packaging-packaging-26.3.dist-info_licenses_LICENSE",
+      "manifests/licenses/packaging-packaging-26.3.dist-info_licenses_LICENSE.APACHE",
+      "manifests/licenses/packaging-packaging-26.3.dist-info_licenses_LICENSE.BSD"
+    ]
+  },
+  {
+    "name": "pip",
+    "version": "26.2.1",
+    "license": "MIT",
+    "home": null,
+    "notices": [
+      "manifests/licenses/pip-pip-26.2.1.dist-info_licenses_AUTHORS.txt",
+      "manifests/licenses/pip-pip-26.2.1.dist-info_licenses_LICENSE.txt",
+      "manifests/licenses/pip-pip-26.2.1.dist-info_licenses_src_pip__vendor_cachecontrol_LICENSE.txt",
+      "manifests/licenses/pip-pip-26.2.1.dist-info_licenses_src_pip__vendor_certifi_LICENSE",
+      "manifests/licenses/pip-pip-26.2.1.dist-info_licenses_src_pip__vendor_distlib_LICENSE.txt",
+      "manifests/licenses/pip-pip-26.2.1.dist-info_licenses_src_pip__vendor_distro_LICENSE",
+      "manifests/licenses/pip-pip-26.2.1.dist-info_licenses_src_pip__vendor_idna_LICENSE.md",
+      "manifests/licenses/pip-pip-26.2.1.dist-info_licenses_src_pip__vendor_msgpack_COPYING",
+      "manifests/licenses/pip-pip-26.2.1.dist-info_licenses_src_pip__vendor_packaging_LICENSE",
+      "manifests/licenses/pip-pip-26.2.1.dist-info_licenses_src_pip__vendor_packaging_LICENSE.APACHE",
+      "manifests/licenses/pip-pip-26.2.1.dist-info_licenses_src_pip__vendor_packaging_LICENSE.BSD",
+      "manifests/licenses/pip-pip-26.2.1.dist-info_licenses_src_pip__vendor_pkg_resources_LICENSE",
+      "manifests/licenses/pip-pip-26.2.1.dist-info_licenses_src_pip__vendor_platformdirs_LICENSE",
+      "manifests/licenses/pip-pip-26.2.1.dist-info_licenses_src_pip__vendor_pygments_LICENSE",
+      "manifests/licenses/pip-pip-26.2.1.dist-info_licenses_src_pip__vendor_pyproject_hooks_LICENSE",
+      "manifests/licenses/pip-pip-26.2.1.dist-info_licenses_src_pip__vendor_requests_LICENSE",
+      "manifests/licenses/pip-pip-26.2.1.dist-info_licenses_src_pip__vendor_resolvelib_LICENSE",
+      "manifests/licenses/pip-pip-26.2.1.dist-info_licenses_src_pip__vendor_rich_LICENSE",
+      "manifests/licenses/pip-pip-26.2.1.dist-info_licenses_src_pip__vendor_tomli_LICENSE",
+      "manifests/licenses/pip-pip-26.2.1.dist-info_licenses_src_pip__vendor_tomli_w_LICENSE",
+      "manifests/licenses/pip-pip-26.2.1.dist-info_licenses_src_pip__vendor_truststore_LICENSE",
+      "manifests/licenses/pip-pip-26.2.1.dist-info_licenses_src_pip__vendor_urllib3_LICENSE.txt",
+      "manifests/licenses/pip-pip__vendor_cachecontrol_LICENSE.txt",
+      "manifests/licenses/pip-pip__vendor_certifi_LICENSE",
+      "manifests/licenses/pip-pip__vendor_distlib_LICENSE.txt",
+      "manifests/licenses/pip-pip__vendor_distro_LICENSE",
+      "manifests/licenses/pip-pip__vendor_msgpack_COPYING",
+      "manifests/licenses/pip-pip__vendor_packaging_LICENSE",
+      "manifests/licenses/pip-pip__vendor_pkg_resources_LICENSE",
+      "manifests/licenses/pip-pip__vendor_platformdirs_LICENSE",
+      "manifests/licenses/pip-pip__vendor_pygments_LICENSE",
+      "manifests/licenses/pip-pip__vendor_pyproject_hooks_LICENSE",
+      "manifests/licenses/pip-pip__vendor_requests_LICENSE",
+      "manifests/licenses/pip-pip__vendor_resolvelib_LICENSE",
+      "manifests/licenses/pip-pip__vendor_rich_LICENSE",
+      "manifests/licenses/pip-pip__vendor_tomli_LICENSE",
+      "manifests/licenses/pip-pip__vendor_tomli_w_LICENSE",
+      "manifests/licenses/pip-pip__vendor_truststore_LICENSE",
+      "manifests/licenses/pip-pip__vendor_urllib3_LICENSE.txt"
+    ]
+  },
+  {
+    "name": "pip_api",
+    "version": "0.0.35",
+    "license": "Apache License\n                        Version 2.0, January 2004\n                     https://www.apache.org/licenses/\n\nTERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n1. Definitions.\n\n   \"License\" shall mean the terms and conditions for use, reproduction,\n   and distribution as defined by Sections 1 through 9 of this document.\n\n   \"Licensor\" shall mean the copyright owner or entity authorized by\n   the copyright owner that is granting the License.\n\n   \"Legal Entity\" shall mean the union of the acting entity and all\n   other entities that control, are controlled by, or are under common\n   control with that entity. For the purposes of this definition,\n   \"control\" means (i) the power, direct or indirect, to cause the\n   direction or management of such entity, whether by contract or\n   otherwise, or (ii) ownership of fifty percent (50%) or more of the\n   outstanding shares, or (iii) beneficial ownership of such entity.\n\n   \"You\" (or \"Your\") shall mean an individual or Legal Entity\n   exercising permissions granted by this License.\n\n   \"Source\" form shall mean the preferred form for making modifications,\n   including but not limited to software source code, documentation\n   source, and configuration files.\n\n   \"Object\" form shall mean any form resulting from mechanical\n   transformation or translation of a Source form, including but\n   not limited to compiled object code, generated documentation,\n   and conversions to other media types.\n\n   \"Work\" shall mean the work of authorship, whether in Source or\n   Object form, made available under the License, as indicated by a\n   copyright notice that is included in or attached to the work\n   (an example is provided in the Appendix below).\n\n   \"Derivative Works\" shall mean any work, whether in Source or Object\n   form, that is based on (or derived from) the Work and for which the\n   editorial revisions, annotations, elaborations, or other modifications\n   represent, as a whole, an original work of authorship. For the purposes\n   of this License, Derivative Works shall not include works that remain\n   separable from, or merely link (or bind by name) to the interfaces of,\n   the Work and Derivative Works thereof.\n\n   \"Contribution\" shall mean any work of authorship, including\n   the original version of the Work and any modifications or additions\n   to that Work or Derivative Works thereof, that is intentionally\n   submitted to Licensor for inclusion in the Work by the copyright owner\n   or by an individual or Legal Entity authorized to submit on behalf of\n   the copyright owner. For the purposes of this definition, \"submitted\"\n   means any form of electronic, verbal, or written communication sent\n   to the Licensor or its representatives, including but not limited to\n   communication on electronic mailing lists, source code control systems,\n   and issue tracking systems that are managed by, or on behalf of, the\n   Licensor for the purpose of discussing and improving the Work, but\n   excluding communication that is conspicuously marked or otherwise\n   designated in writing by the copyright owner as \"Not a Contribution.\"\n\n   \"Contributor\" shall mean Licensor and any individual or Legal Entity\n   on behalf of whom a Contribution has been received by Licensor and\n   subsequently incorporated within the Work.\n\n2. Grant of Copyright License. Subject to the terms and conditions of\n   this License, each Contributor hereby grants to You a perpetual,\n   worldwide, non-exclusive, no-charge, royalty-free, irrevocable\n   copyright license to reproduce, prepare Derivative Works of,\n   publicly display, publicly perform, sublicense, and distribute the\n   Work and such Derivative Works in Source or Object form.\n\n3. Grant of Patent License. Subject to the terms and conditions of\n   this License, each Contributor hereby grants to You a perpetual,\n   worldwide, non-exclusive, no-charge, royalty-free, irrevocable\n   (except as stated in this section) patent license to make, have made,\n   use, offer to sell, sell, import, and otherwise transfer the Work,\n   where such license applies only to those patent claims licensable\n   by such Contributor that are necessarily infringed by their\n   Contribution(s) alone or by combination of their Contribution(s)\n   with the Work to which such Contribution(s) was submitted. If You\n   institute patent litigation against any entity (including a\n   cross-claim or counterclaim in a lawsuit) alleging that the Work\n   or a Contribution incorporated within the Work constitutes direct\n   or contributory patent infringement, then any patent licenses\n   granted to You under this License for that Work shall terminate\n   as of the date such litigation is filed.\n\n4. Redistribution. You may reproduce and distribute copies of the\n   Work or Derivative Works thereof in any medium, with or without\n   modifications, and in Source or Object form, provided that You\n   meet the following conditions:\n\n   (a) You must give any other recipients of the Work or\n       Derivative Works a copy of this License; and\n\n   (b) You must cause any modified files to carry prominent notices\n       stating that You changed the files; and\n\n   (c) You must retain, in the Source form of any Derivative Works\n       that You distribute, all copyright, patent, trademark, and\n       attribution notices from the Source form of the Work,\n       excluding those notices that do not pertain to any part of\n       the Derivative Works; and\n\n   (d) If the Work includes a \"NOTICE\" text file as part of its\n       distribution, then any Derivative Works that You distribute must\n       include a readable copy of the attribution notices contained\n       within such NOTICE file, excluding those notices that do not\n       pertain to any part of the Derivative Works, in at least one\n       of the following places: within a NOTICE text file distributed\n       as part of the Derivative Works; within the Source form or\n       documentation, if provided along with the Derivative Works; or,\n       within a display generated by the Derivative Works, if and\n       wherever such third-party notices normally appear. The contents\n       of the NOTICE file are for informational purposes only and\n       do not modify the License. You may add Your own attribution\n       notices within Derivative Works that You distribute, alongside\n       or as an addendum to the NOTICE text from the Work, provided\n       that such additional attribution notices cannot be construed\n       as modifying the License.\n\n   You may add Your own copyright statement to Your modifications and\n   may provide additional or different license terms and conditions\n   for use, reproduction, or distribution of Your modifications, or\n   for any such Derivative Works as a whole, provided Your use,\n   reproduction, and distribution of the Work otherwise complies with\n   the conditions stated in this License.\n\n5. Submission of Contributions. Unless You explicitly state otherwise,\n   any Contribution intentionally submitted for inclusion in the Work\n   by You to the Licensor shall be under the terms and conditions of\n   this License, without any additional terms or conditions.\n   Notwithstanding the above, nothing herein shall supersede or modify\n   the terms of any separate license agreement you may have executed\n   with Licensor regarding such Contributions.\n\n6. Trademarks. This License does not grant permission to use the trade\n   names, trademarks, service marks, or product names of the Licensor,\n   except as required for reasonable and customary use in describing the\n   origin of the Work and reproducing the content of the NOTICE file.\n\n7. Disclaimer of Warranty. Unless required by applicable law or\n   agreed to in writing, Licensor provides the Work (and each\n   Contributor provides its Contributions) on an \"AS IS\" BASIS,\n   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or\n   implied, including, without limitation, any warranties or conditions\n   of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A\n   PARTICULAR PURPOSE. You are solely responsible for determining the\n   appropriateness of using or redistributing the Work and assume any\n   risks associated with Your exercise of permissions under this License.\n\n8. Limitation of Liability. In no event and under no legal theory,\n   whether in tort (including negligence), contract, or otherwise,\n   unless required by applicable law (such as deliberate and grossly\n   negligent acts) or agreed to in writing, shall any Contributor be\n   liable to You for damages, including any direct, indirect, special,\n   incidental, or consequential damages of any character arising as a\n   result of this License or out of the use or inability to use the\n   Work (including but not limited to damages for loss of goodwill,\n   work stoppage, computer failure or malfunction, or any and all\n   other commercial damages or losses), even if such Contributor\n   has been advised of the possibility of such damages.\n\n9. Accepting Warranty or Additional Liability. While redistributing\n   the Work or Derivative Works thereof, You may choose to offer,\n   and charge a fee for, acceptance of support, warranty, indemnity,\n   or other liability obligations and/or rights consistent with this\n   License. However, in accepting such obligations, You may act only\n   on Your own behalf and on Your sole responsibility, not on behalf\n   of any other Contributor, and only if You agree to indemnify,\n   defend, and hold each Contributor harmless for any liability\n   incurred by, or claims asserted against, such Contributor by reason\n   of your accepting any such warranty or additional liability.\n",
+    "home": null,
+    "notices": [
+      "manifests/licenses/pip_api-pip_api-0.0.35.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "pip_audit",
+    "version": "2.10.1",
+    "license": null,
+    "home": null,
+    "notices": [
+      "manifests/licenses/pip_audit-pip_audit-2.10.1.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "pip-requirements-parser",
+    "version": "32.0.1",
+    "license": "MIT",
+    "home": "https://github.com/nexB/pip-requirements-parser",
+    "notices": []
+  },
+  {
+    "name": "platformdirs",
+    "version": "4.11.13",
+    "license": "MIT",
+    "home": null,
+    "notices": [
+      "manifests/licenses/platformdirs-platformdirs-4.11.13.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "playwright",
+    "version": "1.63.0",
+    "license": "Apache-2.0",
+    "home": null,
+    "notices": [
+      "manifests/licenses/playwright-playwright-1.63.0.dist-info_licenses_LICENSE",
+      "manifests/licenses/playwright-playwright_driver_LICENSE",
+      "manifests/licenses/playwright-playwright_driver_package_LICENSE",
+      "manifests/licenses/playwright-playwright_driver_package_NOTICE"
+    ]
+  },
+  {
+    "name": "pluggy",
+    "version": "1.6.0",
+    "license": "MIT",
+    "home": null,
+    "notices": [
+      "manifests/licenses/pluggy-pluggy-1.6.0.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "protobuf",
+    "version": "7.36.2",
+    "license": "3-Clause BSD License",
+    "home": "https://developers.google.com/protocol-buffers/",
+    "notices": [
+      "manifests/licenses/protobuf-protobuf-7.36.2.dist-info_LICENSE"
+    ]
+  },
+  {
+    "name": "psutil",
+    "version": "7.2.2",
+    "license": "BSD-3-Clause",
+    "home": "https://github.com/giampaolo/psutil",
+    "notices": [
+      "manifests/licenses/psutil-psutil-7.2.2.dist-info_LICENSE"
+    ]
+  },
+  {
+    "name": "pycparser",
+    "version": "3.0",
+    "license": "BSD-3-Clause",
+    "home": null,
+    "notices": [
+      "manifests/licenses/pycparser-pycparser-3.0.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "pydantic",
+    "version": "2.13.5",
+    "license": "MIT",
+    "home": null,
+    "notices": [
+      "manifests/licenses/pydantic-pydantic-2.13.5.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "pydantic_core",
+    "version": "2.46.5",
+    "license": "MIT",
+    "home": "https://github.com/pydantic/pydantic",
+    "notices": [
+      "manifests/licenses/pydantic_core-pydantic_core-2.46.5.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "pydantic-settings",
+    "version": "2.15.0",
+    "license": "MIT",
+    "home": null,
+    "notices": [
+      "manifests/licenses/pydantic-settings-pydantic_settings-2.15.0.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "pyee",
+    "version": "13.0.1",
+    "license": "MIT",
+    "home": null,
+    "notices": [
+      "manifests/licenses/pyee-pyee-13.0.1.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "Pygments",
+    "version": "2.21.0",
+    "license": "BSD-2-Clause",
+    "home": null,
+    "notices": [
+      "manifests/licenses/Pygments-pygments-2.21.0.dist-info_licenses_AUTHORS",
+      "manifests/licenses/Pygments-pygments-2.21.0.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "pyparsing",
+    "version": "3.3.3",
+    "license": "MIT",
+    "home": null,
+    "notices": [
+      "manifests/licenses/pyparsing-pyparsing-3.3.3.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "pytest",
+    "version": "9.1.1",
+    "license": "MIT",
+    "home": null,
+    "notices": [
+      "manifests/licenses/pytest-pytest-9.1.1.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "python-dotenv",
+    "version": "1.2.3",
+    "license": "BSD-3-Clause",
+    "home": null,
+    "notices": [
+      "manifests/licenses/python-dotenv-python_dotenv-1.2.3.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "python-multipart",
+    "version": "0.0.32",
+    "license": "Apache-2.0",
+    "home": null,
+    "notices": [
+      "manifests/licenses/python-multipart-python_multipart-0.0.32.dist-info_licenses_LICENSE.txt"
+    ]
+  },
+  {
+    "name": "PyYAML",
+    "version": "6.0.3",
+    "license": "MIT",
+    "home": "https://pyyaml.org/",
+    "notices": [
+      "manifests/licenses/PyYAML-pyyaml-6.0.3.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "py-serializable",
+    "version": "2.1.0",
+    "license": "Apache-2.0",
+    "home": null,
+    "notices": [
+      "manifests/licenses/py-serializable-py_serializable-2.1.0.dist-info_LICENSE"
+    ]
+  },
+  {
+    "name": "requests",
+    "version": "2.34.2",
+    "license": "Apache-2.0",
+    "home": null,
+    "notices": [
+      "manifests/licenses/requests-requests-2.34.2.dist-info_licenses_LICENSE",
+      "manifests/licenses/requests-requests-2.34.2.dist-info_licenses_NOTICE"
+    ]
+  },
+  {
+    "name": "rich",
+    "version": "15.0.0",
+    "license": "MIT",
+    "home": null,
+    "notices": [
+      "manifests/licenses/rich-rich-15.0.0.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "ruff",
+    "version": "0.16.9",
+    "license": "MIT",
+    "home": "https://docs.astral.sh/ruff",
+    "notices": [
+      "manifests/licenses/ruff-ruff-0.16.9.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "sortedcontainers",
+    "version": "2.4.0",
+    "license": "Apache 2.0",
+    "home": "http://www.grantjenks.com/docs/sortedcontainers/",
+    "notices": [
+      "manifests/licenses/sortedcontainers-sortedcontainers-2.4.0.dist-info_LICENSE"
+    ]
+  },
+  {
+    "name": "SQLAlchemy",
+    "version": "2.1.0",
+    "license": "MIT",
+    "home": null,
+    "notices": [
+      "manifests/licenses/SQLAlchemy-sqlalchemy-2.1.0.dist-info_licenses_AUTHORS",
+      "manifests/licenses/SQLAlchemy-sqlalchemy-2.1.0.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "starlette",
+    "version": "1.7.0",
+    "license": "BSD-3-Clause",
+    "home": null,
+    "notices": [
+      "manifests/licenses/starlette-starlette-1.7.0.dist-info_licenses_LICENSE.md"
+    ]
+  },
+  {
+    "name": "tokenizers",
+    "version": "0.23.2",
+    "license": null,
+    "home": null,
+    "notices": []
+  },
+  {
+    "name": "tomli",
+    "version": "2.4.1",
+    "license": "MIT",
+    "home": null,
+    "notices": [
+      "manifests/licenses/tomli-tomli-2.4.1.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "tomli_w",
+    "version": "1.2.0",
+    "license": null,
+    "home": null,
+    "notices": [
+      "manifests/licenses/tomli_w-tomli_w-1.2.0.dist-info_LICENSE"
+    ]
+  },
+  {
+    "name": "tqdm",
+    "version": "4.70.1",
+    "license": "MPL-2.0 AND MIT",
+    "home": null,
+    "notices": [
+      "manifests/licenses/tqdm-tqdm-4.70.1.dist-info_licenses_LICENCE"
+    ]
+  },
+  {
+    "name": "typing_extensions",
+    "version": "4.16.0",
+    "license": "PSF-2.0",
+    "home": null,
+    "notices": [
+      "manifests/licenses/typing_extensions-typing_extensions-4.16.0.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "typing-inspection",
+    "version": "0.4.4",
+    "license": "MIT",
+    "home": null,
+    "notices": [
+      "manifests/licenses/typing-inspection-typing_inspection-0.4.4.dist-info_licenses_LICENSE"
+    ]
+  },
+  {
+    "name": "tzdata",
+    "version": "2026.4",
+    "license": "Apache-2.0",
+    "home": "https://github.com/python/tzdata",
+    "notices": [
+      "manifests/licenses/tzdata-tzdata-2026.4.dist-info_licenses_LICENSE",
+      "manifests/licenses/tzdata-tzdata-2026.4.dist-info_licenses_licenses_LICENSE_APACHE"
+    ]
+  },
+  {
+    "name": "urllib3",
+    "version": "2.8.0",
+    "license": "MIT",
+    "home": null,
+    "notices": [
+      "manifests/licenses/urllib3-urllib3-2.8.0.dist-info_licenses_LICENSE.txt"
+    ]
+  },
+  {
+    "name": "uvicorn",
+    "version": "0.54.0",
+    "license": "BSD-3-Clause",
+    "home": null,
+    "notices": [
+      "manifests/licenses/uvicorn-uvicorn-0.54.0.dist-info_licenses_LICENSE.md"
+    ]
+  }
+]
