@@ -247,6 +247,7 @@ def main():
     elif args.command == "stop":
         stop()
     elif args.command == "test":
+        config.init_dirs()
         raise SystemExit(
             subprocess.call(
                 [sys.executable, "-m", "pytest", "-q", "--basetemp", str(config.DATA / "test-temp")]
