@@ -103,3 +103,28 @@ def sha(path):
         for b in iter(lambda: f.read(1024 * 1024), b""):
             h.update(b)
     return h.hexdigest()
+
+
+def canonical_clip(source, target, start, end):
+    """Copy exact source samples with bounded buffers, without repeated decoding."""
+    target = Path(target)
+    temporary = target.with_suffix(".partial.wav")
+    with wave.open(str(source), "rb") as reader:
+        if (reader.getframerate(), reader.getnchannels(), reader.getsampwidth()) != (16000, 1, 2):
+            raise ValueError("clip_requires_canonical_audio")
+        if not 0 <= start < end <= reader.getnframes():
+            raise ValueError("clip_outside_source")
+        reader.setpos(start)
+        with wave.open(str(temporary), "wb") as writer:
+            writer.setparams((1, 2, 16000, 0, "NONE", "not compressed"))
+            remaining = end - start
+            while remaining:
+                count = min(remaining, 512 * 1024)
+                data = reader.readframes(count)
+                if len(data) != count * 2:
+                    raise ValueError("truncated_canonical_audio")
+                writer.writeframesraw(data)
+                remaining -= count
+    with temporary.open("r+b") as stream:
+        os.fsync(stream.fileno())
+    os.replace(temporary, target)

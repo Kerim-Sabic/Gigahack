@@ -1,0 +1,22 @@
+[
+  {
+    "package": "nv-one-logger-pytorch-lightning-integration",
+    "version": "2.3.1",
+    "before": "70d04b515b014b030cefb7ccd494326543d13291ff36da29b60a4ed36c142069",
+    "after": "f2947182b1273451727b65bdc238dd61a89ccd607583aa1842442a345eaba79f",
+    "change": "save_checkpoint weights_only type/default matches Lightning 2.6.6 Optional[bool] = None",
+    "scope": "isolated candidate; excerpt inference passed; production integration and target hardware unqualified",
+    "relative_path": "nv_one_logger/training_telemetry/integration/pytorch_lightning.py",
+    "patch": "one-logger.patch"
+  },
+  {
+    "package": "nemo-toolkit",
+    "version": "3.0.0",
+    "before": "9664f4c1c99e58e3ff3df9c8f5753ef0995aa05ce9b6a0a0f277fdfa5e35022b",
+    "after": "2b7b359b21cc06133cc71e7e972f13aa99a36987b96468f671d0f5d71caa9c81",
+    "change": "Import removed optional cloud Neptune logger only if explicitly configured; offline inference does not configure it",
+    "scope": "isolated candidate; excerpt inference passed; production integration and target hardware unqualified",
+    "relative_path": "nemo/utils/exp_manager.py",
+    "patch": "nemo-exp-manager.patch"
+  }
+]

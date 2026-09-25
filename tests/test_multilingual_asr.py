@@ -40,7 +40,11 @@ def test_optional_comparison_does_not_skip_speech_without_numbers(tmp_path, monk
     from services.worker import optional
 
     monkeypatch.setattr(optional.config, 'DATA', tmp_path)
-    monkeypatch.setattr(optional.subprocess, 'run', lambda *args, **kwargs: None)
+    (tmp_path / 'jobs/job').mkdir(parents=True)
+    audio = tmp_path / 'synthetic.wav'
+    with wave.open(str(audio), 'wb') as source:
+        source.setparams((1, 2, 16000, 0, 'NONE', 'not compressed'))
+        source.writeframes(b'\1\0' * 80000)
     monkeypatch.setattr(optional, 'transaction', lambda: nullcontext(None))
     captured = []
 
@@ -51,9 +55,13 @@ def test_optional_comparison_does_not_skip_speech_without_numbers(tmp_path, monk
     optional.optional_stages(
         {'id': 'job', 'meeting_id': 'meeting'},
         {'config': {'parakeet': True, 'inference': load_settings().model_dump()}},
-        {'samples': 80000, 'path': 'synthetic.wav'},
+        {'samples': 80000, 'path': str(audio)},
         [{'id': 'a', 'text': 'Обсудим cererea сегодня.', 'start': 0, 'end': 40000},
          {'id': 'b', 'text': 'Mulțumesc pentru explicație.', 'start': 40000, 'end': 80000}], run,
     )
     assert [clip['segment_id'] for clip in captured] == ['a', 'b']
     assert captured[0]['start'] == 0 and captured[-1]['end'] == 80000
+    for clip in captured:
+        with wave.open(str(clip['path']), 'rb') as source:
+            assert source.getnframes() == clip['end'] - clip['start']
+            assert source.readframes(source.getnframes()) == b'\1\0' * source.getnframes()

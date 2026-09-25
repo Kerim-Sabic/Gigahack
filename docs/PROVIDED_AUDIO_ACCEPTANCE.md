@@ -31,7 +31,7 @@ directory passed. No recordings/transcripts are tracked.
   Unknown speakers and overlap stay explicit. A speaker cluster is not a person's identity.
 - Model access, dependencies and actual successful inference must be checked independently.
   Community-1 initially returned GatedRepoError. The user accepted publisher terms and
-  the pinned local download subsequently succeeded; actual inference remains pending. Never bypass the access restriction or silently use cloud diarization.
+  the pinned local download subsequently succeeded; excerpt inference later passed (see below). Never bypass the access restriction or silently use cloud diarization.
 - Progress must report observed work units/stages. ETA is explicitly an estimate, based on
   measured throughput, and unavailable during startup or insufficient sampling. Do not
   fabricate a linear percentage or show completion before durable publication.
@@ -57,3 +57,24 @@ never translation. Its initial language result is not a language tag for every w
 Cyrillic/Latin script differences alone cannot establish Romanian versus English.
 Compare independent hypotheses; retain disagreements and source audio for review.
 Do not claim accurate word-level language identification without annotated recordings.
+
+## Optional excerpt inference and exact clip preparation
+
+Private run optional-diarize-1790371548383828053 processed source seconds 300–345 inside
+an isolated Linux network namespace: 10 speech turns, two clusters, stage 194.61s,
+peak process-tree RSS 2,619,744,256 bytes. No reference speaker labels exist, so diarization
+error rate is not measured. Cluster labels do not identify people.
+
+Private run optional-parakeet-1790371786397743852 processed the same excerpt in a separate
+sequential stage: one nonempty hypothesis with word/character/segment timestamps, stage
+216.95s, peak process-tree RSS 3,951,644,672 bytes. No gold transcript exists; no WER or
+medical accuracy claim follows. Both runs include cold library/model startup on the NTFS
+workspace through WSL. Shared device totals include unrelated applications; process VRAM
+was not measured. They do not qualify the 8 GB target laptop.
+
+For full-recording comparison, excerpts now copy exact canonical source samples in buffers
+of at most 1 MiB, publishing only complete WAVs. Repeated FFmpeg decoding is eliminated.
+Tests verify byte-for-byte sample/timing preservation across buffer boundaries, invalid ranges,
+truncated input rejection and coverage of speech without numbers. The full backend passes
+143 tests with one Linux-only skip. Full-recording optional runs are in progress; approval,
+email and human accuracy review have not occurred.

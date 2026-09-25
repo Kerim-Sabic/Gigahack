@@ -54,3 +54,10 @@ The first patched import passed pyannote and then exposed a second NeMo compatib
 its training manager imports the removed Neptune cloud logger eagerly. A second experimental
 patch defers that import until explicit Neptune configuration. Offline inference does not
 request it; no cloud logger substitute is installed. Original/hash provenance is retained.
+
+Both patched adapters subsequently completed actual inference on the 45-second supplied-audio
+excerpt under unshare network isolation. The compatibility diffs, before/after hashes, resolved
+232-package list, OSV scan and affected packages' Apache-2.0 licenses are preserved in
+manifests/optional-runtime-experiment. This is experimental provenance, not a production
+installation recipe. Full integrated behavior, comprehensive dependency notices, target-driver
+compatibility and full-recording qualification remain pending. No core dependency lock changed.

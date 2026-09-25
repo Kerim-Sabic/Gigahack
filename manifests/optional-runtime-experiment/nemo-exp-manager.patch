@@ -1,0 +1,19 @@
+--- a/nemo/utils/exp_manager.py
++++ b/nemo/utils/exp_manager.py
+@@ -33,7 +33,7 @@
+ from lightning.pytorch.callbacks import Callback, ModelCheckpoint
+ from lightning.pytorch.callbacks.early_stopping import EarlyStopping
+ from lightning.pytorch.callbacks.timer import Interval, Timer
+-from lightning.pytorch.loggers import MLFlowLogger, NeptuneLogger, TensorBoardLogger, WandbLogger
++from lightning.pytorch.loggers import MLFlowLogger, TensorBoardLogger, WandbLogger
+ from lightning.pytorch.loops import _TrainingEpochLoop
+ from lightning.pytorch.strategies.ddp import DDPStrategy
+ from lightning.pytorch.trainer.connectors.checkpoint_connector import _CheckpointConnector
+@@ -1277,6 +1277,7 @@
+         logging.info("ClearMLLogger has been set up")
+ 
+     if create_neptune_logger:
++        from lightning.pytorch.loggers import NeptuneLogger
+         if neptune_kwargs is None:
+             neptune_kwargs = {}
+         if "name" not in neptune_kwargs and "project" not in neptune_kwargs:

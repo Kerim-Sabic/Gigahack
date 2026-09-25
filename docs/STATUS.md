@@ -1,14 +1,14 @@
 # Current implementation status
 
 Complete mission remains active. The last verified remote checkpoint is
-b68f0c8e478c75f76c01b0c8d73b647427afd6a9 (CI 36190175156 PASS). It contains multilingual
+0046c2711e17290c6ae15aac0b7c65b71e9f3bf3 (CI 36191562041 PASS). It contains multilingual
 transcription, frozen developer settings, current-step ETA and bounded ASR checkpoints.
-It also includes atomic recording/stage recovery and optional-model provenance. Kernel-backed
-model-process ownership is the next checkpoint and requires its own CI.
+It also includes atomic recording/stage recovery and kernel-backed model-process ownership.
+Exact bounded audio clips and optional-model excerpt results form the next checkpoint.
 
 ## Current evidence
 
-- 141 backend tests pass locally with one Linux-only check skipped; that check and the actual
+- 143 backend tests pass locally with one Linux-only check skipped; that check and the actual
   child cleanup test pass in Linux. Last frontend checkpoint: 10 tests and strict build pass.
 - Hard-killing a model stage now terminates its owned child through Windows Job Objects or
   Linux parent-death binding; the actual tests preserve an unrelated running process.
@@ -37,11 +37,14 @@ Pinned Parakeet and Community-1 assets downloaded; user accepted Community-1 acc
 Model cards, CC-BY-4.0 attribution/license and checksums are recorded separately. Weights and
 private recording data remain ignored. The first experimental NeMo/pyannote stack imported
 successfully offline, but a 208-package OSV scan identified advisories. A patched 232-package
-candidate installed with no current OSV matches and pip check passes. Its import test exposed
-a OneLogger/Lightning annotation incompatibility; a minimal experimental compatibility patch
-is under test. No production optional-runtime adoption is claimed.
-Neither model's actual inference or target fit is verified; application availability remains
-disabled. See DECISIONS/010-optional-model-preparation.md.
+candidate installed with no current OSV matches and pip check passes. Two focused compatibility
+patches are retained with hashes/licenses under manifests/optional-runtime-experiment.
+Both models now executed successfully on a private 45-second excerpt with external networking
+unavailable: Community-1 10 turns / two clusters, Parakeet one timestamped hypothesis.
+Cold stage times were 194.61s and 216.95s in WSL on the NTFS workspace. This is not a latency
+qualification or an accuracy score. Full-recording runs have started; complete API/UI integration
+and target fit remain unqualified, and application availability remains disabled.
+See DECISIONS/010-optional-model-preparation.md.
 
 ## Remaining acceptance
 

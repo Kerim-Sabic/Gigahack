@@ -1,6 +1,5 @@
-import subprocess
-
 from services.api import config
+from services.api.audio import canonical_clip
 from services.api.db import canonical, transaction
 
 
@@ -15,25 +14,7 @@ def optional_stages(job, spec, asset, segments, run_stage):
             if settings.parakeet_audio_fraction < 1 and used + end - start > budget:
                 continue
             clip = config.DATA / "jobs" / job["id"] / (s["id"] + ".wav")
-            subprocess.run(
-                [
-                    "ffmpeg",
-                    "-nostdin",
-                    "-v",
-                    "error",
-                    "-y",
-                    "-i",
-                    asset["path"],
-                    "-ss",
-                    str(start / 16000),
-                    "-t",
-                    str((end - start) / 16000),
-                    str(clip),
-                ],
-                capture_output=True,
-                check=True,
-                timeout=60,
-            )
+            canonical_clip(asset["path"], clip, start, end)
             clips.append({"segment_id": s["id"], "path": str(clip), "start": start, "end": end})
             used += end - start
         if clips:

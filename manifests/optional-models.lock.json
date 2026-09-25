@@ -7,7 +7,7 @@
       "parakeet-tdt-0.6b-v3.nemo": "3cbdc85877e668ca7b82d0d56770eb1fac76691f55d6b97545e8d61ca588d10d",
       "README.md": "7a4306a43f395e3a716e77f1d81c03db18a0a355d7b566bb1d6307213ba0302b"
     },
-    "qualification": "download and checksum recorded; actual inference and target hardware not verified",
+    "qualification": "45-second supplied-audio excerpt inference passed in isolated experimental WSL runtime; full integration, accuracy and target hardware unqualified",
     "attribution": "manifests/optional-model-cards/parakeet-README.md"
   },
   "diarization": {
@@ -24,7 +24,7 @@
       "plda/xvec_transform.npz": "325f1ce8e48f7e55e9c8aa47e05d2766b7c48c4b25b8de8dd751e7a4cc5fbe8f",
       "segmentation/pytorch_model.bin": "7ad24338d844fb95985486eb1a464e32d229f6d7a03c9abe60f978bacf3f816e"
     },
-    "qualification": "download and checksum recorded; actual inference and target hardware not verified",
+    "qualification": "45-second supplied-audio excerpt inference passed in isolated experimental WSL runtime; full integration, accuracy and target hardware unqualified",
     "attribution": "manifests/optional-model-cards/diarization-README.md"
   }
 }
