@@ -2,6 +2,30 @@ import type { Lang } from './i18n';
 let language:Lang='en';
 export function setUiLanguage(value:Lang){language=value;document.documentElement.lang=value;}
 const rows:[string,string,string][]=[
+ ['Participants, one per line','Participanți, câte unul pe rând','Участники, по одному в строке'],
+ ["Recipients for this delivery", "Destinatarii acestei livrări", "Получатели этой отправки"],
+ ["Retry this failed delivery", "Reîncearcă această livrare eșuată", "Повторить неудавшуюся отправку"],
+ ["Delivery is uncertain. Check the mail server; this attempt cannot be retried automatically.", "Livrarea este incertă. Verificați serverul de e-mail; această încercare nu poate fi repetată automat.", "Статус доставки неизвестен. Проверьте почтовый сервер; эту попытку нельзя повторить автоматически."],
+ ["This delivery cannot be safely retried. Check its status on the mail server.", "Această livrare nu poate fi repetată în siguranță. Verificați starea pe serverul de e-mail.", "Повтор этой отправки небезопасен. Проверьте её состояние на почтовом сервере."],
+
+ ["Meeting details and access", "Detaliile și accesul ședinței", "Данные совещания и доступ"],
+ ["Cancel or finish processing before changing meeting details.", "Anulați sau finalizați procesarea înainte de modificarea detaliilor ședinței.", "Отмените или завершите обработку перед изменением данных совещания."],
+ ["Title", "Titlu", "Название"],
+ ["Date", "Data", "Дата"],
+ ["Changing the date or timezone requires another review. Previous approved versions remain in history.", "Modificarea datei sau a fusului orar necesită o nouă verificare. Versiunile aprobate anterior rămân în istoric.", "После изменения даты или часового пояса нужна повторная проверка. Ранее утверждённые версии сохраняются в истории."],
+ ["Save meeting details", "Salvează detaliile ședinței", "Сохранить данные совещания"],
+ ["Grant meeting access", "Acordă acces la ședință", "Предоставить доступ к совещанию"],
+ ["Local account", "Cont local", "Локальная учётная запись"],
+ ["Choose an account", "Alegeți un cont", "Выберите учётную запись"],
+ ["Grant access", "Acordă acces", "Предоставить доступ"],
+ ["Delete this meeting", "Șterge această ședință", "Удалить это совещание"],
+ ["Deletes recordings, transcripts, reviews and exports. This cannot be undone. Type the exact meeting title to confirm.", "Șterge înregistrările, transcrierile, verificările și exporturile. Acțiunea este ireversibilă. Introduceți titlul exact al ședinței pentru confirmare.", "Удаляет записи, расшифровки, результаты проверки и экспортированные файлы. Отменить это действие нельзя. Для подтверждения введите точное название совещания."],
+ ["Confirm meeting title", "Confirmă titlul ședinței", "Подтвердите название совещания"],
+ ["Changed fields", "Câmpuri modificate", "Изменённые поля"],
+ ["Reviewer", "Revizor", "Проверяющий"],
+ ["The meeting date changed. Process the audio again or correct the due date with a reason.", "Data ședinței s-a modificat. Procesați din nou audio sau corectați termenul, indicând motivul.", "Дата совещания изменилась. Обработайте аудио повторно или исправьте срок, указав причину."],
+ ["This local account no longer exists. Refresh the account list.", "Acest cont local nu mai există. Actualizați lista conturilor.", "Эта локальная учётная запись больше не существует. Обновите список."],
+
  ['Condition','Condiție','Условие'],['Value','Valoare','Значение'],
  ['Issues I have resolved','Aspecte pe care le-am clarificat','Вопросы, которые я разрешил'],
  ['Only check an issue after reviewing its source. Your reason is retained in the amendment history.','Bifați doar după verificarea sursei. Motivul este păstrat în istoricul modificărilor.','Отмечайте вопрос только после проверки источника. Причина сохранится в истории изменений.'],

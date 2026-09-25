@@ -34,3 +34,7 @@ upload-to-PDF-to-Mailpit in 25.168 seconds, zero page errors. Networking was not
 
 Linux isolated real stages: Whisper 27.723 s, Qwen 22.977 s; peak total GPU 0 9769 MiB.
 This exceeds the target total-VRAM budget and is not a target-laptop pass.
+
+Operator recovery milestone: 44 backend tests, 5 frontend tests, lint/build pass. Expanded fixture
+browser workflow 12.175 s with no page errors; metadata, account/grant and amendment-history assertions
+pass. Internal SMTP TLS/authentication uses test doubles; real local Mailpit delivery passes.

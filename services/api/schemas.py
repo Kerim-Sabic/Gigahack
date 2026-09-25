@@ -3,12 +3,15 @@ from typing import Literal
 from pydantic import BaseModel
 
 
-class AccountView(BaseModel):
+class AccountSummary(BaseModel):
     id: str
     name: str
     role: Literal["admin", "secretary", "viewer"]
-    csrf: str
     language: Literal["en", "ro", "ru"] = "en"
+
+
+class AccountView(AccountSummary):
+    csrf: str
 
 
 class MeetingView(BaseModel):

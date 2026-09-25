@@ -1,6 +1,11 @@
 import { tr } from './translations';
 
 const messages: Record<string, string> = {
+  delivery_not_safe_to_retry: 'This delivery cannot be safely retried. Check its status on the mail server.',
+  cancel_processing_before_metadata_edit: 'Cancel or finish processing before changing meeting details.',
+  meeting_date_requires_reextraction: 'The meeting date changed. Process the audio again or correct the due date with a reason.',
+  account_not_found: 'This local account no longer exists. Refresh the account list.',
+
   invalid_credentials: 'The username or password is incorrect.',
   authentication_required: 'Please sign in again.',
   login_rate_limit: 'Too many sign-in attempts. Wait a minute and try again.',

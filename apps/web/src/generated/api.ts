@@ -81,7 +81,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Accounts */
+        get: operations["accounts_api_v1_accounts_get"];
         put?: never;
         /** Account */
         post: operations["account_api_v1_accounts_post"];
@@ -556,6 +557,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/deliveries/{ident}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retry Delivery */
+        post: operations["retry_delivery_api_v1_deliveries__ident__retry_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/snapshots/{ident}/exports/{format}": {
         parameters: {
             query?: never;
@@ -608,6 +626,24 @@ export interface components {
              */
             role: "admin" | "secretary" | "viewer";
         };
+        /** AccountSummary */
+        AccountSummary: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "admin" | "secretary" | "viewer";
+            /**
+             * Language
+             * @default en
+             * @enum {string}
+             */
+            language: "en" | "ro" | "ru";
+        };
         /** AccountView */
         AccountView: {
             /** Id */
@@ -619,14 +655,14 @@ export interface components {
              * @enum {string}
              */
             role: "admin" | "secretary" | "viewer";
-            /** Csrf */
-            csrf: string;
             /**
              * Language
              * @default en
              * @enum {string}
              */
             language: "en" | "ro" | "ru";
+            /** Csrf */
+            csrf: string;
         };
         /** AssetView */
         AssetView: {
@@ -953,6 +989,14 @@ export interface components {
             /** Last Sequence */
             last_sequence: number | null;
         };
+        /** RetryDelivery */
+        RetryDelivery: {
+            /**
+             * Explicitly Send Older
+             * @default false
+             */
+            explicitly_send_older: boolean;
+        };
         /** Review */
         Review: {
             /** Revision */
@@ -1170,6 +1214,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    accounts_api_v1_accounts_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountSummary"][];
                 };
             };
         };
@@ -2214,6 +2278,41 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["Delivery"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retry_delivery_api_v1_deliveries__ident__retry_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ident: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RetryDelivery"];
             };
         };
         responses: {

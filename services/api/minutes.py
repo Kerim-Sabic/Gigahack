@@ -290,6 +290,34 @@ def deliveries(ident: str, u=Depends(authenticated)):
         return [dict(r) for r in c.execute("SELECT * FROM outbox WHERE snapshot_id=?", (ident,))]
 
 
+class RetryDelivery(Strict):
+    explicitly_send_older: bool = False
+
+
+@router.post("/deliveries/{ident}/retry")
+def retry_delivery(ident: str, body: RetryDelivery, u=Depends(authenticated)):
+    from .main import fail
+
+    with transaction() as c:
+        row = c.execute("SELECT * FROM outbox WHERE id=?", (ident,)).fetchone()
+        if not row:
+            fail("delivery_not_found", 404)
+        s, m = get_snapshot(c, row["snapshot_id"], u, True)
+        if not c.execute("SELECT 1 FROM approvals WHERE snapshot_id=?", (s["id"],)).fetchone():
+            fail("approval_required", 409)
+        if s["revision"] != m["revision"] and not body.explicitly_send_older:
+            fail("older_version_requires_explicit_choice", 409)
+        if row["state"] == "queued":
+            return {"id": ident, "state": "queued"}
+        if row["state"] != "failed":
+            fail("delivery_not_safe_to_retry", 409)
+        # A failed attempt never entered send_message. Keep the original recipients,
+        # snapshot and Message-ID; uncertain/accepted attempts must never be replayed.
+        c.execute("UPDATE outbox SET state='queued',error=NULL WHERE id=?", (ident,))
+        audit(c, m["id"], u["id"], "delivery_retry_queued", {"delivery": ident})
+        return {"id": ident, "state": "queued"}
+
+
 @router.get("/snapshots/{ident}/exports/{format}")
 def export(ident: str, format: str, u=Depends(authenticated)):
     from .main import fail

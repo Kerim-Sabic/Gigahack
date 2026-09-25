@@ -21,8 +21,9 @@ from pydantic import Field
 from . import config
 from .audio import atomic_write, decode, sha
 from .db import audit, canonical, migrate, transaction, uid
+from .dates import resolve as resolve_date
 from .domain import Strict, reduce_events
-from .schemas import AccountView, MeetingDetail, MeetingView, SegmentView
+from .schemas import AccountSummary, AccountView, MeetingDetail, MeetingView, SegmentView
 
 passwords = PasswordHasher()
 attempts = {}
@@ -222,6 +223,14 @@ def preference(body: Preference, u=Depends(user)):
     return body
 
 
+@app.get("/api/v1/accounts", response_model=list[AccountSummary])
+def accounts(u=Depends(user)):
+    if u["role"] != "admin":
+        fail("admin_required", 403)
+    with transaction() as c:
+        return [dict(r) for r in c.execute("SELECT id,name,role,language FROM users ORDER BY name")]
+
+
 @app.post("/api/v1/accounts")
 def account(body: Account, u=Depends(user)):
     if u["role"] != "admin":
@@ -333,13 +342,20 @@ def update_meeting(ident: str, body: MeetingEdit, u=Depends(user)):
         fail("invalid_timezone")
     with transaction() as c:
         m = access(c, ident, u, True)
+        if c.execute(
+            "SELECT 1 FROM jobs WHERE meeting_id=? AND state IN ('queued','running')", (ident,)
+        ).fetchone():
+            fail("cancel_processing_before_metadata_edit", 409)
         revision(c, m, body.revision)
         c.execute(
             "UPDATE meetings SET title=?,date=?,timezone=?,language=?,classification=? WHERE id=?",
             (body.title, str(body.date), body.timezone, body.language, body.classification, ident),
         )
         if str(body.date) != m["date"] or body.timezone != m["timezone"]:
-            c.execute("UPDATE candidates SET review='needs_review' WHERE meeting_id=?", (ident,))
+            c.execute(
+                "UPDATE candidates SET review='needs_review' WHERE meeting_id=? AND review!='excluded'",
+                (ident,),
+            )
         c.execute("DELETE FROM participants WHERE meeting_id=?", (ident,))
         for name in body.participants:
             c.execute("INSERT INTO participants VALUES(?,?,?)", (uid(), ident, name[:200]))
@@ -463,6 +479,8 @@ def grant(ident: str, body: Grant, u=Depends(user)):
         access(c, ident, u, True)
         if u["role"] != "admin":
             fail("member_admin_required", 403)
+        if not c.execute("SELECT 1 FROM users WHERE id=?", (body.user_id,)).fetchone():
+            fail("account_not_found", 404)
         c.execute("INSERT OR IGNORE INTO members VALUES(?,?)", (ident, body.user_id))
         audit(c, ident, u["id"], "member_granted", {"user": body.user_id})
         return {"ok": True}
@@ -622,7 +640,7 @@ def queue(ident: str, body: Queue, u=Depends(user)):
         if getattr(body, name) and not available[name]["available"]:
             fail(name + "_not_prepared", 409)
     with transaction() as c:
-        access(c, ident, u, True)
+        meeting_context = access(c, ident, u, True)
         if not c.execute(
             "SELECT 1 FROM assets WHERE id=? AND meeting_id=?", (body.asset_id, ident)
         ).fetchone():
@@ -646,6 +664,9 @@ def queue(ident: str, body: Queue, u=Depends(user)):
                 "source_versions": source_versions,
                 "glossary": json.loads(glossary["body"]) if glossary else [],
                 "glossary_version": glossary["version"] if glossary else 0,
+                "meeting_context": {
+                    key: meeting_context[key] for key in ("date", "timezone", "language", "classification")
+                },
                 "models_hash": hashlib.sha256(model_manifest.read_bytes()).hexdigest()
                 if model_manifest.exists()
                 else None,
@@ -804,6 +825,12 @@ def correct_item(ident: str, body: Correction, u=Depends(user)):
         m = access(c, old["meeting_id"], u, True)
         revision(c, m, body.revision)
         e = json.loads(old["body"])
+        if (
+            e.get("raw_due")
+            and resolve_date(e["raw_due"], m["date"]) != e.get("due")
+            and (str(body.due) if body.due else None) == e.get("due")
+        ):
+            fail("meeting_date_requires_reextraction", 409)
         changed = [
             f
             for f in ("text", "owner", "due")
@@ -910,6 +937,8 @@ def review(ident: str, body: Review, u=Depends(user)):
             if stale:
                 fail("stale_evidence_requires_reextraction", 409)
             e = json.loads(event["body"])
+            if e.get("raw_due") and resolve_date(e["raw_due"], m["date"]) != e.get("due"):
+                fail("meeting_date_requires_reextraction", 409)
             if any("critical" in issue.lower() for issue in e["uncertainties"]) and e.get("value"):
                 fail("critical_value_unresolved", 409)
             c.execute(

@@ -2,6 +2,7 @@ import hashlib
 import json
 import os
 import smtplib
+import ssl
 import subprocess
 import sys
 import tempfile
@@ -289,19 +290,36 @@ def deliver_one():
             return False
         row = dict(row)
         c.execute("UPDATE outbox SET state='sending',attempt=attempt+1 WHERE id=?", (row["id"],))
-    msg = EmailMessage()
-    msg["From"] = "minutes@secure-mom.test"
-    msg["To"] = ", ".join(json.loads(row["addresses"]))
-    msg["Subject"] = "Approved minutes: " + json.loads(row["body"])["meeting"]["title"]
-    msg["Message-ID"] = row["message_id"]
-    msg.set_content("Approved meeting minutes are included as HTML. No audio attached.")
-    msg.add_alternative(row["html"], subtype="html")
     state, error = "smtp_accepted", None
     entered_data = False
     try:
+        msg = EmailMessage()
+        msg["From"] = os.environ.get("MOM_SMTP_FROM", "minutes@secure-mom.test")
+        msg["To"] = ", ".join(json.loads(row["addresses"]))
+        msg["Subject"] = "Approved minutes: " + json.loads(row["body"])["meeting"]["title"]
+        msg["Message-ID"] = row["message_id"]
+        msg.set_content("Approved meeting minutes are included as HTML. No audio attached.")
+        msg.add_alternative(row["html"], subtype="html")
         host = os.environ.get("MOM_SMTP_HOST", "127.0.0.1")
-        port = int(os.environ.get("MOM_SMTP_PORT", "1025"))
-        with smtplib.SMTP(host, port, timeout=15) as smtp:
+        local = host.lower() in ("127.0.0.1", "::1", "localhost")
+        mode = os.environ.get("MOM_SMTP_TLS", "none" if local else "starttls")
+        if mode not in ("none", "starttls", "ssl") or (mode == "none" and not local):
+            raise ValueError("TLS is required for non-loopback SMTP")
+        username, password = os.environ.get("MOM_SMTP_USER"), os.environ.get("MOM_SMTP_PASSWORD")
+        if bool(username) != bool(password) or (username and mode == "none"):
+            raise ValueError("SMTP authentication requires credentials and TLS")
+        port = int(os.environ.get("MOM_SMTP_PORT", "1025" if local else "465" if mode == "ssl" else "587"))
+        context = (
+            ssl.create_default_context(cafile=os.environ.get("MOM_SMTP_CA_FILE")) if mode != "none" else None
+        )
+        transport = smtplib.SMTP_SSL if mode == "ssl" else smtplib.SMTP
+        with transport(host, port, timeout=15, **({"context": context} if mode == "ssl" else {})) as smtp:
+            if mode == "starttls":
+                smtp.ehlo()
+                smtp.starttls(context=context)
+                smtp.ehlo()
+            if username:
+                smtp.login(username, password)
             entered_data = True
             refused = smtp.send_message(msg)
             if refused:

@@ -80,3 +80,77 @@ def test_smtp_timeout_does_not_automatically_retry(tmp_path, monkeypatch):
     with transaction() as c:
         row = c.execute("SELECT state,attempt FROM outbox").fetchone()
         assert tuple(row) == ("uncertain", 1)
+
+
+@pytest.mark.parametrize(
+    "tls,expected", [("starttls", "smtp_accepted"), ("none", "failed"), ("ssl", "smtp_accepted")]
+)
+def test_internal_smtp_requires_verified_tls_before_auth(tmp_path, monkeypatch, tls, expected):
+    import ssl
+
+    monkeypatch.setattr(config, "DATA", tmp_path)
+    monkeypatch.setenv("MOM_SMTP_HOST", "mail.internal.example")
+    monkeypatch.setenv("MOM_SMTP_TLS", tls)
+    monkeypatch.setenv("MOM_SMTP_USER", "synthetic-user")
+    monkeypatch.setenv("MOM_SMTP_PASSWORD", "synthetic-password")
+    migrate()
+    with transaction() as c:
+        c.execute(
+            "INSERT INTO meetings VALUES('m','test','2026-09-25','Europe/Chisinau','en','Administrative',1,'ready',0)"
+        )
+        c.execute(
+            "INSERT INTO snapshots VALUES('s','m',1,?,'hash','<p>synthetic</p>',0)",
+            (canonical({"meeting": {"title": "Synthetic"}}),),
+        )
+        c.execute(
+            "INSERT INTO outbox(id,snapshot_id,addresses,recipient_hash,state,message_id,created) VALUES('o','s','[\"x@secure-mom.test\"]','hash','queued','<o@test>',0)"
+        )
+    calls = []
+
+    class SMTP:
+        def __init__(self, *args, **kwargs):
+            calls.append("connect")
+            self.secure = "context" in kwargs
+            if self.secure:
+                self.check_context(kwargs["context"])
+
+        def check_context(self, context):
+            assert context.check_hostname and context.verify_mode == ssl.CERT_REQUIRED
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+        def ehlo(self):
+            calls.append("ehlo")
+
+        def starttls(self, context):
+            self.check_context(context)
+            self.secure = True
+            calls.append("tls")
+
+        def login(self, user, password):
+            assert self.secure
+            assert (user, password) == ("synthetic-user", "synthetic-password")
+            calls.append("auth")
+
+        def send_message(self, msg):
+            assert self.secure and calls[-1] == "auth"
+            assert msg["Message-ID"] == "<o@test>"
+            calls.append("send")
+            return {}
+
+    monkeypatch.setattr(smtplib, "SMTP", SMTP)
+    monkeypatch.setattr(smtplib, "SMTP_SSL", SMTP)
+    assert deliver_one()
+    with transaction() as c:
+        assert c.execute("SELECT state FROM outbox").fetchone()[0] == expected
+    assert calls == (
+        []
+        if tls == "none"
+        else ["connect", "ehlo", "tls", "ehlo", "auth", "send"]
+        if tls == "starttls"
+        else ["connect", "auth", "send"]
+    )

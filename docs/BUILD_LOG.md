@@ -58,3 +58,14 @@
   correction and reviewer issue resolution with retained provenance. 38 backend and 5 frontend tests pass.
 - Browser regression now creates a second recipient group, selects it and verifies its exact address in
   Mailpit. Latest fixture workflow: 9.256 s plus successful RO/RU checks; zero page errors.
+
+- GitHub full Ubuntu CI passed at ec3d049b9a8e45e14a55a9b8ebfcf51b037638e3 (run 36163082294).
+- Added operator metadata/access/delete controls and retained candidate amendment history. Fixed date
+  cache identity and stale relative-deadline acceptance; excluded history is not resurrected by edits.
+- Added admin-only safe account directory, explicit failed-mail retry and verified SMTP TLS/authentication.
+  No new external dependency/model. 44 backend tests, 5 frontend tests, lint and strict build pass.
+- Expanded browser assertions exposed accessible-label ambiguity in the role selector and amendment
+  textarea; explicit labels were added. Test tab selector corrected to the actual displayed label.
+- Expanded fixture browser flow passed in 12.175 s, with metadata edit, account creation/access grant,
+  retained amendment reason, actual PDF and Mailpit receipt. RO/RU persistence/source checks also pass.
+- Final operator browser regression after checkbox/selection fixes passed in 9.889 s, zero page errors.

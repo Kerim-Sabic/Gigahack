@@ -5,7 +5,7 @@ Current stage: real local workflow implemented; acceptance gates remain open.
 Windows development host: two RTX 5080 16 GB GPUs, 128 GiB RAM, Python 3.12.10.
 Target RTX 3070 Ti 8 GB / 24 GB laptop is not connected and has NOT RUN.
 
-- 38 backend/domain/recovery/fault tests pass; 5 frontend tests pass; strict build and lint pass.
+- 44 backend/domain/recovery/fault tests pass; 5 frontend tests pass; strict build and lint pass.
 - Real synthetic audio runs through Whisper, Qwen, evidence review, immutable minutes, PDF and Mailpit.
 - Model revisions/checksums, package lockfiles, copied license notices and provenance are tracked.
 - Schema upgrade, disk-write failure, child cancellation, OOM retry mechanism, backup/restore,
@@ -32,3 +32,7 @@ runtime rehearsal; target-laptop sustained performance. See REQUIREMENTS_MATRIX.
 
 UI language persistence and recipient errors passed real Romanian/Russian browser checks; evidence
 quotes remain unchanged. Conditions/values and explicit issue resolution now support human amendments.
+
+Operator metadata/access/delete controls and retained amendment timeline are implemented.
+Date edits invalidate job context; stale relative deadlines cannot be accepted unchanged.
+Explicit safe failed-mail retry and verified internal SMTP TLS/authentication have regression tests.

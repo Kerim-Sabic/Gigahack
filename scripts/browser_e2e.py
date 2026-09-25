@@ -33,11 +33,28 @@ def main(*, fixture_inference=False):
             page.get_by_label("Addresses, one per line", exact=True).fill("reviewers@secure-mom.test")
             page.get_by_role("button", name="Save recipient group", exact=True).click()
             expect(page.get_by_text("Saved on this computer.", exact=True)).to_be_visible()
+            page.get_by_label("Username", exact=True).fill("fixture-viewer")
+            page.get_by_label("Password", exact=True).fill("synthetic-viewer-password")
+            page.get_by_label("Role", exact=True).select_option("viewer")
+            page.get_by_role("button", name="Create account", exact=True).click()
+            expect(page.get_by_text("Saved on this computer.", exact=True)).to_be_visible()
             page.get_by_role("button", name="Meetings", exact=True).click()
         page.get_by_role("button", name="＋ New meeting", exact=True).click()
         page.get_by_label("Meeting title").fill("Synthetic end-to-end qualification")
         page.get_by_label("Participants, one per line").fill("Elena\nAndrei")
         page.get_by_role("button", name="Create meeting", exact=True).click()
+        if fixture_inference:
+            page.get_by_text("Meeting details and access", exact=True).click()
+            page.get_by_label("Date", exact=True).fill("2026-09-24")
+            page.get_by_role("button", name="Save meeting details", exact=True).click()
+            expect(page.locator(".pageheading .eyebrow")).to_contain_text("2026-09-24")
+            page.get_by_label("Local account", exact=True).select_option(label="fixture-viewer · viewer")
+            with page.expect_response(
+                lambda r: r.url.endswith("/members") and r.request.method == "POST"
+            ) as granted:
+                page.get_by_role("button", name="Grant access", exact=True).click()
+            assert granted.value.status == 200
+            page.get_by_text("Meeting details and access", exact=True).click()
         page.get_by_label("Upload audio", exact=True).set_input_files(str(fixture))
         page.get_by_role("button", name="Process audio", exact=True).wait_for(timeout=30000)
         page.get_by_role("button", name="Process audio", exact=True).click()
@@ -79,11 +96,27 @@ def main(*, fixture_inference=False):
         assert messages["total"] >= 1
         if fixture_inference:
             assert messages["messages"][0]["To"][0]["Address"] == "reviewers@secure-mom.test"
+            page.set_viewport_size({"width": 1366, "height": 768})
+            page.get_by_role("tab", name="Decisions & actions", exact=True).click()
+            page.locator(".detail").get_by_text("Secretary amendment", exact=True).click()
+            page.get_by_label("Text", exact=True).fill("Synthetic reviewed maintenance report")
+            page.get_by_label("Reason for amendment", exact=True).fill("Synthetic browser correction reason")
+            page.get_by_role("button", name="Save reviewed amendment", exact=True).click()
+            history = page.locator(".evidence")
+            history.get_by_text("Secretary amendment", exact=True).click()
+            expect(history.get_by_text("Synthetic browser correction reason", exact=True)).to_be_visible()
+            expect(history.get_by_text("Synthetic reviewed maintenance report", exact=True)).to_be_visible()
+            page.screenshot(path=str(proof / "amendment-history.png"), full_page=True)
         browser.close()
     report = {
         "kind": "fixture-inference-browser" if fixture_inference else "real-model-browser-synthetic",
         "elapsed_seconds": time.time() - started,
-        "checks": [
+        "checks": (
+            ["metadata_edit", "account_create", "member_grant", "retained_amendment_history"]
+            if fixture_inference
+            else []
+        )
+        + [
             "login",
             "create",
             "upload",

@@ -19,3 +19,19 @@ The admin-and-member-only meeting deletion endpoint requires the expected revisi
 It rejects active jobs, quarantines audio, removes meeting content/exports and retains a minimal audit
 tombstone. Backups are separate retention copies and are not erased by meeting deletion. Failed file
 cleanup is reported as pending. Automatic retention scheduling and forensic SSD erasure are not provided.
+
+
+The minutes panel offers **Retry this failed delivery** only when the attempt failed before
+entering the SMTP send operation. The server rejects uncertain, sending and accepted attempts.
+Retry preserves the frozen recipients, snapshot, Message-ID and attempt count; a stale approved
+version still needs an explicit older-version choice. The displayed delivery recipients are the
+frozen envelope, independent of the currently selected group.
+
+Internal SMTP configuration is read from the mail worker environment:
+`MOM_SMTP_HOST`, `MOM_SMTP_PORT`, `MOM_SMTP_FROM`, `MOM_SMTP_TLS` (`starttls` or `ssl`),
+`MOM_SMTP_USER`, `MOM_SMTP_PASSWORD`, and optional `MOM_SMTP_CA_FILE` for an internal CA.
+Non-loopback hosts default to STARTTLS/587; implicit TLS defaults to 465. Certificate and hostname
+verification remain enabled. Plain transport is allowed only for loopback Mailpit, without credentials.
+Keep credentials outside Git and restart the mail worker after configuration changes. An internal
+SMTP deployment needs its own connectivity/certificate rehearsal; automated tests cover transport
+ordering and failures, while the actual local Mailpit flow covers delivery integration.

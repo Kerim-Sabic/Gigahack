@@ -245,6 +245,58 @@ def test_adversarial_spec_inventory():
     assert all(c["expected"] for c in cases)
 
 
+def test_metadata_edit_invalidates_job_context_and_old_relative_date(client):
+    m = new_meeting(client)
+    _, cid, asset = seed_candidate(client, m)
+    route = f"/api/v1/meetings/{m['id']}"
+    job = client.post(route + "/jobs", json={"asset_id": asset}).json()
+    edit = {"title": m["title"], "date": "2026-09-26", "revision": 1}
+    assert client.patch(route, json=edit).json()["code"] == "cancel_processing_before_metadata_edit"
+    with transaction() as c:
+        c.execute("UPDATE jobs SET state='complete' WHERE id=?", (job["id"],))
+        body = json.loads(c.execute("SELECT body FROM candidates WHERE id=?", (cid,)).fetchone()[0])
+        body.update(raw_due="tomorrow", due="2026-09-26")
+        c.execute("UPDATE candidates SET body=? WHERE id=?", (canonical(body), cid))
+    assert client.patch(route, json=edit).status_code == 200
+    assert (
+        client.post(
+            f"/api/v1/review-issues/{cid}/resolve", json={"revision": 2, "action": "accepted"}
+        ).json()["code"]
+        == "meeting_date_requires_reextraction"
+    )
+    next_job = client.post(route + "/jobs", json={"asset_id": asset}).json()
+    assert next_job["id"] != job["id"]
+    with transaction() as c:
+        config_body = json.loads(
+            c.execute("SELECT config FROM jobs WHERE id=?", (next_job["id"],)).fetchone()[0]
+        )
+        assert config_body["meeting_context"]["date"] == "2026-09-26"
+
+
+def test_account_directory_and_explicit_membership(client):
+    m = new_meeting(client)
+    created = client.post(
+        "/api/v1/accounts", json={"name": "viewer", "password": "synthetic-viewer-password", "role": "viewer"}
+    ).json()
+    directory = client.get("/api/v1/accounts")
+    assert directory.status_code == 200
+    assert all(set(row) == {"id", "name", "role", "language"} for row in directory.json())
+    assert client.post(f"/api/v1/meetings/{m['id']}/members", json={"user_id": "missing"}).status_code == 404
+    assert (
+        client.post(f"/api/v1/meetings/{m['id']}/members", json={"user_id": created["id"]}).status_code == 200
+    )
+    client.delete("/api/v1/sessions/current")
+    login = client.post(
+        "/api/v1/sessions", json={"name": "viewer", "password": "synthetic-viewer-password"}
+    ).json()
+    client.headers["x-csrf-token"] = login["csrf"]
+    assert client.get("/api/v1/accounts").status_code == 403
+    assert client.get(f"/api/v1/meetings/{m['id']}").status_code == 200
+    assert (
+        client.post(f"/api/v1/meetings/{m['id']}/members", json={"user_id": created["id"]}).status_code == 403
+    )
+
+
 def test_reviewed_quantity_and_condition_are_explicit_human_additions(client):
     m = new_meeting(client)
     _, cid, _ = seed_candidate(client, m)
@@ -330,6 +382,38 @@ def test_confirmed_retention_deletion_keeps_only_tombstone(client):
             c.execute("SELECT kind FROM audit WHERE meeting_id=?", (m["id"],)).fetchone()[0]
             == "meeting_deleted"
         )
+
+
+def test_failed_mail_retry_preserves_envelope_and_refuses_uncertainty(client):
+    m = new_meeting(client)
+    _, cid, _ = seed_candidate(client, m)
+    client.post(f"/api/v1/review-issues/{cid}/resolve", json={"revision": 1, "action": "accepted"})
+    sid = client.post(f"/api/v1/meetings/{m['id']}/snapshots", json={"revision": 2}).json()["id"]
+    client.post(f"/api/v1/snapshots/{sid}/approve", json={"revision": 2})
+    group = client.get("/api/v1/recipient-groups").json()[0]
+    oid = client.post(
+        f"/api/v1/snapshots/{sid}/deliveries",
+        json={"group_id": group["id"], "group_version": group["version"]},
+    ).json()["id"]
+    with transaction() as c:
+        prior = dict(c.execute("SELECT * FROM outbox WHERE id=?", (oid,)).fetchone())
+        c.execute(
+            "UPDATE outbox SET state='failed',error='smtp_transport_error',attempt=1 WHERE id=?", (oid,)
+        )
+        c.execute("UPDATE meetings SET revision=3 WHERE id=?", (m["id"],))
+    route = f"/api/v1/deliveries/{oid}/retry"
+    assert client.post(route, json={}).status_code == 409
+    assert client.post(route, json={"explicitly_send_older": True}).status_code == 200
+    assert client.post(route, json={"explicitly_send_older": True}).status_code == 200
+    with transaction() as c:
+        after = dict(c.execute("SELECT * FROM outbox WHERE id=?", (oid,)).fetchone())
+        assert after["state"] == "queued" and after["attempt"] == 1
+        assert all(after[k] == prior[k] for k in ("message_id", "addresses", "snapshot_id", "recipient_hash"))
+        c.execute("UPDATE outbox SET state='uncertain' WHERE id=?", (oid,))
+    assert (
+        client.post(route, json={"explicitly_send_older": True}).json()["code"]
+        == "delivery_not_safe_to_retry"
+    )
 
 
 def test_migration_upgrade_keeps_existing_accounts(tmp_path, monkeypatch):

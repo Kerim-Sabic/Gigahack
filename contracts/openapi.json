@@ -164,6 +164,26 @@
       }
     },
     "/api/v1/accounts": {
+      "get": {
+        "summary": "Accounts",
+        "operationId": "accounts_api_v1_accounts_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AccountSummary"
+                  },
+                  "type": "array",
+                  "title": "Response Accounts Api V1 Accounts Get"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "summary": "Account",
         "operationId": "account_api_v1_accounts_post",
@@ -1501,6 +1521,53 @@
         }
       }
     },
+    "/api/v1/deliveries/{ident}/retry": {
+      "post": {
+        "summary": "Retry Delivery",
+        "operationId": "retry_delivery_api_v1_deliveries__ident__retry_post",
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetryDelivery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/snapshots/{ident}/exports/{format}": {
       "get": {
         "summary": "Export",
@@ -1633,6 +1700,44 @@
         ],
         "title": "Account"
       },
+      "AccountSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "secretary",
+              "viewer"
+            ],
+            "title": "Role"
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "en",
+              "ro",
+              "ru"
+            ],
+            "title": "Language",
+            "default": "en"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "role"
+        ],
+        "title": "AccountSummary"
+      },
       "AccountView": {
         "properties": {
           "id": {
@@ -1652,10 +1757,6 @@
             ],
             "title": "Role"
           },
-          "csrf": {
-            "type": "string",
-            "title": "Csrf"
-          },
           "language": {
             "type": "string",
             "enum": [
@@ -1665,6 +1766,10 @@
             ],
             "title": "Language",
             "default": "en"
+          },
+          "csrf": {
+            "type": "string",
+            "title": "Csrf"
           }
         },
         "type": "object",
@@ -2547,6 +2652,18 @@
           "last_sequence"
         ],
         "title": "RecordingView"
+      },
+      "RetryDelivery": {
+        "properties": {
+          "explicitly_send_older": {
+            "type": "boolean",
+            "title": "Explicitly Send Older",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "RetryDelivery"
       },
       "Review": {
         "properties": {
