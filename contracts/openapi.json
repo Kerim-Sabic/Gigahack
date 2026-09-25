@@ -1160,6 +1160,69 @@
         }
       }
     },
+    "/api/v1/assets/{ident}/clip": {
+      "get": {
+        "summary": "Asset Clip",
+        "operationId": "asset_clip_api_v1_assets__ident__clip_get",
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Start"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/assets/{ident}/audio": {
       "get": {
         "summary": "Audio",
@@ -2286,7 +2349,7 @@
         "properties": {
           "count": {
             "type": "integer",
-            "maximum": 3601.0,
+            "maximum": 9007199254740991.0,
             "minimum": 1.0,
             "title": "Count"
           },

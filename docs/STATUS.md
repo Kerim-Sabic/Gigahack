@@ -1,7 +1,7 @@
 # Current implementation status
 
 Complete mission remains active. The last verified remote checkpoint is
-aabc99e34f08f141bc67b55c203fd8796210dc65 (CI 36196962259 PASS). It contains multilingual
+7b97596fde98ef491c6d5adb794f406f54cae060 (CI 36198246292 PASS). It contains multilingual
 transcription, frozen developer settings, current-step ETA and bounded ASR checkpoints.
 It also includes atomic recording/stage recovery and kernel-backed model-process ownership.
 Exact bounded audio clips and optional-model excerpt results are included. Full-recording
@@ -10,8 +10,8 @@ add source-linked audio coverage observations and freeze warning counts into exp
 
 ## Current evidence
 
-- 155 backend tests pass locally with one Linux-only check skipped; that check and the actual
-  child cleanup test pass in Linux. Current frontend checkpoint: 11 tests and strict build pass.
+- 165 backend tests pass locally with two Linux-only checks skipped; those ownership/RF64
+  checks pass in Linux. Current frontend checkpoint: 11 tests and strict build pass.
 - Hard-killing a model stage now terminates its owned child through Windows Job Objects or
   Linux parent-death binding; the actual tests preserve an unrelated running process.
   New CUDA silence inference passes in 7.00s. Full application crash rehearsal remains open.
@@ -67,10 +67,18 @@ gaps / 102.322875 seconds and 24 empty alternatives; these are not human-confirm
 Schema 3 preserves accounts and existing records; retention cascades observations with jobs.
 See DECISIONS/013-audio-coverage-review.md. Independent gap recovery remains open.
 
+## Long audio
+
+See DECISIONS/014-long-audio-storage-and-playback.md for exact ingestion, sparse RF64, source
+playback and real silent-ASR scope. The complete mission still requires long-speech accuracy,
+aggregate-memory and crash recovery work; finite hardware cannot promise failure-free operation.
+
 ## Remaining acceptance
 
-Arbitrary-length upload/recording support still needs size/duration/container limits replaced
-with resource-aware handling; extraction checkpoints and bounded transcript state remain open.
+Default byte/duration caps are removed; RF64, paged recording assembly, storage checks and
+sectioned source playback are implemented. Actual 1.728 GB / 2.5-hour silence upload and all
+30 real Whisper chunks passed. This does not qualify long speech or optional diarization.
+Extraction checkpoints and bounded transcript state remain open.
 Full-app crash/fencing, final corrected real-model evaluation, multilingual human assessment,
 long-distance reconciliation, retention/settings, branding/UI/PDF finishing, final demo,
 current-source packaging and final offline qualification remain required.

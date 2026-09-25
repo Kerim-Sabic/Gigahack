@@ -2,12 +2,12 @@
 
 import hashlib
 import json
-import wave
 from pathlib import Path
 
 import numpy as np
 
 from services.api.audio import atomic_write, sha
+from services.api.pcm import Reader
 from services.api.db import canonical
 from services.api.provenance import runtime_identity
 
@@ -63,7 +63,7 @@ def transcribe_chunks(model, spec, settings, progress):
     directory.mkdir(parents=True, exist_ok=True)
     segments, languages = [], []
     reused = 0
-    with wave.open(str(audio), 'rb') as source:
+    with Reader(audio) as source:
         if (source.getframerate(), source.getnchannels(), source.getsampwidth()) != (RATE, 1, 2):
             raise ValueError('asr_requires_canonical_pcm16_mono_16khz')
         total = source.getnframes()

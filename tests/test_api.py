@@ -159,6 +159,7 @@ def test_admin_has_no_implicit_content_access(client):
         f"meetings/{m['id']}/transcript",
         f"meetings/{m['id']}/items",
         f"assets/{asset}/audio",
+        f"assets/{asset}/clip",
     ]:
         assert client.get("/api/v1/" + route).status_code == 404
     assert client.get("/api/v1/meetings").json() == []
@@ -1006,3 +1007,51 @@ def test_audio_checks_are_paginated_idempotent_and_membership_protected(client):
     with transaction() as c:
         c.execute("DELETE FROM jobs WHERE id=?", (job["id"],))
         assert c.execute("SELECT COUNT(*) FROM audio_checks").fetchone()[0] == 0
+
+
+def test_virtual_audio_clips_preserve_exact_bytes_and_authorized_ranges(client):
+    meeting = new_meeting(client)
+    asset = client.post(f"/api/v1/meetings/{meeting['id']}/uploads", files={"file": ("source.wav", audio(), "audio/wav")}).json()["id"]
+    path = f"/api/v1/assets/{asset}/clip?start=100&end=2100"
+    full = client.get(path)
+    assert full.status_code == 200 and full.headers["x-audio-start-sample"] == "100"
+    with wave.open(io.BytesIO(full.content)) as source:
+        assert source.getnframes() == 2000 and source.readframes(2000) == b"\0\0" * 2000
+    for value, first, last in [("bytes=0-50", 0, 50), ("bytes=43-71", 43, 71), ("bytes=-5", len(full.content)-5, len(full.content)-1)]:
+        partial = client.get(path, headers={"Range": value})
+        assert partial.status_code == 206 and partial.content == full.content[first:last+1]
+    assert client.get(path, headers={"Range": "bytes=999999-"}).status_code == 416
+    assert client.get(path, headers={"Range": "bytes=0-1,3-4"}).status_code == 416
+    assert client.get(f"/api/v1/assets/{asset}/clip?start=-1").status_code == 400
+    client.delete("/api/v1/sessions/current")
+    assert client.get(path).status_code == 401
+
+
+def test_recording_assembles_more_than_old_chunk_limit_in_bounded_pages(client):
+    import hashlib
+
+    meeting = new_meeting(client)
+    rid = client.post(f"/api/v1/meetings/{meeting['id']}/recordings", json={"sample_rate": 8000}).json()["id"]
+    assert client.put(f"/api/v1/recordings/{rid}/chunks/0", content=b"\1\0").status_code == 200
+    with transaction() as c:
+        path = c.execute("SELECT path FROM chunks WHERE recording_id=?", (rid,)).fetchone()[0]
+        c.executemany("INSERT INTO chunks VALUES(?,?,?,?,?)", [(rid, i, hashlib.sha256(b"\1\0").hexdigest(), 1, path) for i in range(1,3602)])
+    result = client.post(f"/api/v1/recordings/{rid}/finish", json={"count": 3602})
+    assert result.status_code == 200, result.text
+    assert result.json()["samples"] == 7204
+
+
+def test_low_storage_rejects_upload_and_never_acknowledges_new_chunk(client, monkeypatch):
+    from services.api import storage
+    from types import SimpleNamespace
+
+    meeting = new_meeting(client)
+    rid = client.post(f"/api/v1/meetings/{meeting['id']}/recordings", json={"sample_rate": 16000}).json()["id"]
+    monkeypatch.setattr(storage.shutil, "disk_usage", lambda _: SimpleNamespace(free=config.MIN_FREE_BYTES-1))
+    result = client.post(f"/api/v1/meetings/{meeting['id']}/uploads", files={"file": ("source.wav", audio(), "audio/wav")})
+    assert result.status_code == 507 and result.json()["code"] == "storage_low"
+    result = client.put(f"/api/v1/recordings/{rid}/chunks/0", content=b"\1\0")
+    assert result.status_code == 507
+    with transaction() as c:
+        assert c.execute("SELECT COUNT(*) FROM chunks").fetchone()[0] == 0
+        assert c.execute("SELECT COUNT(*) FROM assets").fetchone()[0] == 0

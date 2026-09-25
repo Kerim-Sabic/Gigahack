@@ -2,6 +2,13 @@ import type { Lang } from './i18n';
 let language:Lang='en';
 export function setUiLanguage(value:Lang){language=value;document.documentElement.lang=value;}
 const rows:[string,string,string][]=[
+ ["Audio playback failed. Your recording is retained. Try playing the passage again.", "Redarea audio a eșuat. Înregistrarea este păstrată. Încercați să redați din nou fragmentul.", "Не удалось воспроизвести аудио. Запись сохранена. Попробуйте прослушать фрагмент ещё раз."],
+ ["Previous audio section", "Secțiunea audio anterioară", "Предыдущий аудиофрагмент"],
+ ["Next audio section", "Următoarea secțiune audio", "Следующий аудиофрагмент"],
+ ["Source interval", "Interval în sursă", "Интервал в исходной записи"],
+ ["The audio exceeds the upload limit configured by the operator.", "Înregistrarea depășește limita de încărcare configurată de operator.", "Аудиозапись превышает предел загрузки, установленный оператором."],
+ ["There is not enough free storage to continue safely. Saved recordings and acknowledged chunks are retained. Free space and retry.", "Nu există suficient spațiu liber pentru a continua în siguranță. Înregistrările salvate și fragmentele confirmate sunt păstrate. Eliberați spațiu și reîncercați.", "Недостаточно свободного места для безопасного продолжения. Сохранённые записи и подтверждённые фрагменты сохранены. Освободите место и повторите попытку."],
+ ["The storage operation failed. Saved work is retained. Check the storage device and retry.", "Operația de stocare a eșuat. Lucrul salvat este păstrat. Verificați dispozitivul de stocare și reîncercați.", "Ошибка операции с хранилищем. Сохранённые данные не потеряны. Проверьте накопитель и повторите попытку."],
  ["Flags come from the latest analysis of this recording. Transcript edits do not recalculate them.", "Semnalările provin din ultima analiză a acestei înregistrări. Editarea transcrierii nu le recalculează.", "Отметки относятся к последнему анализу этой записи. Правки расшифровки не пересчитывают их."],
  ["Audio checks could not be loaded.", "Verificările audio nu au putut fi încărcate.", "Не удалось загрузить результаты проверки аудио."],
  ["Audio passages to check", "Fragmente audio de verificat", "Аудиофрагменты для проверки"],

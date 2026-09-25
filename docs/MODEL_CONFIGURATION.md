@@ -48,7 +48,8 @@ twice, and crossing hypotheses retain their complete raw text and a boundary-rev
 Checkpoints are atomic/fsynced and keyed to the actual audio hash, settings, device/retry
 profile and implementation identity. Corrupt or mismatching checkpoints are recomputed.
 This bounds waveform memory; total transcript/LLM state is still proportional to meeting size.
-Upload duration/container limits and full-pipeline long-file qualification are not yet removed.
+Fixed default upload/duration caps are removed and canonical storage supports RF64. Full-pipeline
+long-speech qualification and bounded aggregate state remain open. See DECISIONS/014-long-audio-storage-and-playback.md.
 
 `worker.no_activity_timeout_seconds` controls the inactivity watchdog (default 1800 seconds).
 A long stage is not stopped merely because two hours elapsed. Advancing work or observed CPU
@@ -74,3 +75,12 @@ local prerequisites, not linguistic accuracy or compatibility with the target la
 The candidate lock records 182 package artifacts; pip 26.2.1 is separate bootstrap tooling.
 The complete reproducible installer/offline distribution is still pending. Do not point the
 application at the historical merged experimental environment, which contains extra packages.
+
+
+Ingestion resource policy is separate from inference budgets. `MOM_MAX_UPLOAD_BYTES` and
+`MOM_MAX_AUDIO_SECONDS` default to zero (no operator-imposed cap). `MOM_MIN_FREE_BYTES`
+defaults to 5 GiB and cannot be lowered below that reserve. `MOM_DECODE_IDLE_SECONDS`
+defaults to 300 and measures lack of CPU/output activity, not total decoding time. These
+process-start settings live in services/api/config.py; restart the API after changing them.
+They do not certify unlimited storage or bounded whole-pipeline memory. Storage errors preserve
+already acknowledged audio; unacknowledged incoming bytes may need to be sent again.

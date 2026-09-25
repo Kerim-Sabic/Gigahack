@@ -1,11 +1,13 @@
 import asyncio
 import hashlib
+import errno
+import tempfile
 import json
 import os
 import secrets
+import re
 import sqlite3
 import time
-import wave
 from contextlib import asynccontextmanager
 from datetime import date as CalendarDate
 from pathlib import Path
@@ -22,6 +24,8 @@ from filelock import FileLock, Timeout
 
 from . import config
 from .audio import atomic_write, decode, sha
+from .pcm import header as pcm_header
+from .storage import require_space
 from .db import audit, canonical, migrate, transaction, uid
 from .dates import resolve as resolve_date
 from .domain import Strict, reduce_events
@@ -48,11 +52,24 @@ async def safety(request, call_next):
         length = request.headers.get("content-length")
         if length is None or request.headers.get("transfer-encoding"):
             return JSONResponse({"code": "content_length_required"}, 411)
-        if not length.isdecimal():
+        if not length.isdecimal() or len(length) > 20:
             return JSONResponse({"code": "invalid_content_length"}, 400)
-        limit = config.MAX_BYTES + 1024 * 1024 if request.url.path.endswith("/uploads") else 8 * 1024 * 1024
-        if int(length) > limit:
+        upload_request = request.url.path.endswith("/uploads")
+        limit = (config.MAX_BYTES + 1024 * 1024 if config.MAX_BYTES else None) if upload_request else 8 * 1024 * 1024
+        if limit is not None and int(length) > limit:
             return JSONResponse({"code": "request_too_large"}, 413)
+        if upload_request:
+            try:
+                actor = user(request)
+                with transaction() as c:
+                    access(c, request.url.path.split("/")[-2], actor, True)
+            except HTTPException as exc:
+                return JSONResponse({"code": str(exc.detail)}, exc.status_code)
+            try:
+                require_space(tempfile.gettempdir(), int(length))
+                require_space(config.DATA, int(length) * 2)
+            except OSError:
+                return JSONResponse({"code": "storage_low"}, 507)
     if request.method not in ("GET", "HEAD", "OPTIONS"):
         origin = request.headers.get("origin")
         if origin and origin != config.ORIGIN:
@@ -91,6 +108,13 @@ async def error(request, exc):
 @app.exception_handler(sqlite3.IntegrityError)
 async def integrity_error(request, exc):
     return JSONResponse({"code": "data_conflict", "request_id": request.state.request_id}, 409)
+
+
+@app.exception_handler(OSError)
+async def storage_error(request, exc):
+    if exc.errno in (errno.ENOSPC, errno.EDQUOT):
+        return JSONResponse({"code": "storage_low", "request_id": request.state.request_id}, 507)
+    return JSONResponse({"code": "storage_io_failed", "request_id": request.state.request_id}, 500)
 
 
 @app.exception_handler(Exception)
@@ -510,10 +534,11 @@ def upload(ident: str, file: UploadFile, u=Depends(user)):
     with original.open("wb") as f:
         while chunk := file.file.read(1024 * 1024):
             size += len(chunk)
-            if size > config.MAX_BYTES:
+            if config.MAX_BYTES and size > config.MAX_BYTES:
                 f.close()
                 original.unlink()
                 fail("upload_too_large", 413)
+            require_space(folder, len(chunk))
             f.write(chunk)
         f.flush()
         import os
@@ -522,6 +547,8 @@ def upload(ident: str, file: UploadFile, u=Depends(user)):
     target = folder / "source.wav"
     try:
         metadata = decode(original, target)
+    except OSError:
+        raise
     except Exception:
         fail("audio_decode_failed")
     with transaction() as c:
@@ -557,7 +584,7 @@ def recording(ident: str, body: Capture, u=Depends(user)):
 
 @app.put("/api/v1/recordings/{ident}/chunks/{sequence}")
 async def chunk(ident: str, sequence: int, request: Request, u=Depends(user)):
-    if sequence < 0 or sequence > 3600:
+    if sequence < 0 or sequence > 2**53 - 1:
         fail("invalid_sequence")
     content = bytearray()
     async for part in request.stream():
@@ -581,6 +608,7 @@ async def chunk(ident: str, sequence: int, request: Request, u=Depends(user)):
             fail("recording_sealed", 409)
         if not prior:
             path = config.DATA / "audio" / r["meeting_id"] / ident / f"{sequence}.pcm"
+            require_space(config.DATA, len(content))
             atomic_write(path, content)
             c.execute(
                 "INSERT INTO chunks VALUES(?,?,?,?,?)",
@@ -591,7 +619,7 @@ async def chunk(ident: str, sequence: int, request: Request, u=Depends(user)):
 
 
 class Finish(Strict):
-    count: int = Field(ge=1, le=3601)
+    count: int = Field(ge=1, le=2**53 - 1)
     gaps: list[dict] = Field(default_factory=list, max_length=1000)
 
 
@@ -616,8 +644,8 @@ def finish(ident: str, body: Finish, u=Depends(user)):
             if not r:
                 fail("recording_not_found", 404)
             access(c, r["meeting_id"], u, True)
-            chunks = c.execute("SELECT * FROM chunks WHERE recording_id=? ORDER BY sequence", (ident,)).fetchall()
-            if len(chunks) != body.count or any(ch["sequence"] != i for i, ch in enumerate(chunks)):
+            stats = c.execute("SELECT COUNT(*),MIN(sequence),MAX(sequence),SUM(samples) FROM chunks WHERE recording_id=?", (ident,)).fetchone()
+            if stats[0] != body.count or stats[1] != 0 or stats[2] != body.count - 1:
                 fail("missing_chunks", 409)
             if r["state"] == "sealed":
                 if r["gaps"] != canonical(body.gaps):
@@ -633,16 +661,27 @@ def finish(ident: str, body: Finish, u=Depends(user)):
         try:
             path = folder / "original.wav"
             temporary = folder / "original.partial.wav"
+            frames = stats[3]
+            require_space(folder, frames * 2 + (frames * 32000 // r["rate"]) + 160)
+            written, cursor = 0, 0
             with temporary.open("w+b") as stream:
-                with wave.open(stream, "wb") as w:
-                    w.setnchannels(1)
-                    w.setsampwidth(2)
-                    w.setframerate(r["rate"])
+                stream.write(pcm_header(frames, r["rate"]))
+                while cursor < body.count:
+                    with transaction() as c:
+                        chunks = c.execute("SELECT * FROM chunks WHERE recording_id=? AND sequence>=? ORDER BY sequence LIMIT 256", (ident, cursor)).fetchall()
+                    if not chunks:
+                        fail("missing_chunks", 409)
                     for ch in chunks:
-                        pcm = Path(ch["path"]).read_bytes()
-                        if hashlib.sha256(pcm).hexdigest() != ch["hash"]:
+                        with Path(ch["path"]).open("rb") as chunk_file:
+                            pcm = chunk_file.read(384001)
+                        if ch["sequence"] != cursor or len(pcm) != ch["samples"] * 2 or hashlib.sha256(pcm).hexdigest() != ch["hash"]:
                             fail("recording_chunk_corrupt", 409)
-                        w.writeframes(pcm)
+                        require_space(folder, len(pcm))
+                        stream.write(pcm)
+                        written += len(pcm)
+                        cursor += 1
+                if written != frames * 2:
+                    fail("recording_chunk_corrupt", 409)
                 stream.flush()
                 os.fsync(stream.fileno())
             os.replace(temporary, path)
@@ -1040,6 +1079,46 @@ def review(ident: str, body: Review, u=Depends(user)):
         c.execute("UPDATE candidates SET review=?,actor=? WHERE id=?", (body.action, u["id"], ident))
         audit(c, m["id"], u["id"], "review_" + body.action, {"candidate": ident})
         return {"revision": m["revision"] + 1}
+
+
+@app.get("/api/v1/assets/{ident}/clip")
+def asset_clip(ident: str, request: Request, start: int = 0, end: int | None = None, u=Depends(user)):
+    from .audio import clip_bytes
+    from .pcm import Reader
+
+    with transaction() as c:
+        asset = c.execute("SELECT * FROM assets WHERE id=?", (ident,)).fetchone()
+        if not asset:
+            fail("asset_not_found", 404)
+        access(c, asset["meeting_id"], u)
+    with Reader(asset["path"]) as source:
+        if source.getframerate() != 16000:
+            fail("invalid_audio_format")
+        total = source.getnframes()
+    end = min(total, end if end is not None else start + 600 * 16000)
+    if not 0 <= start < end <= total or end - start > 600 * 16000:
+        fail("invalid_audio_range")
+    length = 44 + (end - start) * 2
+    first, last, status = 0, length - 1, 200
+    value = request.headers.get("range")
+    if value:
+        match = re.fullmatch(r"bytes=(\d*)-(\d*)", value)
+        if not match or not any(match.groups()) or len(value) > 60:
+            return Response(status_code=416, headers={"Content-Range": f"bytes */{length}"})
+        left, right = match.groups()
+        if left:
+            first, last = int(left), min(int(right), length - 1) if right else length - 1
+        else:
+            first, last = max(0, length - int(right)), length - 1
+        if first > last or first >= length:
+            return Response(status_code=416, headers={"Content-Range": f"bytes */{length}"})
+        status = 206
+    headers = {"Content-Length": str(last - first + 1), "Accept-Ranges": "bytes",
+               "X-Audio-Start-Sample": str(start), "X-Audio-End-Sample": str(end)}
+    if status == 206:
+        headers["Content-Range"] = f"bytes {first}-{last}/{length}"
+    return StreamingResponse(clip_bytes(asset["path"], start, end, first, last), status_code=status,
+                             media_type="audio/wav", headers=headers)
 
 
 @app.get("/api/v1/assets/{ident}/audio")

@@ -12,7 +12,8 @@ import { MeetingDetails, CandidateHistory } from './MeetingDetails';
 export function Workspace({id,t,back,role}: {id:string;t:Labels;back:()=>void;role:string}) {
  const [tab,setTab]=useState('review'),[error,setError]=useState(''),[busy,setBusy]=useState(false),[search,setSearch]=useState(''),[selection,setSelection]=useState<any>(null),[field,setField]=useState('text');
  const [offset,setOffset]=useState(0);
- const clipEnd=useRef<number|null>(null);
+ const continuousPlayback=useRef(true);
+ const [playback,setPlayback]=useState<{asset_id:string;start:number;end:number}|null>(null);
  const [profile,setProfile]=useState({device:'cuda',parakeet:false,diarization:false});
  const capabilities=useQuery({queryKey:['proof'],queryFn:()=>api('/system/proof')});
  const player=useRef<HTMLAudioElement>(null),cache=useQueryClient();
@@ -24,7 +25,15 @@ export function Workspace({id,t,back,role}: {id:string;t:Labels;back:()=>void;ro
  const refresh=async()=>{await cache.invalidateQueries();};
  async function act(fn:()=>Promise<unknown>){setError('');setBusy(true);try{await fn();await refresh();}catch(e){setError(e instanceof Error ? e.message : tr('The request failed. Check the form, refresh, and try again.'));}finally{setBusy(false);}}
  async function upload(file:File){const form=new FormData();form.append('file',file);await act(()=>api(`/meetings/${id}/uploads`,'POST',form));}
- function play(segment:any){const audio=player.current;if(!audio)return;const start=Math.max(0,segment.start/16000-2);clipEnd.current=segment.end/16000+2;audio.onloadedmetadata=()=>{audio.currentTime=start;void audio.play();};audio.src=`/api/v1/assets/${segment.asset_id}/audio`;audio.load();}
+ function playSpan(asset_id:string,start:number,end:number,continuous=false){
+  const audio=player.current,asset=meeting.data?.assets?.find(a=>a.id===asset_id);if(!audio||!asset)return;
+  start=Math.max(0,start);end=Math.min(asset.samples,end,start+600*16000);if(end<=start)return;
+  continuousPlayback.current=continuous;setPlayback({asset_id,start,end});
+  audio.onloadedmetadata=()=>{audio.currentTime=0;void audio.play().catch((error:DOMException)=>{if(error.name!=='AbortError')setError(tr('Audio playback failed. Your recording is retained. Try playing the passage again.'));});};
+  audio.src=`/api/v1/assets/${asset_id}/clip?start=${start}&end=${end}`;audio.load();
+ }
+ function play(segment:any){playSpan(segment.asset_id,segment.start-32000,segment.end+32000);}
+
  async function playEvidence(ref:any){try{const segment=await api(`/segments/${ref.segment_id}`);play(segment);}catch(e){setError(e instanceof Error ? e.message : tr('The request failed. Check the form, refresh, and try again.'));}}
 
  if(meeting.isPending)return <p role="status">{t.loading}</p>;
@@ -32,6 +41,8 @@ export function Workspace({id,t,back,role}: {id:string;t:Labels;back:()=>void;ro
  const m=meeting.data,candidates=review.data?.candidates||[],selected=candidates.find((c:any)=>c.id===selection)||candidates[0];
  const latestJobs=new Map<string,NonNullable<Meeting['jobs']>[number]>();
  for(const job of m.jobs||[])if(job.created>=(latestJobs.get(job.asset_id)?.created??-1))latestJobs.set(job.asset_id,job);
+ const activeAudio=playback||(m.assets?.[0]?{asset_id:m.assets[0].id,start:0,end:Math.min(m.assets[0].samples,600*16000)}:null);
+ const audioSamples=m.assets?.find(a=>a.id===activeAudio?.asset_id)?.samples||0;
  const refs=selected?.evidence?.filter((e:any)=>e.field===field)||[];
  return <><button className="textbutton" onClick={back}>← {t.back}</button><div className="pageheading"><div><p className="eyebrow">{tr(m.classification)} · {m.date||tr("Date unknown")}</p><h1>{m.title}</h1><p>{m.participants?.map(p=>p.name).join(' · ')||tr('No participants entered')}</p></div><span className="badge">{tr(m.status.replaceAll('_',' '))}</span></div>
  {error&&<p className="error" role="alert">{error}</p>}
@@ -44,7 +55,8 @@ export function Workspace({id,t,back,role}: {id:string;t:Labels;back:()=>void;ro
  <aside className="card evidence"><p className="eyebrow">{tr("SOURCE EVIDENCE · ")}{tr(field)}</p>{refs.length?refs.map((r:any)=>{return <div key={r.id}><blockquote>{r.quote}</blockquote><p>{tr("Transcript revision ")}{r.revision}</p><button className="secondary" onClick={()=>playEvidence(r)}>{tr("▶ Play source clip")}</button></div>;}):<p>{tr("No source supplied for this field. Keep unsupported values unresolved.")}</p>}<CandidateHistory id={selected?.id}/></aside></div>}
  {tab==='transcript'&&<section className="card"><label>{t.search}<input value={search} onChange={e=>{setSearch(e.target.value);setOffset(0);}} placeholder={tr("Search original speech…")}/></label><p className="caption">{tr("Original source language · 200 segments per page · corrections preserve history")}</p>{transcript.data?.map(s=><TranscriptRow readOnly={role==='viewer'} key={s.id} segment={s} play={()=>play(s)} save={(text,speaker)=>act(()=>api(`/segments/${s.id}/revisions`,'POST',{revision:s.revision,text,speaker}))}/>)}<div className="toolbar"><button className="secondary" disabled={offset===0} onClick={()=>setOffset(Math.max(0,offset-200))}>{tr("Previous segments")}</button><span>{offset+1}–{offset+(transcript.data?.length||0)}</span><button className="secondary" disabled={(transcript.data?.length||0)<200} onClick={()=>setOffset(offset+200)}>{tr("Next segments")}</button></div>{transcript.data?.length===0&&<p>{tr("No transcript available.")}</p>}</section>}
  {tab==='minutes'&&<section className="card"><div className="pageheading"><div><h2>{tr("Versioned minutes")}</h2><p>{tr("Resolve every review item, then create an immutable preview.")}</p></div><button disabled={busy||role==='viewer'} onClick={()=>act(()=>api(`/meetings/${id}/snapshots`,'POST',{revision:m.revision}))}>{tr("Create preview")}</button></div>{snapshots.data?.map(s=><Snapshot key={s.id} snapshot={s} revision={m.revision} t={t} groups={groups.data||[]} act={act} busy={busy||role==='viewer'}/>)}{!snapshots.data?.length&&<p>{tr("No versions yet. Approval and sending are separate steps.")}</p>}</section>}
- <div className="player"><span>{tr("Source audio")}</span><audio ref={player} controls onTimeUpdate={()=>{if(player.current&&clipEnd.current!==null&&player.current.currentTime>=clipEnd.current){player.current.pause();clipEnd.current=null;}}} preload="none" src={m.assets?.[0]?`/api/v1/assets/${m.assets[0].id}/audio`:undefined}/><span className="caption">{tr("Original speech is retained")}</span></div></>;
+ <div className="player"><span>{tr("Source audio")}</span><audio ref={player} controls onEnded={()=>{if(continuousPlayback.current&&activeAudio&&activeAudio.end<audioSamples)playSpan(activeAudio.asset_id,activeAudio.end,activeAudio.end+600*16000,true);}} preload="none" src={m.assets?.[0]?`/api/v1/assets/${m.assets[0].id}/clip`:undefined}/>{activeAudio&&<><button className="secondary" disabled={activeAudio.start===0} onClick={()=>playSpan(activeAudio.asset_id,Math.max(0,activeAudio.start-600*16000),activeAudio.start,true)}>{tr("Previous audio section")}</button><button className="secondary" disabled={activeAudio.end>=audioSamples} onClick={()=>playSpan(activeAudio.asset_id,activeAudio.end,activeAudio.end+600*16000,true)}>{tr("Next audio section")}</button><span className="caption">{tr("Source interval")}: {(activeAudio.start/16000).toFixed(1)}–{(activeAudio.end/16000).toFixed(1)}s</span></>}</div></>;
+
 }
 
 function TranscriptRow({segment:s,play,save,readOnly}:{readOnly:boolean;segment:any;play:()=>void;save:(text:string,speaker:string|null)=>void}) {

@@ -11,6 +11,7 @@ FILES = (
     "services/worker/asr_chunks.py",
     "services/api/progress.py",
     "services/api/audio.py",
+    "services/api/pcm.py",
     "services/worker/stage.py",
     "services/worker/reconcile.py",
     "services/worker/optional.py",
