@@ -4,8 +4,8 @@ Environment: Windows development host, Python 3.12.10, two RTX 5080 16 GB, 128 G
 
 | Check | Observed result |
 |---|---|
-| Backend/domain/recovery tests | 33 passed; 0 skipped; one Starlette httpx deprecation warning |
-| Frontend component/capture queue tests | 4 passed |
+| Backend/domain/recovery tests | 38 passed; 0 skipped; one Starlette httpx deprecation warning |
+| Frontend component/capture queue tests | 5 passed |
 | Python lint | Passed |
 | Frontend strict TypeScript + production build | Passed |
 | OpenAPI type generation | Passed with TypeScript 5.9.3 |
@@ -21,7 +21,7 @@ Environment: Windows development host, Python 3.12.10, two RTX 5080 16 GB, 128 G
 | 30 actual extraction cases | 28 structurally valid outputs; 2 validation failures; semantic gate NOT passed |
 | Target 8 GB GPU/24 GB RAM | NOT RUN — TARGET MACHINE REQUIRED |
 | Human RO/RU/EN and code-switch accuracy | Not measured |
-| Scoped WSL namespace probe | IPv4/IPv6 external route attempts fail ENETUNREACH; complete runtime unverified |
+| Scoped WSL namespace probe | IPv4/IPv6 external route attempts fail ENETUNREACH; real Whisper/Qwen worker completed; full application boundary unverified |
 | Offline kit | Preparation and no-index wheel installation passed; disconnected run not verified |
 | GPU/host sampling | Actual samples recorded; total-host RAM gate failed on shared dev workstation |
 
@@ -31,3 +31,6 @@ Public reports must remove absolute local paths and raw model response identifie
 
 Fresh prepared-kit environment (new database/account, packaged browser/models/tools) completed real
 upload-to-PDF-to-Mailpit in 25.168 seconds, zero page errors. Networking was not disabled.
+
+Linux isolated real stages: Whisper 27.723 s, Qwen 22.977 s; peak total GPU 0 9769 MiB.
+This exceeds the target total-VRAM budget and is not a target-laptop pass.

@@ -27,4 +27,5 @@ Python and the GPU driver are host prerequisites. No private runtime state is co
 `python -m scripts.offline_probe` was run under WSL with a dedicated unprivileged network namespace.
 Both IPv4 and IPv6 external probes failed with errno 101 (ENETUNREACH). With Linux dependencies/tools
 prepared, `MOM_ISOLATE_WORKER=1 python -m scripts.mom start` uses that boundary for the inference worker.
-Mail delivery remains a separate process. The complete isolated inference path has not been verified.
+Mail delivery remains a separate process. The production Whisper and Qwen path subsequently completed in this namespace on WSL (51.038 s);
+API/browser/PDF/SMTP and Windows-host networking were outside that test.

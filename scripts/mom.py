@@ -71,6 +71,7 @@ def start():
     config.init_dirs()
     if not (config.ROOT / "apps/web/dist/index.html").exists():
         raise SystemExit("Frontend not prepared. Run npm ci and npm run build in apps/web.")
+    verify_assets()
     pidfile = config.DATA / "processes.json"
     if pidfile.exists():
         for p in json.loads(pidfile.read_text()):

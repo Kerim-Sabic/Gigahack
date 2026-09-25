@@ -30,8 +30,8 @@ Open http://127.0.0.1:8765. First-run setup creates a local admin with your own 
 There is no production default account/password. The development verification database contains only
 synthetic content and is never included in Git. Mailpit is http://127.0.0.1:8025; SMTP port 1025.
 
-Startup installs/downloads nothing. Missing prepared frontend or Mailpit fails clearly. Missing models
-appear in diagnostics and processing errors; the app never substitutes fixture results or cloud inference.
+Startup installs/downloads nothing and verifies model checksums. Missing or damaged models, prepared
+frontend or Mailpit fail clearly; the app never substitutes fixture results or cloud inference.
 Models are under `models/`; recordings/database under `.runtime/` unless `MOM_DATA` is set.
 Both directories are ignored by Git. Keep host storage encrypted and protected by OS permissions.
 
@@ -92,3 +92,13 @@ workflow has not been verified. The kit is an internal deployment artifact, not 
 Synthetic browser microphone check (services running and qualification credentials set):
 `python -m scripts.recording_e2e`. It defaults to 305 seconds and exercises real AudioWorklet/chunk capture
 using Chromium's synthetic microphone. It does not validate a physical microphone.
+
+Scoped Linux real-inference check, after preparation (use native Linux storage for MOM_DATA):
+`python -m scripts.qualify_worker_isolation --path /path/to/synthetic-16khz-mono.wav`.
+This runs the production worker with external IPv4/IPv6 blocked in its own namespace. It does not
+measure Windows-host networking or include browser/PDF/SMTP. Never open a live Linux SQLite database
+from Windows; use the backup API or read the completed report instead.
+
+Fast fixture browser check: stop managed services, prepare Mailpit, then run
+`python -m tests.browser_fixture`. Only its test process replaces inference; the report is explicitly
+labeled fixture inference. It exercises the real UI/API/queue/evidence/PDF/SMTP plumbing.

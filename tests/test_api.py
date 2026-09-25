@@ -245,6 +245,73 @@ def test_adversarial_spec_inventory():
     assert all(c["expected"] for c in cases)
 
 
+def test_reviewed_quantity_and_condition_are_explicit_human_additions(client):
+    m = new_meeting(client)
+    _, cid, _ = seed_candidate(client, m)
+    issue = "critical quantity ambiguous"
+    with transaction() as c:
+        original = json.loads(c.execute("SELECT body FROM candidates WHERE id=?", (cid,)).fetchone()[0])
+        original["uncertainties"] = [issue]
+        c.execute("UPDATE candidates SET body=? WHERE id=?", (canonical(original), cid))
+    r = client.post(
+        f"/api/v1/items/{cid}/corrections",
+        json={
+            "revision": 1,
+            "text": "Send report",
+            "owner": "Elena",
+            "due": None,
+            "value": "25 beds",
+            "condition": "If procurement approves",
+            "resolved_issues": [issue],
+            "reason": "Synthetic reviewer verified the intended resource quantity",
+        },
+    )
+    assert r.status_code == 200, r.text
+    with transaction() as c:
+        corrected = json.loads(
+            c.execute("SELECT body FROM candidates WHERE id=?", (r.json()["id"],)).fetchone()[0]
+        )
+        assert corrected["value"] == "25 beds" and corrected["condition"] == "If procurement approves"
+        assert corrected["uncertainties"] == []
+        assert corrected["human_amendment"]["resolved_issues"] == [issue]
+        assert not any(e["field"] in ("value", "condition") for e in corrected["evidence"])
+        assert (
+            issue
+            in json.loads(c.execute("SELECT body FROM candidates WHERE id=?", (cid,)).fetchone()[0])[
+                "uncertainties"
+            ]
+        )
+
+
+def test_selected_recipient_group_is_versioned_and_addresses_are_frozen(client):
+    m = new_meeting(client)
+    _, cid, _ = seed_candidate(client, m)
+    client.post(f"/api/v1/review-issues/{cid}/resolve", json={"revision": 1, "action": "accepted"})
+    sid = client.post(f"/api/v1/meetings/{m['id']}/snapshots", json={"revision": 2}).json()["id"]
+    client.post(f"/api/v1/snapshots/{sid}/approve", json={"revision": 2})
+    group = client.post(
+        "/api/v1/recipient-groups",
+        json={"name": "Synthetic chosen recipients", "addresses": ["selected@secure-mom.test"]},
+    ).json()
+    changed = client.post(
+        "/api/v1/recipient-groups",
+        json={
+            "id": group["id"],
+            "version": group["version"],
+            "name": group["name"],
+            "addresses": ["updated@secure-mom.test"],
+        },
+    ).json()
+    route = f"/api/v1/snapshots/{sid}/deliveries"
+    assert (
+        client.post(route, json={"group_id": group["id"], "group_version": group["version"]}).status_code
+        == 409
+    )
+    sent = client.post(route, json={"group_id": changed["id"], "group_version": changed["version"]})
+    assert sent.status_code == 200
+    assert sent.json()["addresses"] == ["updated@secure-mom.test"]
+
+
 def test_confirmed_retention_deletion_keeps_only_tombstone(client):
     m = new_meeting(client)
     seed_candidate(client, m)

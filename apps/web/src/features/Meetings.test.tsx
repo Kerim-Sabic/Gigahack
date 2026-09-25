@@ -16,7 +16,7 @@ describe('meeting form',()=>{
   fireEvent.click(screen.getByRole('button',{name:'＋ New meeting'}));
   fireEvent.change(screen.getByLabelText('Meeting title'),{target:{value:'Synthetic'}});
   fireEvent.submit(screen.getByRole('button',{name:'Create meeting'}).closest('form')!);
-  await waitFor(()=>expect(screen.getByRole('alert').textContent).toContain('revision_conflict'));
+  await waitFor(()=>expect(screen.getByRole('alert').textContent).toContain('This record changed.'));
   expect(open).not.toHaveBeenCalled();
  });
  it('keeps localization keys synchronized',()=>{

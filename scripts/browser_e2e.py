@@ -27,6 +27,13 @@ def main(*, fixture_inference=False):
         page.get_by_label("Username", exact=True).fill(os.environ["MOM_QUALIFY_USER"])
         page.get_by_label("Password (12+ characters)", exact=True).fill(os.environ["MOM_QUALIFY_PASSWORD"])
         page.get_by_role("button", name="Continue").click()
+        if fixture_inference:
+            page.get_by_role("button", name="Settings", exact=True).click()
+            page.get_by_label("New group name", exact=True).fill("CI reviewers")
+            page.get_by_label("Addresses, one per line", exact=True).fill("reviewers@secure-mom.test")
+            page.get_by_role("button", name="Save recipient group", exact=True).click()
+            expect(page.get_by_text("Saved on this computer.", exact=True)).to_be_visible()
+            page.get_by_role("button", name="Meetings", exact=True).click()
         page.get_by_role("button", name="＋ New meeting", exact=True).click()
         page.get_by_label("Meeting title").fill("Synthetic end-to-end qualification")
         page.get_by_label("Participants, one per line").fill("Elena\nAndrei")
@@ -34,7 +41,7 @@ def main(*, fixture_inference=False):
         page.get_by_label("Upload audio", exact=True).set_input_files(str(fixture))
         page.get_by_role("button", name="Process audio", exact=True).wait_for(timeout=30000)
         page.get_by_role("button", name="Process audio", exact=True).click()
-        expect(page.get_by_text("awaiting review", exact=True)).to_be_visible(timeout=240000)
+        expect(page.locator(".pageheading .badge").first).to_have_text("awaiting review", timeout=240000)
         expect(page.locator(".itemlist button").first).to_be_visible(timeout=10000)
         page.screenshot(path=str(proof / "review-1366.png"), full_page=True)
         for _ in range(20):
@@ -49,6 +56,9 @@ def main(*, fixture_inference=False):
         page.get_by_role("tab", name="Minutes", exact=True).click()
         page.get_by_role("button", name="Create preview", exact=True).click()
         page.get_by_role("button", name="Approve version", exact=True).click()
+        if fixture_inference:
+            page.get_by_label("Recipient group", exact=True).select_option(label="CI reviewers")
+            expect(page.locator(".snapshot strong")).to_have_text("reviewers@secure-mom.test")
         send = page.get_by_role("button", name="Send approved version", exact=True)
         expect(send).to_be_enabled()
         send.click()
@@ -67,6 +77,8 @@ def main(*, fixture_inference=False):
         assert page.evaluate("document.activeElement.tagName") in ("BUTTON", "A", "INPUT", "SELECT")
         messages = httpx.get("http://127.0.0.1:8025/api/v1/messages", trust_env=False).json()
         assert messages["total"] >= 1
+        if fixture_inference:
+            assert messages["messages"][0]["To"][0]["Address"] == "reviewers@secure-mom.test"
         browser.close()
     report = {
         "kind": "fixture-inference-browser" if fixture_inference else "real-model-browser-synthetic",

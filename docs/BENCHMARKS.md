@@ -22,3 +22,8 @@ Input duration 9.6671875 s. Original audio and outputs retained locally, exclude
 
 The worker records process-tree RAM samples and stage elapsed times in receipts. Monitoring limitations
 remain null, never zero. No under-15-minute one-hour claim is made.
+
+WSL isolated production worker (synthetic input, no external route): 51.038 s total;
+Whisper 27.723 s and Qwen 22.977 s. Peak sampled total GPU 0 memory 9769 MiB and
+9076 MiB respectively; WSL memory samples 6.668/8.274 GB. This total-VRAM result exceeds the
+requested 7 GiB gate. It includes Windows activity and does not qualify an 8 GB laptop.

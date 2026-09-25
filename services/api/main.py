@@ -787,6 +787,9 @@ class Correction(Strict):
     text: str = Field(min_length=1, max_length=2000)
     owner: str | None = Field(default=None, max_length=200)
     due: date | None = None
+    condition: str | None = Field(default=None, max_length=2000)
+    value: str | None = Field(default=None, max_length=200)
+    resolved_issues: list[str] = Field(default_factory=list, max_length=30)
     reason: str = Field(min_length=3, max_length=1000)
     category: Literal["action", "decision", "information"] | None = None
     kind: Literal["propose", "confirm", "amend", "reject", "cancel", "reopen", "inform"] | None = None
@@ -809,6 +812,13 @@ def correct_item(ident: str, body: Correction, u=Depends(user)):
         for field in ("category", "kind"):
             if getattr(body, field) is not None and getattr(body, field) != e[field]:
                 changed.append(field)
+        for field in ("condition", "value"):
+            if field in body.model_fields_set and getattr(body, field) != e.get(field):
+                changed.append(field)
+        if any(issue not in e["uncertainties"] for issue in body.resolved_issues):
+            fail("unknown_review_issue")
+        if body.resolved_issues:
+            changed.append("uncertainties")
         if not changed:
             fail("no_changes")
         new = {
@@ -824,8 +834,14 @@ def correct_item(ident: str, body: Correction, u=Depends(user)):
                 "fields": changed,
                 "created": time.time(),
             },
-            "uncertainties": [x for x in e["uncertainties"] if not x.startswith("Date normalization")],
+            "uncertainties": [x for x in e["uncertainties"] if x not in body.resolved_issues],
         }
+        if "due" in changed:
+            new["raw_due"] = None
+        for field in ("condition", "value"):
+            if field in body.model_fields_set:
+                new[field] = getattr(body, field)
+        new["human_amendment"]["resolved_issues"] = body.resolved_issues
         for field in ("category", "kind"):
             value = getattr(body, field)
             if value is not None and value != e[field]:

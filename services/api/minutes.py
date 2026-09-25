@@ -23,34 +23,113 @@ def authenticated(request: Request):
     return current_user(request)
 
 
+LABELS = {
+    "en": {
+        "title": "Meeting minutes",
+        "items": "Decisions and actions",
+        "participants": "Participants",
+        "unresolved": "Unresolved matters",
+        "task": "Task / decision",
+        "owner": "Owner",
+        "due": "Due",
+        "status": "Status",
+        "condition": "Condition",
+        "history": "Amendment history",
+        "human": "Secretary amendment",
+        "unknown": "Not specified",
+        "revision": "Review revision",
+        "evidence": "Original evidence retained in the authorized workspace",
+        "owner_missing": "owner not specified",
+        "conditional": "conditional",
+    },
+    "ro": {
+        "title": "Proces-verbal",
+        "items": "Decizii și acțiuni",
+        "participants": "Participanți",
+        "unresolved": "Aspecte nerezolvate",
+        "task": "Sarcină / decizie",
+        "owner": "Responsabil",
+        "due": "Termen",
+        "status": "Stare",
+        "condition": "Condiție",
+        "history": "Istoricul modificărilor",
+        "human": "Modificare a secretarului",
+        "unknown": "Nespecificat",
+        "revision": "Revizia verificării",
+        "evidence": "Dovezile originale sunt păstrate în spațiul autorizat",
+        "owner_missing": "responsabil nespecificat",
+        "conditional": "condiționat",
+        "proposed": "propus",
+        "confirmed": "confirmat",
+        "rejected": "respins",
+        "cancelled": "anulat",
+        "information": "informație",
+        "propose": "propunere",
+        "confirm": "confirmare",
+        "amend": "modificare",
+        "reject": "respingere",
+        "cancel": "anulare",
+        "reopen": "redeschidere",
+        "inform": "informare",
+    },
+    "ru": {
+        "title": "Протокол совещания",
+        "items": "Решения и действия",
+        "participants": "Участники",
+        "unresolved": "Нерешённые вопросы",
+        "task": "Задача / решение",
+        "owner": "Ответственный",
+        "due": "Срок",
+        "status": "Статус",
+        "condition": "Условие",
+        "history": "История изменений",
+        "human": "Изменение секретаря",
+        "unknown": "Не указано",
+        "revision": "Редакция проверки",
+        "evidence": "Исходные подтверждения сохранены в рабочем пространстве с контролем доступа",
+        "owner_missing": "ответственный не указан",
+        "conditional": "условно",
+        "proposed": "предложено",
+        "confirmed": "подтверждено",
+        "rejected": "отклонено",
+        "cancelled": "отменено",
+        "information": "сведения",
+        "propose": "предложение",
+        "confirm": "подтверждение",
+        "amend": "изменение",
+        "reject": "отклонение",
+        "cancel": "отмена",
+        "reopen": "возобновление",
+        "inform": "информация",
+    },
+}
+
+
 def render(data):
     m = data["meeting"]
+    labels = LABELS[m["language"]]
 
     def esc(value):
-        return html.escape(str(value if value is not None else "Not specified"))
+        return html.escape(str(value if value is not None else labels["unknown"]))
 
-    labels = {
-        "en": ["Meeting minutes", "Decisions and actions", "Participants", "Unresolved matters"],
-        "ro": ["Proces-verbal", "Decizii și acțiuni", "Participanți", "Aspecte nerezolvate"],
-        "ru": ["Протокол совещания", "Решения и действия", "Участники", "Нерешённые вопросы"],
-    }[m["language"]]
     rows = "".join(
-        f"<tr><td>{esc(i['text'])}</td><td>{esc(i['owner'])}</td><td>{esc(i['due'])}</td><td>{esc(i['status'])}</td><td>{esc(i['condition'])}</td></tr>"
+        f"<tr><td>{esc(i['text'])}</td><td>{esc(i['owner'])}</td><td>{esc(i['due'])}</td><td>{esc(labels.get(i['status'], i['status']))}</td><td>{esc(i['condition'])}</td></tr>"
         for i in data["items"]
     )
     history = "".join(
-        f"<li>{esc(i['subject'])}: {'Secretary amendment' if e.get('human_amendment') else esc(e['kind'])} — {esc(e['text'])}</li>"
+        f"<li>{esc(i['subject'])}: {esc(labels['human'] if e.get('human_amendment') else labels.get(e['kind'], e['kind']))} — {esc(e['text'])}</li>"
         for i in data["items"]
         for e in i["history"]
     )
     unresolved = "".join(f"<li>{esc(x)}</li>" for x in data["unresolved"])
+    headers = "".join(f"<th>{esc(labels[k])}</th>" for k in ("task", "owner", "due", "status", "condition"))
     return f'''<!doctype html><html lang="{m["language"]}"><meta charset="utf-8"><title>{esc(m["title"])}</title>
 <style>body{{font:16px sans-serif;color:#203339;max-width:900px;margin:40px auto;padding:24px}}h1{{font-size:30px}}table{{border-collapse:collapse;width:100%}}td,th{{text-align:left;padding:12px;border-bottom:1px solid #ccd6d5}}footer{{margin-top:32px;font-size:12px}}@page{{size:A4;margin:18mm}}</style>
-<h1>{labels[0]}</h1><h2>{esc(m["title"])}</h2><p>{esc(m["date"])} · {esc(m["timezone"])} · {esc(m["classification"])}</p>
-<h3>{labels[2]}</h3><p>{esc(", ".join(data["participants"]))}</p><h3>{labels[1]}</h3>
-<table><thead><tr><th>Task / decision</th><th>Owner</th><th>Due</th><th>Status</th><th>Condition</th></tr></thead><tbody>{rows}</tbody></table>
-<h3>{labels[3]}</h3><ul>{unresolved}</ul><h3>Amendment history</h3><ul>{history}</ul>
-<footer>Secure MOM · review revision {m["revision"]} · original evidence retained in authorized workspace · synthetic demonstration / human review required</footer></html>'''
+<h1>{labels["title"]}</h1><h2>{esc(m["title"])}</h2><p>{esc(m["date"])} · {esc(m["timezone"])} · {esc(m["classification"])}</p>
+<h3>{labels["participants"]}</h3><p>{esc(", ".join(data["participants"]))}</p><h3>{labels["items"]}</h3>
+<table><thead><tr>{headers}</tr></thead><tbody>{rows}</tbody></table>
+<h3>{labels["unresolved"]}</h3><ul>{unresolved}</ul><h3>{labels["history"]}</h3><ul>{history}</ul>
+<footer>Secure MOM · {labels["revision"]} {m["revision"]} · {labels["evidence"]}</footer></html>'''
 
 
 class Revision(Strict):
@@ -77,6 +156,7 @@ def snapshot(ident: str, body: Revision, u=Depends(authenticated)):
             fail("processing_incomplete", 409)
         data = {
             "schema_version": 1,
+            "template_version": 2,
             "application_version": "0.1.0",
             "meeting": m,
             "participants": [
@@ -88,9 +168,11 @@ def snapshot(ident: str, body: Revision, u=Depends(authenticated)):
         for item in data["items"]:
             data["unresolved"].extend(item.get("uncertainties", []))
             if item["owner"] is None and item["category"] == "action":
-                data["unresolved"].append(item["subject"] + ": owner not specified")
+                data["unresolved"].append(item["subject"] + ": " + LABELS[m["language"]]["owner_missing"])
             if item["condition"]:
-                data["unresolved"].append(item["subject"] + ": conditional — " + item["condition"])
+                data["unresolved"].append(
+                    item["subject"] + ": " + LABELS[m["language"]]["conditional"] + " — " + item["condition"]
+                )
         blob = canonical(data)
         digest = hashlib.sha256(blob.encode()).hexdigest()
         existing = c.execute(

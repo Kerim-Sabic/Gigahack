@@ -34,7 +34,7 @@
 - Added capture queue backpressure/retries, flush acknowledgements and interrupted-recording recovery UI.
 - Added scoped unprivileged Linux namespace launcher and executed IPv4/IPv6 isolation probe.
 - Added Windows offline-kit preparation; actually installed all pinned wheels with --no-index.
-- Latest verification: 33 backend tests, 4 frontend tests, lint, generated API types and production build pass.
+- Latest verification: 38 backend tests, 5 frontend tests, lint, generated API types and production build pass.
 - Real text extraction retains semantic failures; no full accuracy or target-hardware acceptance claim.
 - Five-minute synthetic browser microphone rehearsal passed: 307.648 seconds saved; pause/resume,
   stop/flush, abrupt browser close and sealing acknowledged audio; zero page errors.
@@ -48,3 +48,13 @@
 - Added explicitly test-only fixture browser harness; local browser/API/queue/PDF/Mailpit test passed in
   9.079 s. Production worker has no fixture switch. CI extension pending execution.
 - Prepared pinned Linux CUDA llama.cpp/Mailpit and Linux Python environment without changing the host driver.
+- Scoped production Linux worker passed real Whisper/Qwen processing in 51.038 s with external IPv4/IPv6
+  blocked. First run on a shared NTFS SQLite database failed during a Windows-side inspection; rerun used
+  native Linux database storage. Do not read a live database concurrently across OS boundaries.
+- WSL peak total GPU memory exceeded target budget (9769 MiB); recorded as failure to qualify, not hidden.
+- GitHub fixture browser CI passed at fb9edb004e794998f893245ab55d5ab3fdb08b1c.
+- Localized operational states/errors and minutes captions; real RO/RU browser checks preserve quotations
+  and persist preferences. Added recipient group selection, explicit older-version send, manual quantity/condition
+  correction and reviewer issue resolution with retained provenance. 38 backend and 5 frontend tests pass.
+- Browser regression now creates a second recipient group, selects it and verifies its exact address in
+  Mailpit. Latest fixture workflow: 9.256 s plus successful RO/RU checks; zero page errors.

@@ -665,6 +665,12 @@ export interface components {
             owner?: string | null;
             /** Due */
             due?: string | null;
+            /** Condition */
+            condition?: string | null;
+            /** Value */
+            value?: string | null;
+            /** Resolved Issues */
+            resolved_issues?: string[];
             /** Reason */
             reason: string;
             /** Category */

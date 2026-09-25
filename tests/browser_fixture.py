@@ -141,6 +141,9 @@ def main():
                 pass
             time.sleep(1)
         browser(fixture_inference=True)
+        from scripts.ui_language_e2e import main as check_languages
+
+        check_languages()
     finally:
         for process in reversed(processes):
             kill_tree(process.pid)
