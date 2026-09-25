@@ -47,3 +47,7 @@ same evidence/quantity pipeline. Original uncertainty/approval requirements rema
 Validation: full backend suite passed 131 tests; the added boundary/no-boundary API
 parameterization then passed both cases (132 total cases). Frontend 10 tests/build and
 lint pass. Synthetic fixture browser/PDF/Mailpit rerun also verifies the boundary notice.
+
+CI run 36188009455 at f691425 failed collection because the API/test environment did not
+include NumPy. The full runtime already pins NumPy 2.5.3; the API/test lock now uses that
+same pin so checkpoint tests execute in CI. The failure is retained, not excluded.
