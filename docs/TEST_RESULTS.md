@@ -60,3 +60,5 @@ locally. Future rehearsals use /var/tmp so database, screenshots and receipts su
 Latest Linux fixture browser integration: 13.766 s, no page errors; metadata, account/grant, recipient
 group edits, manual topic link, retained amendments, real PDF and Mailpit passed. RO/RU preference,
 source preservation and localized recipient errors passed. This run uses explicit fixture inference.
+
+Security/recovery follow-up: 72 backend tests passed. Denied admin cannot read ranges/evidence/search/history/exports/SSE; valid byte ranges work; expired/logout/revoked streams terminate; malformed uploads create no assets; paths remain server-owned; HTML escapes source content. Restore retains source, reviewed evidence, immutable approval and delivery deduplication. Corruption and nonempty destinations are refused before writing.

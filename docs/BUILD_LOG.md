@@ -80,3 +80,6 @@
   exposed the defect; only positively identified owned services were cleaned. Rerun passed cleanup.
 - Complete production Linux offline workflow passed in 84.589 s; Windows scope and target excluded.
 - Canonical citation dedup preserves distinct raw dates/amendments. 63 backend and 6 frontend tests pass.
+
+- Expanded authorization and malformed-upload/export tests; revoked live streams now close cleanly.
+- Checksummed stopped backups and strict empty restore destinations; full reviewed workflow state and outbox identity survive restore. 72 backend tests pass.

@@ -206,3 +206,30 @@ def test_internal_smtp_requires_verified_tls_before_auth(tmp_path, monkeypatch, 
         if tls == "starttls"
         else ["connect", "auth", "send"]
     )
+
+
+def test_corrupt_backup_and_nonempty_restore_are_rejected_before_writing(tmp_path, monkeypatch):
+    original = tmp_path / "original"
+    monkeypatch.setattr(config, "DATA", original)
+    migrate()
+    (original / "audio/ack.pcm").write_bytes(b"source")
+    saved = tmp_path / "backup"
+    backup(saved)
+    (saved / "audio/ack.pcm").write_bytes(b"corrupted")
+    restored = tmp_path / "restored"
+    monkeypatch.setattr(config, "DATA", restored)
+    with pytest.raises(SystemExit, match="checksum mismatch"):
+        restore(saved)
+    assert not restored.exists()
+    restored.mkdir()
+    (restored / "keep.txt").write_text("existing")
+    with pytest.raises(SystemExit, match="new empty"):
+        restore(saved)
+    assert (restored / "keep.txt").read_text() == "existing"
+
+
+def test_backup_rejects_nested_destination(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "DATA", tmp_path / "data")
+    migrate()
+    with pytest.raises(SystemExit, match="outside"):
+        backup(config.DATA / "audio/nested-backup")

@@ -474,3 +474,147 @@ def test_migration_upgrade_keeps_existing_accounts(tmp_path, monkeypatch):
     with transaction() as c:
         assert c.execute("SELECT MAX(version) FROM schema_version").fetchone()[0] == 2
         assert c.execute("SELECT name FROM users").fetchone()[0] == "existing"
+
+
+def test_private_surfaces_and_range_require_membership(client):
+    m = new_meeting(client)
+    sid, cid, asset = seed_candidate(client, m)
+    client.post(f"/api/v1/review-issues/{cid}/resolve", json={"revision": 1, "action": "accepted"})
+    snap = client.post(f"/api/v1/meetings/{m['id']}/snapshots", json={"revision": 2}).json()["id"]
+    with transaction() as db:
+        evidence = db.execute("SELECT id FROM evidence WHERE candidate_id=?", (cid,)).fetchone()[0]
+    media = f"/api/v1/assets/{asset}/audio"
+    response = client.get(media, headers={"range": "bytes=0-3"})
+    assert response.status_code == 206 and response.content == b"RIFF"
+    assert client.get(media, headers={"range": "bytes=999999999-"}).status_code == 416
+    client.post(
+        "/api/v1/accounts",
+        json={"name": "denied-admin", "password": "synthetic-other-password", "role": "admin"},
+    )
+    client.delete("/api/v1/sessions/current")
+    client.headers.pop("x-csrf-token")
+    login = client.post(
+        "/api/v1/sessions", json={"name": "denied-admin", "password": "synthetic-other-password"}
+    )
+    client.headers["x-csrf-token"] = login.json()["csrf"]
+    for path in [
+        f"meetings/{m['id']}/stream",
+        f"meetings/{m['id']}/transcript?q=Elena",
+        f"segments/{sid}",
+        f"segments/{sid}/history",
+        f"items/{cid}/history",
+        f"evidence/{evidence}/audio",
+        f"assets/{asset}/audio",
+        f"snapshots/{snap}/exports/html",
+        f"snapshots/{snap}/exports/json",
+        f"snapshots/{snap}/exports/pdf",
+        f"snapshots/{snap}/deliveries",
+    ]:
+        result = client.get("/api/v1/" + path, headers={"range": "bytes=0-3"})
+        assert result.status_code == 404, (path, result.status_code)
+        assert "Elena" not in result.text
+    assert client.get("/api/v1/actions").json() == []
+
+
+@pytest.mark.parametrize("revocation", ["membership", "logout", "expired"])
+def test_live_stream_stops_after_authorization_revocation(client, monkeypatch, revocation):
+    import asyncio
+    from services.api.main import stream
+
+    m = new_meeting(client)
+    current = client.get("/api/v1/me").json()
+    token = client.cookies.get("mom_session")
+
+    class Request:
+        cookies = {"mom_session": token}
+
+        async def is_disconnected(self):
+            return False
+
+    async def no_wait(_):
+        pass
+
+    monkeypatch.setattr("services.api.main.asyncio.sleep", no_wait)
+
+    async def exercise():
+        response = await stream(m["id"], Request(), current)
+        iterator = response.body_iterator
+        assert await anext(iterator) == "data: []\n\n"
+        with transaction() as db:
+            if revocation == "membership":
+                db.execute("DELETE FROM members WHERE meeting_id=? AND user_id=?", (m["id"], current["id"]))
+            elif revocation == "logout":
+                db.execute("DELETE FROM sessions WHERE id=?", (token,))
+            else:
+                db.execute("UPDATE sessions SET expires=0 WHERE id=?", (token,))
+        with pytest.raises(StopAsyncIteration):
+            await anext(iterator)
+
+    asyncio.run(exercise())
+
+
+def test_invalid_uploads_never_create_assets_and_names_cannot_escape(client):
+    m = new_meeting(client)
+    url = f"/api/v1/meetings/{m['id']}/uploads"
+    assert (
+        client.post(
+            url, files={"file": ("attack.html", b"<script>alert(1)</script>", "audio/wav")}
+        ).status_code
+        == 400
+    )
+    bad = client.post(url, files={"file": ("attack.wav", b"not audio", "audio/wav")})
+    assert bad.status_code == 400 and bad.json()["code"] == "audio_decode_failed"
+    with transaction() as db:
+        assert db.execute("SELECT COUNT(*) FROM assets").fetchone()[0] == 0
+    valid = client.post(url, files={"file": ("../../escape.wav", audio(), "audio/wav")})
+    assert valid.status_code == 200
+    from pathlib import Path
+
+    with transaction() as db:
+        saved = Path(db.execute("SELECT path FROM assets").fetchone()[0]).resolve()
+    assert saved.is_relative_to((config.DATA / "audio" / m["id"]).resolve())
+    assert not (config.DATA / "escape.wav").exists()
+
+
+def test_minutes_escape_untrusted_source_and_metadata(client):
+    m = new_meeting(client)
+    _, cid, _ = seed_candidate(client, m)
+    payload = '<img src="https://attacker.invalid/x" onerror="alert(1)">'
+    with transaction() as db:
+        db.execute("UPDATE meetings SET title=? WHERE id=?", (payload, m["id"]))
+        body = json.loads(db.execute("SELECT body FROM candidates WHERE id=?", (cid,)).fetchone()[0])
+        body["text"] = payload
+        db.execute("UPDATE candidates SET body=? WHERE id=?", (canonical(body), cid))
+    client.post(f"/api/v1/review-issues/{cid}/resolve", json={"revision": 1, "action": "accepted"})
+    snap = client.post(f"/api/v1/meetings/{m['id']}/snapshots", json={"revision": 2}).json()["id"]
+    response = client.get(f"/api/v1/snapshots/{snap}/exports/html")
+    assert response.status_code == 200
+    assert payload not in response.text and "&lt;img" in response.text
+    assert "frame-ancestors 'none'" in response.headers["content-security-policy"]
+
+
+def test_restore_retains_evidence_approval_audio_and_delivery_identity(client, tmp_path, monkeypatch):
+    from scripts.mom import backup, restore
+    from services.api.db import migrate
+
+    m = new_meeting(client)
+    sid, cid, asset = seed_candidate(client, m)
+    client.post(f"/api/v1/review-issues/{cid}/resolve", json={"revision": 1, "action": "accepted"})
+    snap = client.post(f"/api/v1/meetings/{m['id']}/snapshots", json={"revision": 2}).json()["id"]
+    client.post(f"/api/v1/snapshots/{snap}/approve", json={"revision": 2})
+    group = client.get("/api/v1/recipient-groups").json()[0]
+    body = {"group_id": group["id"], "group_version": group["version"]}
+    delivery = client.post(f"/api/v1/snapshots/{snap}/deliveries", json=body).json()["id"]
+    before = client.get(f"/api/v1/snapshots/{snap}/exports/json").json()
+    saved = tmp_path.parent / (tmp_path.name + "-backup")
+    backup(saved)
+    monkeypatch.setattr(config, "DATA", tmp_path.parent / (tmp_path.name + "-restored"))
+    restore(saved)
+    migrate()
+    assert client.get(f"/api/v1/snapshots/{snap}/exports/json").json() == before
+    assert client.get(f"/api/v1/assets/{asset}/audio").content[:4] == b"RIFF"
+    assert client.get(f"/api/v1/segments/{sid}").json()["text"] == "Elena sends the report. Confirmed."
+    assert client.post(f"/api/v1/snapshots/{snap}/deliveries", json=body).json()["id"] == delivery
+    with transaction() as db:
+        assert db.execute("SELECT COUNT(*) FROM outbox").fetchone()[0] == 1
+        assert db.execute("SELECT COUNT(*) FROM approvals").fetchone()[0] == 1

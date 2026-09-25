@@ -211,9 +211,15 @@ def stop():
 
 
 def backup(destination):
+    if not destination:
+        raise SystemExit("Backup requires --path to a new directory.")
     target = Path(destination).resolve()
     if target.exists():
         raise SystemExit("Backup destination must not exist.")
+    if target.is_relative_to(config.DATA.resolve()):
+        raise SystemExit("Backup destination must be outside the data directory.")
+    if not (config.DATA / "app.sqlite").is_file():
+        raise SystemExit("No application database exists to back up.")
     # Require stopped services so audio/manifests and SQLite share a consistent boundary.
     if (config.DATA / "processes.json").exists():
         raise SystemExit("Stop managed services before backup.")
@@ -225,20 +231,46 @@ def backup(destination):
         source.backup(dest)
     for name in ["audio", "jobs", "exports", "proofs"]:
         shutil.copytree(config.DATA / name, target / name, dirs_exist_ok=True)
+    files = {}
+    for file in sorted(target.rglob("*")):
+        if file.is_file():
+            with file.open("rb") as stream:
+                files[file.relative_to(target).as_posix()] = hashlib.file_digest(stream, "sha256").hexdigest()
     (target / "backup.json").write_text(
-        json.dumps({"version": 1, "original_data_root": str(config.DATA.resolve())})
+        json.dumps({"version": 2, "original_data_root": str(config.DATA.resolve()), "files": files}),
+        encoding="utf-8",
     )
     print("Consistent stopped backup created.")
 
 
 def restore(source):
+    if not source:
+        raise SystemExit("Restore requires --path to an existing backup directory.")
     source = Path(source).resolve()
-    if (config.DATA / "app.sqlite").exists():
+    target = config.DATA.resolve()
+    if target.exists() and (not target.is_dir() or any(target.iterdir())):
         raise SystemExit(
             "Restore requires a new empty MOM_DATA directory; existing data is never overwritten."
         )
-    metadata = json.loads((source / "backup.json").read_text())
-    shutil.copytree(source, config.DATA, dirs_exist_ok=True)
+    if target.is_relative_to(source) or source.is_relative_to(target):
+        raise SystemExit("Restore source and destination must be separate directories.")
+    metadata = json.loads((source / "backup.json").read_text(encoding="utf-8"))
+    if metadata.get("version") not in (1, 2):
+        raise SystemExit("Unsupported backup format.")
+    if metadata["version"] == 2:
+        files = metadata.get("files", {})
+        if "app.sqlite" not in files:
+            raise SystemExit("Backup manifest is missing its database.")
+        for name, expected in files.items():
+            file = (source / name).resolve()
+            if not file.is_relative_to(source) or not file.is_file():
+                raise SystemExit("Backup contains an invalid or missing file.")
+            with file.open("rb") as stream:
+                if hashlib.file_digest(stream, "sha256").hexdigest() != expected:
+                    raise SystemExit("Backup checksum mismatch; destination was not changed.")
+    else:
+        print("Legacy backup: file checksums were not recorded.")
+    shutil.copytree(source, target, dirs_exist_ok=True)
     with sqlite3.connect(config.DATA / "app.sqlite") as c:
         for table, column in [("assets", "path"), ("chunks", "path")]:
             c.execute(

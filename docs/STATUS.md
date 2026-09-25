@@ -4,7 +4,7 @@ Current stage: complete synthetic local workflow runs; acceptance gates remain o
 Development hardware: two RTX 5080 16 GB GPUs, 128 GiB RAM. Target RTX 3070 Ti Laptop
 8 GB / 24 GB is not connected and has NOT RUN.
 
-- 63 backend/domain/recovery/fault tests and 6 frontend tests pass; lint and strict build pass.
+- 72 backend/domain/recovery/fault tests and 6 frontend tests pass; lint and strict build pass.
 - Real Linux browser → upload → FFmpeg → Whisper → Qwen → review → immutable minutes → PDF
   → Mailpit passed in a loopback-only namespace. IPv4/IPv6 external probes return ENETUNREACH
   before and after; all four services share the namespace; verified cleanup leaves no owned services.
@@ -28,8 +28,8 @@ Development hardware: two RTX 5080 16 GB GPUs, 128 GiB RAM. Target RTX 3070 Ti L
   is included. This is not target-device resource qualification or isolated process VRAM attribution.
 
 Services: API/UI 8765, Mailpit UI 8025, SMTP 1025; extraction server 8081 only while needed.
-Latest pushed checkpoint before this milestone: 3ad639c4119802688933a146ad2a3866d16e5e3a;
-GitHub Ubuntu CI passed (run 36165602226).
+Latest pushed checkpoint before this milestone: 18256f3987e4adc6ec9ec03a392462b05d7acb4e;
+Previous checkpoint GitHub CI passed; current milestone CI is being checked.
 
 Next: complete remaining fault/security and stateful acceptance checks, clean deployment/kit refresh,
 long-window and multilingual audio evaluation, native translation review, optional model preparation,

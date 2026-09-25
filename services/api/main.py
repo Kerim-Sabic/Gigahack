@@ -1015,7 +1015,13 @@ async def stream(ident: str, request: Request, u=Depends(user)):
                     (request.cookies.get("mom_session", ""), time.time()),
                 ).fetchone():
                     return
-                access(c, ident, u)
+                # Headers are already sent. Revocation ends the stream instead of
+                # raising an HTTP error after a successful response has started.
+                if not c.execute(
+                    "SELECT 1 FROM members WHERE meeting_id=? AND user_id=?",
+                    (ident, u["id"]),
+                ).fetchone():
+                    return
                 state = [
                     dict(r) for r in c.execute("SELECT id,state,stage FROM jobs WHERE meeting_id=?", (ident,))
                 ]

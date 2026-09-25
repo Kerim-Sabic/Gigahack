@@ -35,3 +35,9 @@ verification remain enabled. Plain transport is allowed only for loopback Mailpi
 Keep credentials outside Git and restart the mail worker after configuration changes. An internal
 SMTP deployment needs its own connectivity/certificate rehearsal; automated tests cover transport
 ordering and failures, while the actual local Mailpit flow covers delivery integration.
+
+New backups record SHA-256 for every copied database/audio/job/export/proof file. Restore checks those
+hashes before writing and rejects a nonempty destination. Legacy version-1 backups remain readable,
+with an explicit missing-checksum notice. Hashes detect corruption, not malicious replacement of both
+files and manifest. Tested restore includes evidence, immutable approval, readable relocated audio,
+and outbox deduplication. Stop all manually started services too; the CLI only knows its managed processes.
