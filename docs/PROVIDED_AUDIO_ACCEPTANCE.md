@@ -78,3 +78,34 @@ Tests verify byte-for-byte sample/timing preservation across buffer boundaries, 
 truncated input rejection and coverage of speech without numbers. The full backend passes
 143 tests with one Linux-only skip. Full-recording optional runs are in progress; approval,
 email and human accuracy review have not occurred.
+
+## Full-recording optional experiments (still not app qualification)
+
+- Parakeet comparison run `optional-parakeet-full-1790372072987398325`: all 194 Whisper
+  segments plus padding, 170 nonempty hypotheses / 24 empty, five mixed-script hypotheses,
+  stage 231.71s, process-tree RSS peak 3,910,197,248 bytes. Clip union is 598.62s of 702.549s:
+  this first comparison did not independently cover gaps between Whisper segments.
+- Community-1 run `optional-diarize-full-1790372313130440559`: complete canonical recording,
+  262 turns / five clusters, stage 216.54s, process-tree RSS peak 2,605,187,072 bytes.
+  Cluster accuracy, overlap accuracy and person identities are not verified.
+- Independent Parakeet run `optional-parakeet-timeline-1790372626350097280`: 24 contiguous
+  30-second primary windows with 0.2s padding; stage 220.37s, process-tree RSS peak
+  3,914,293,248 bytes. 1,085 word hypotheses remain after midpoint ownership removes padding
+  duplicates; 92 word midpoints lie outside the first comparison's Whisper clips. These may
+  be missed speech, recognition errors or timing errors; they are not automatically accepted.
+  Windows 90–120s, 120–150s and 660–690s returned no text despite the independent diarizer
+  assigning about 26.16s, 26.65s and 25.73s of speech. This is an unresolved coverage/accuracy
+  signal, not a passing linguistic qualification. NeMo recommends roughly 5–25s input clips;
+  window-length sensitivity and shorter retries need evaluation before selecting a production
+  whole-timeline profile. Original empty hypotheses must remain available.
+
+All three runs were sequential in isolated Linux network namespaces. Package compatibility
+patches were active. Results, original inputs, timestamped hypotheses, progress and resource
+reports remain private and ignored. The first timeline helper attempt failed before inference
+with a missing helper import; its failure log remains retained. The corrected attempt above
+completed. Current-step progress and ETA were observed during actual comparison (169/194
+clips, about 2.42s remaining for that phase); this is not an estimate for later pipeline steps.
+
+None of these experiments approved minutes, sent email, established native-language accuracy,
+qualified target hardware or completed production API/UI integration. Import/model startup
+accounts for most observed wall time in this environment and needs separate profiling.

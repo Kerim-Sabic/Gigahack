@@ -1,0 +1,18 @@
+#!/usr/bin/env python
+"""
+Download utility as an easy way to get file from the net
+ 
+  python -m wget <URL>
+  python wget.py <URL>
+
+Downloads: http://pypi.python.org/pypi/wget/
+Development: http://bitbucket.org/techtonik/python-wget/
+
+wget.py is not option compatible with Unix wget utility,
+to make command line interface intuitive for new people.
+
+Public domain by anatoly techtonik <techtonik@gmail.com>
+Also available under the terms of MIT license
+Copyright (c) 2010-2015 anatoly techtonik
+"""
+

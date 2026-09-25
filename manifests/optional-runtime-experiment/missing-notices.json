@@ -1,0 +1,53 @@
+{
+  "status": "Historical wheel-notice omission inventory; see source/upstream/wget reviews for supplements. Release linkage and native distribution review remain open.",
+  "packages": [
+    {
+      "name": "antlr4-python3-runtime",
+      "version": "4.9.3",
+      "declared_license": "BSD",
+      "home": "http://www.antlr.org"
+    },
+    {
+      "name": "cuda-toolkit",
+      "version": "13.0.3.0",
+      "declared_license": null,
+      "home": null
+    },
+    {
+      "name": "kaldi-python-io",
+      "version": "1.2.2",
+      "declared_license": "Apache V2.0",
+      "home": "https://github.com/funcwj/kaldi-python-io"
+    },
+    {
+      "name": "primePy",
+      "version": "1.3",
+      "declared_license": "UNKNOWN",
+      "home": "https://github.com/janaindrajit/primePy"
+    },
+    {
+      "name": "sentencepiece",
+      "version": "0.2.2",
+      "declared_license": "Apache-2.0",
+      "home": null
+    },
+    {
+      "name": "tensorboard-data-server",
+      "version": "0.7.2",
+      "declared_license": "Apache 2.0",
+      "home": "https://github.com/tensorflow/tensorboard/tree/master/tensorboard/data/server"
+    },
+    {
+      "name": "tokenizers",
+      "version": "0.23.2",
+      "declared_license": null,
+      "home": null
+    },
+    {
+      "name": "wget",
+      "version": "3.2",
+      "declared_license": "Public Domain",
+      "home": "http://bitbucket.org/techtonik/python-wget/"
+    }
+  ]
+}

@@ -198,3 +198,9 @@ through production CUDA ASR/worker, zero observed segments/candidates/deliveries
 The waveform is an original local procedural tune; it uses no downloaded composition or voice.
 This closes that synthetic T26 music branch alongside separate silence evidence, not all music
 or difficult speech. Models and dependencies remain unchanged. Raw waveforms are ignored.
+
+## Targeted ownership follow-up
+
+Actual Qwen run 1790371439051700000 selected T10 only after kernel-backed model ownership:
+PASS, 36.99s. This exercised the real Windows llama-server child. It is not a fresh full
+semantic-suite pass and does not close the held-out H03 tentative-date failure.

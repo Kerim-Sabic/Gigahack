@@ -1,10 +1,11 @@
 # Current implementation status
 
 Complete mission remains active. The last verified remote checkpoint is
-0046c2711e17290c6ae15aac0b7c65b71e9f3bf3 (CI 36191562041 PASS). It contains multilingual
+2f6341a457d0e83a5e4156540aeb33b7a9817f2c (CI 36192494740 PASS). It contains multilingual
 transcription, frozen developer settings, current-step ETA and bounded ASR checkpoints.
 It also includes atomic recording/stage recovery and kernel-backed model-process ownership.
-Exact bounded audio clips and optional-model excerpt results form the next checkpoint.
+Exact bounded audio clips and optional-model excerpt results are included. Full-recording
+experimental results and the separate license inventory form the next checkpoint.
 
 ## Current evidence
 
@@ -42,8 +43,14 @@ patches are retained with hashes/licenses under manifests/optional-runtime-exper
 Both models now executed successfully on a private 45-second excerpt with external networking
 unavailable: Community-1 10 turns / two clusters, Parakeet one timestamped hypothesis.
 Cold stage times were 194.61s and 216.95s in WSL on the NTFS workspace. This is not a latency
-qualification or an accuracy score. Full-recording runs have started; complete API/UI integration
-and target fit remain unqualified, and application availability remains disabled.
+qualification or an accuracy score. Full-recording experiments also completed: 194 Whisper-derived comparison clips, a separate
+24-window entire-timeline Parakeet pass and 262 diarized turns / five clusters. The independent
+pass returned no text in three windows with substantial model-detected speech; 92 word
+hypotheses fall outside Whisper clips. These are review signals, not gold accuracy results.
+Complete API/UI integration and target fit remain unqualified; application availability remains
+disabled. The optional inventory now contains 233 components including pinned pip 26.2.1;
+all 233 have no current OSV matches. Supplied/upstream notices are retained; release linkage
+and remaining distribution-notice review are still open.
 See DECISIONS/010-optional-model-preparation.md.
 
 ## Remaining acceptance

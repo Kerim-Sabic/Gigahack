@@ -61,3 +61,20 @@ excerpt under unshare network isolation. The compatibility diffs, before/after h
 manifests/optional-runtime-experiment. This is experimental provenance, not a production
 installation recipe. Full integrated behavior, comprehensive dependency notices, target-driver
 compatibility and full-recording qualification remain pending. No core dependency lock changed.
+
+The collector now supports a separate Python-only destination under manifests and no longer
+silently drops license files larger than 200 KB. The core Python/npm inventories were not
+replaced. The optional inventory records 233 installed components: 232 candidate dependencies
+plus pip. This exposed old preparation pip 24.0, which was upgraded to pinned 26.2.1 after an
+OSV check. Pip check passes; a new scan of all 233 installed versions reports no current matches.
+The earlier 232-package scan remains historical evidence, not coverage of that old pip.
+
+Supplied notices (including package license subtrees) and additional verified source-archive
+notices are retained. SHA-256-checked PyPI sdists supplied SentencePiece and Tokenizers notices;
+upstream pinned revisions supplied ANTLR, kaldi-python-io and primePy notices. ANTLR's combined
+BSD-3-Clause/MIT text is preserved even though GitHub labels it NOASSERTION. wget's original
+source header explicitly declares public domain/alternative MIT and is retained unchanged.
+The cuda-toolkit distribution contains dependency metadata only; individual NVIDIA component
+notices are retained. Full release linkage and native redistribution-notice review, notably
+TensorBoard's data-server binary, remain open before a distributable optional-runtime package.
+No weights, transcripts, recordings or package archives enter Git.

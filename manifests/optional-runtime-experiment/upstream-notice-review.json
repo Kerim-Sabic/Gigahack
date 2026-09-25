@@ -1,0 +1,53 @@
+[
+  {
+    "name": "antlr4-python3-runtime",
+    "repository": "antlr/antlr4",
+    "revision": "e4c1a74c66bd5290364ea2b36c97cd724b247357",
+    "path": "LICENSE.txt",
+    "license": {
+      "key": "other",
+      "name": "Other",
+      "spdx_id": "NOASSERTION",
+      "url": null,
+      "node_id": "MDc6TGljZW5zZTA="
+    },
+    "sha256": "b1b379fcaf3219593a4c433feb1b35c780bed23fafaae440b1ae2771a9521e3a",
+    "notice": "manifests/optional-runtime-experiment/licenses/antlr4-python3-runtime-upstream-LICENSE.txt",
+    "source": "https://github.com/antlr/antlr4/blob/e4c1a74c66bd5290364ea2b36c97cd724b247357/LICENSE.txt",
+    "scope": "upstream notice; release attribution must also be verified"
+  },
+  {
+    "name": "kaldi-python-io",
+    "repository": "funcwj/kaldi-python-io",
+    "revision": "a7191049d79beabffab7256327214d6d875ec7b5",
+    "path": "LICENSE",
+    "license": {
+      "key": "apache-2.0",
+      "name": "Apache License 2.0",
+      "spdx_id": "Apache-2.0",
+      "url": "https://api.github.com/licenses/apache-2.0",
+      "node_id": "MDc6TGljZW5zZTI="
+    },
+    "sha256": "a05ec21b8e131d1fa5e1f1df69f3c17f1009c8351a755047329831310c00844b",
+    "notice": "manifests/optional-runtime-experiment/licenses/kaldi-python-io-upstream-LICENSE",
+    "source": "https://github.com/funcwj/kaldi-python-io/blob/a7191049d79beabffab7256327214d6d875ec7b5/LICENSE",
+    "scope": "upstream notice; release attribution must also be verified"
+  },
+  {
+    "name": "primePy",
+    "repository": "janaindrajit/primePy",
+    "revision": "9c98276fee5211e8761dfc03c9a1e02127e09e4a",
+    "path": "LICENSE",
+    "license": {
+      "key": "mit",
+      "name": "MIT License",
+      "spdx_id": "MIT",
+      "url": "https://api.github.com/licenses/mit",
+      "node_id": "MDc6TGljZW5zZTEz"
+    },
+    "sha256": "1a06a1576544095ade4508462bc6c795c874a499e2abe12d21557e85a3741d9e",
+    "notice": "manifests/optional-runtime-experiment/licenses/primePy-upstream-LICENSE",
+    "source": "https://github.com/janaindrajit/primePy/blob/9c98276fee5211e8761dfc03c9a1e02127e09e4a/LICENSE",
+    "scope": "upstream notice; release attribution must also be verified"
+  }
+]

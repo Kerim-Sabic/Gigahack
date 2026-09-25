@@ -1,0 +1,7 @@
+{
+  "package": "wget",
+  "version": "3.2",
+  "source_sha256": "17e1e138d89005e6d0c487878f0489f9ec60d7f0c632135627e4efb26a0c115f",
+  "notice": "Original source header declares Public Domain and alternative MIT license; retained unchanged",
+  "source_archive": "see source-notice-review.json"
+}
