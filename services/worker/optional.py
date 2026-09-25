@@ -1,6 +1,7 @@
 from services.api import config
 from services.api.audio import canonical_clip
 from services.api.db import canonical, transaction
+from .audio_checks import save_checks, speech_gaps
 
 
 def optional_stages(job, spec, asset, segments, run_stage):
@@ -19,6 +20,8 @@ def optional_stages(job, spec, asset, segments, run_stage):
             used += end - start
         if clips:
             alternatives = run_stage(job, "parakeet", {**spec, "clips": clips})
+            empty_ids = {h["segment_id"] for h in alternatives["hypotheses"] if not h["text"].strip()}
+            save_checks(job, "empty_second_recognizer", [s for s in segments if s["id"] in empty_ids])
             with transaction() as c:
                 for h in alternatives["hypotheses"]:
                     c.execute(
@@ -41,6 +44,7 @@ def optional_stages(job, spec, asset, segments, run_stage):
                     )
     if spec["config"].get("diarization"):
         diarization = run_stage(job, "diarize", spec)
+        save_checks(job, "speech_without_transcript", speech_gaps(diarization["turns"], segments, asset["samples"]))
         with transaction() as c:
             for s in segments:
                 overlapping = [

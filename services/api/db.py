@@ -48,7 +48,7 @@ def migrate():
         version = (
             c.execute("SELECT COALESCE(MAX(version),0) FROM schema_version").fetchone()[0] if exists else 0
         )
-        if version > 2:
+        if version > 3:
             raise RuntimeError("Database schema is newer than this application; refusing downgrade")
         for path in sorted(MIGRATIONS.glob("*.sql")):
             number = int(path.name.split("_")[0])

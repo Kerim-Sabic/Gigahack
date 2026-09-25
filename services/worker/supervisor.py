@@ -296,6 +296,7 @@ def process(job):
                 event.uncertainties.append(
                     "Date expression unresolved; reviewer must inspect original expression"
                 )
+        event.uncertainties = list(dict.fromkeys(event.uncertainties))
         validated.append((event, validate_evidence(event, source)))
     with transaction() as c:
         for s in segments:

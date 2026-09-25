@@ -502,7 +502,7 @@ def test_migration_upgrade_keeps_existing_accounts(tmp_path, monkeypatch):
         c.execute("INSERT INTO users VALUES('u','existing','hash','secretary','en')")
     migrate()
     with transaction() as c:
-        assert c.execute("SELECT MAX(version) FROM schema_version").fetchone()[0] == 2
+        assert c.execute("SELECT MAX(version) FROM schema_version").fetchone()[0] == 3
         assert c.execute("SELECT name FROM users").fetchone()[0] == "existing"
 
 
@@ -967,3 +967,42 @@ def test_recording_finish_retains_chunks_when_decode_fails_and_blocks_concurrent
         chunk_path = db.execute('SELECT path FROM chunks WHERE recording_id=?', (rid,)).fetchone()[0]
     from pathlib import Path
     assert Path(chunk_path).read_bytes() == b'\0\0' * 32000
+
+
+def test_audio_checks_are_paginated_idempotent_and_membership_protected(client):
+    from services.worker.audio_checks import save_checks
+
+    meeting = new_meeting(client)
+    asset = client.post(f"/api/v1/meetings/{meeting['id']}/uploads", files={"file": ("synthetic.wav", audio(), "audio/wav")}).json()["id"]
+    job = client.post(f"/api/v1/meetings/{meeting['id']}/jobs", json={"asset_id": asset}).json()
+    intervals = [{"start": 0, "end": 16000}, {"start": 16000, "end": 32000}]
+    for _ in range(2):
+        save_checks(job, "speech_without_transcript", intervals)
+    path = f"/api/v1/jobs/{job['id']}/audio-checks"
+    page = client.get(path + "?offset=1&limit=1").json()
+    assert page["total"] == 2 and len(page["items"]) == 1
+    assert page["items"][0]["start"] == 16000 and page["asset_id"] == asset
+    save_checks(job, "speech_without_transcript", [])
+    assert client.get(path).json()["total"] == 0
+    save_checks(job, "empty_second_recognizer", intervals)
+    with transaction() as c:
+        c.execute("UPDATE jobs SET state='complete' WHERE id=?", (job["id"],))
+    snapshot = client.post(f"/api/v1/meetings/{meeting['id']}/snapshots", json={"revision": meeting["revision"]})
+    assert snapshot.status_code == 200, snapshot.text
+    exported = f"/api/v1/snapshots/{snapshot.json()['id']}/exports/json"
+    original = client.get(exported).json()
+    assert original["audio_checks"][0]["count"] == 2
+    assert any("Automated audio flags" in warning for warning in original["unresolved"])
+    save_checks(job, "empty_second_recognizer", [])
+    assert client.get(exported).json() == original  # Frozen snapshot survives later diagnostic changes.
+    save_checks(job, "empty_second_recognizer", intervals)
+    client.post("/api/v1/accounts", json={"name": "unrelated", "password": "another-password-123", "role": "admin"})
+    client.delete("/api/v1/sessions/current")
+    assert client.get(path).status_code == 401
+    signed = client.post("/api/v1/sessions", json={"name": "unrelated", "password": "another-password-123"})
+    client.headers["x-csrf-token"] = signed.json()["csrf"]
+    assert client.get(path).status_code == 404  # Existing membership policy hides inaccessible meetings.
+
+    with transaction() as c:
+        c.execute("DELETE FROM jobs WHERE id=?", (job["id"],))
+        assert c.execute("SELECT COUNT(*) FROM audio_checks").fetchone()[0] == 0

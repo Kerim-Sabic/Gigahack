@@ -86,6 +86,11 @@ def main(*, fixture_inference=False):
         expect(page.locator(".pageheading .badge").first).to_have_text("awaiting review", timeout=240000)
         expect(page.locator(".itemlist button").first).to_be_visible(timeout=10000)
         if fixture_inference:
+            checks = page.get_by_role("region", name="Audio passages to check")
+            expect(checks.get_by_text("The second recognizer returned no text here.", exact=True)).to_be_visible()
+            checks.get_by_role("button", name="Play passage", exact=False).click()
+            page.wait_for_function("() => document.querySelector('audio').currentSrc.includes('/assets/') && document.querySelector('audio').readyState >= 2")
+            page.evaluate("() => document.querySelector('audio').pause()")
             page.get_by_role("tab", name="Transcript", exact=True).click()
             expect(page.get_by_text("Check the wording here against the audio; this passage crosses a processing boundary.", exact=True)).to_be_visible()
             page.get_by_role("tab", name="Decisions & actions", exact=True).click()
@@ -94,6 +99,7 @@ def main(*, fixture_inference=False):
             button = page.get_by_role("button", name="Accept", exact=True)
             if button.is_enabled():
                 button.click()
+                expect(page.locator(".detail .badge")).to_have_text("Review: accepted", timeout=10000)
                 expect(button).to_be_disabled(timeout=10000)
             pending = page.locator(".itemlist button").filter(has_text="unreviewed")
             if pending.count() == 0:
@@ -110,6 +116,9 @@ def main(*, fixture_inference=False):
             snapshot_json = page.request.get(
                 "http://127.0.0.1:8765" + page.get_by_role("link", name="JSON ↗").get_attribute("href")
             ).json()
+            assert snapshot_json["audio_checks"][0]["count"] == 1
+            assert snapshot_json["unresolved"].count("Source crosses an audio processing boundary; verify wording against the audio") == 1
+            assert any("Automated audio flags" in warning for warning in snapshot_json["unresolved"])
             assert snapshot_json["template"]["version"] == 1
             assert snapshot_json["template"]["titles"]["en"] == "Synthetic template minutes"
             assert snapshot_json["template"]["introduction"] == "Synthetic configured introduction"
@@ -157,6 +166,9 @@ def main(*, fixture_inference=False):
                 "recipient_group_edit",
                 "template_configuration",
                 "template_snapshot_freezing",
+                "audio_check_playback",
+                "audio_check_snapshot_warning",
+                "deduplicated_source_warnings",
                 "suggested_recipient_group",
                 "manual_topic_link",
                 "retained_amendment_history",

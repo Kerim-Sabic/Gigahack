@@ -687,6 +687,65 @@
         }
       }
     },
+    "/api/v1/jobs/{ident}/audio-checks": {
+      "get": {
+        "summary": "Audio Checks",
+        "operationId": "audio_checks_api_v1_jobs__ident__audio_checks_get",
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AudioChecksPage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/jobs/{ident}/{action}": {
       "post": {
         "summary": "Job Action",
@@ -1899,6 +1958,67 @@
           "original"
         ],
         "title": "AssetView"
+      },
+      "AudioCheckView": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "speech_without_transcript",
+              "empty_second_recognizer"
+            ],
+            "title": "Kind"
+          },
+          "start": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Start"
+          },
+          "end": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "End"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "start",
+          "end"
+        ],
+        "title": "AudioCheckView"
+      },
+      "AudioChecksPage": {
+        "properties": {
+          "asset_id": {
+            "type": "string",
+            "title": "Asset Id"
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Total"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AudioCheckView"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope"
+          }
+        },
+        "type": "object",
+        "required": [
+          "asset_id",
+          "total",
+          "items",
+          "scope"
+        ],
+        "title": "AudioChecksPage"
       },
       "Body_upload_api_v1_meetings__ident__uploads_post": {
         "properties": {

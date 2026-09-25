@@ -22,6 +22,9 @@ def fixture_stage(job, stage, spec):
         return {"segments": [{"start": 0, "end": 32000, "text": TEXT, "raw": {"fixture": True, "boundary_review": True}, "words": []}]}
     if stage != "extract":
         raise RuntimeError("CI fixture does not implement optional inference")
+    # Explicit synthetic observation exercises review playback, not model accuracy.
+    from services.worker.audio_checks import save_checks
+    save_checks(job, "empty_second_recognizer", [{"start": 0, "end": 16000}])
     source = spec["segments"][0]
     return {
         "events": [

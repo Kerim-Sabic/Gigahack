@@ -1,17 +1,17 @@
 # Current implementation status
 
 Complete mission remains active. The last verified remote checkpoint is
-aa25c9285aa46fb3bd6ffaaa00447847ab954584 (CI 36194268266 PASS). It contains multilingual
+aabc99e34f08f141bc67b55c203fd8796210dc65 (CI 36196962259 PASS). It contains multilingual
 transcription, frozen developer settings, current-step ETA and bounded ASR checkpoints.
 It also includes atomic recording/stage recovery and kernel-backed model-process ownership.
 Exact bounded audio clips and optional-model excerpt results are included. Full-recording
-experimental results and the separate license inventory are recorded. Current changes connect
-the verified isolated optional runtime to the API and supervisor.
+experimental results and the separate license inventory are recorded. The verified isolated optional runtime is connected to the API and supervisor. Current changes
+add source-linked audio coverage observations and freeze warning counts into exported minutes.
 
 ## Current evidence
 
-- 152 backend tests pass locally with one Linux-only check skipped; that check and the actual
-  child cleanup test pass in Linux. Last frontend checkpoint: 10 tests and strict build pass.
+- 155 backend tests pass locally with one Linux-only check skipped; that check and the actual
+  child cleanup test pass in Linux. Current frontend checkpoint: 11 tests and strict build pass.
 - Hard-killing a model stage now terminates its owned child through Windows Job Objects or
   Linux parent-death binding; the actual tests preserve an unrelated running process.
   New CUDA silence inference passes in 7.00s. Full application crash rehearsal remains open.
@@ -57,6 +57,15 @@ A fresh 182-package candidate plus pip removes 50 unused packages. Worker startu
 installed versions, reviewed patch hashes and pinned model files. The metadata-only API check
 imports no model frameworks. Clean-runtime whole-recording diarization reproduced the same
 262 turns/five clusters. See DECISIONS/010-optional-model-preparation.md.
+
+## Audio coverage review
+
+Optional adapters now persist possible speech gaps and empty second-recognizer observations.
+The latest analysis has paginated, member-authorized playback in the UI. Minutes snapshots
+freeze the warning count. A diagnostic replay of the saved private outputs found 56 possible
+gaps / 102.322875 seconds and 24 empty alternatives; these are not human-confirmed omissions.
+Schema 3 preserves accounts and existing records; retention cascades observations with jobs.
+See DECISIONS/013-audio-coverage-review.md. Independent gap recovery remains open.
 
 ## Remaining acceptance
 

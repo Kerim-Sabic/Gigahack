@@ -25,7 +25,7 @@ from .audio import atomic_write, decode, sha
 from .db import audit, canonical, migrate, transaction, uid
 from .dates import resolve as resolve_date
 from .domain import Strict, reduce_events
-from .schemas import AccountSummary, AccountView, MeetingDetail, MeetingView, SegmentView
+from .schemas import AudioChecksPage, AccountSummary, AccountView, MeetingDetail, MeetingView, SegmentView
 from .provenance import runtime_identity
 
 passwords = PasswordHasher()
@@ -732,6 +732,20 @@ def queue(ident: str, body: Queue, u=Depends(user)):
         )
         c.execute("UPDATE meetings SET status='queued' WHERE id=?", (ident,))
         return {"id": job, "state": "queued"}
+
+
+@app.get("/api/v1/jobs/{ident}/audio-checks", response_model=AudioChecksPage)
+def audio_checks(ident: str, offset: int = 0, limit: int = 50, u=Depends(user)):
+    with transaction() as c:
+        job = c.execute("SELECT * FROM jobs WHERE id=?", (ident,)).fetchone()
+        if not job:
+            fail("job_not_found", 404)
+        access(c, job["meeting_id"], u)
+        rows = c.execute("SELECT kind,start,end FROM audio_checks WHERE job_id=? ORDER BY start,end,kind LIMIT ? OFFSET ?",
+                         (ident, min(max(limit, 1), 100), max(offset, 0))).fetchall()
+        total = c.execute("SELECT COUNT(*) FROM audio_checks WHERE job_id=?", (ident,)).fetchone()[0]
+        return {"asset_id": job["asset_id"], "total": total, "items": [dict(r) for r in rows],
+                "scope": "Automated observations from this processing attempt; not proof of missing speech or transcript accuracy"}
 
 
 @app.post("/api/v1/jobs/{ident}/{action}")

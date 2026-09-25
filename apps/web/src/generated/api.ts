@@ -231,6 +231,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/jobs/{ident}/audio-checks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Audio Checks */
+        get: operations["audio_checks_api_v1_jobs__ident__audio_checks_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/jobs/{ident}/{action}": {
         parameters: {
             query?: never;
@@ -714,6 +731,29 @@ export interface components {
             channels: number;
             /** Original */
             original: string;
+        };
+        /** AudioCheckView */
+        AudioCheckView: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "speech_without_transcript" | "empty_second_recognizer";
+            /** Start */
+            start: number;
+            /** End */
+            end: number;
+        };
+        /** AudioChecksPage */
+        AudioChecksPage: {
+            /** Asset Id */
+            asset_id: string;
+            /** Total */
+            total: number;
+            /** Items */
+            items: components["schemas"]["AudioCheckView"][];
+            /** Scope */
+            scope: string;
         };
         /** Body_upload_api_v1_meetings__ident__uploads_post */
         Body_upload_api_v1_meetings__ident__uploads_post: {
@@ -1733,6 +1773,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    audio_checks_api_v1_jobs__ident__audio_checks_get: {
+        parameters: {
+            query?: {
+                offset?: number;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                ident: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AudioChecksPage"];
                 };
             };
             /** @description Validation Error */

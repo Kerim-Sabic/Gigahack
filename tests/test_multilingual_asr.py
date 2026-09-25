@@ -46,6 +46,7 @@ def test_optional_comparison_does_not_skip_speech_without_numbers(tmp_path, monk
         source.setparams((1, 2, 16000, 0, 'NONE', 'not compressed'))
         source.writeframes(b'\1\0' * 80000)
     monkeypatch.setattr(optional, 'transaction', lambda: nullcontext(None))
+    monkeypatch.setattr(optional, 'save_checks', lambda *args: None)
     captured = []
 
     def run(job, stage, spec):

@@ -127,3 +127,13 @@ GPU totals include unrelated services starting on the host and cannot establish 
 VRAM or target-laptop fit. Source/config hashes, raw hypotheses, turns, progress and receipts
 remain in the ignored private run directory. Earlier coverage/empty-window failures remain
 unresolved; successful persistence is not an acoustic accuracy result.
+
+
+## Coverage diagnostic replay
+
+The new interval diagnostic, applied to the stored actual outputs of
+app-optional-1790375165684521014, found 56 possible speech gaps totaling 102.322875 seconds,
+plus 24 empty second-recognizer hypotheses. Speaker overlaps are unioned; nonempty transcript
+spans are subtracted; gaps under 0.5 seconds are not flagged. This is a review signal from
+imperfect model outputs, not 102 seconds of human-confirmed missing speech. Private source
+intervals and count report remain ignored. No new acoustic inference occurred in this replay.

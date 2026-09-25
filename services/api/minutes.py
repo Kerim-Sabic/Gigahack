@@ -42,6 +42,7 @@ LABELS = {
         "evidence": "Original evidence retained in the authorized workspace",
         "owner_missing": "owner not specified",
         "conditional": "conditional",
+        "audio_flags": "Automated audio flags from the latest analysis: {count}. Review the source recording; these may be false alarms. Transcript edits do not recalculate these flags.",
     },
     "ro": {
         "title": "Proces-verbal",
@@ -61,6 +62,7 @@ LABELS = {
         "evidence": "Dovezile originale sunt păstrate în spațiul autorizat",
         "owner_missing": "responsabil nespecificat",
         "conditional": "condiționat",
+        "audio_flags": "Semnalări audio automate din ultima analiză: {count}. Verificați înregistrarea sursă; pot fi alarme false. Editarea transcrierii nu recalculează aceste semnalări.",
         "proposed": "propus",
         "confirmed": "confirmat",
         "rejected": "respins",
@@ -92,6 +94,7 @@ LABELS = {
         "evidence": "Исходные подтверждения сохранены в рабочем пространстве с контролем доступа",
         "owner_missing": "ответственный не указан",
         "conditional": "условно",
+        "audio_flags": "Автоматические отметки аудио по последнему анализу: {count}. Проверьте исходную запись; отметки могут быть ложными. Правки расшифровки не пересчитывают эти отметки.",
         "proposed": "предложено",
         "confirmed": "подтверждено",
         "rejected": "отклонено",
@@ -164,7 +167,7 @@ def snapshot(ident: str, body: Revision, u=Depends(authenticated)):
             fail("processing_incomplete", 409)
         data = {
             "schema_version": 1,
-            "template_version": 4,
+            "template_version": 5,
             "template": load_template(c, m["classification"]),
             "application_version": "0.1.0",
             "meeting": m,
@@ -174,6 +177,14 @@ def snapshot(ident: str, body: Revision, u=Depends(authenticated)):
             "items": projections(c, ident),
             "unresolved": [],
         }
+        data["audio_checks"] = [dict(row) for row in c.execute(
+            "SELECT j.id AS job_id,j.asset_id,a.kind,COUNT(*) AS count FROM audio_checks a JOIN jobs j ON j.id=a.job_id "
+            "WHERE j.meeting_id=? AND j.id=(SELECT latest.id FROM jobs latest WHERE latest.asset_id=j.asset_id "
+            "AND latest.meeting_id=j.meeting_id ORDER BY latest.created DESC,latest.rowid DESC LIMIT 1) "
+            "GROUP BY j.id,j.asset_id,a.kind ORDER BY j.id,a.kind", (ident,))]
+        flag_count = sum(row["count"] for row in data["audio_checks"])
+        if flag_count:
+            data["unresolved"].append(LABELS[m["language"]]["audio_flags"].format(count=flag_count))
         for item in data["items"]:
             data["unresolved"].extend(item.get("uncertainties", []))
             if item["owner"] is None and item["category"] == "action":

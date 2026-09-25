@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from .progress import ProgressView
 
 
@@ -86,3 +86,16 @@ class SegmentView(BaseModel):
     speaker: str | None
     alternatives: str
     words: str
+
+
+class AudioCheckView(BaseModel):
+    kind: Literal["speech_without_transcript", "empty_second_recognizer"]
+    start: int = Field(ge=0)
+    end: int = Field(gt=0)
+
+
+class AudioChecksPage(BaseModel):
+    asset_id: str
+    total: int = Field(ge=0)
+    items: list[AudioCheckView]
+    scope: str
