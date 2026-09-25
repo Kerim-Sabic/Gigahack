@@ -85,6 +85,10 @@ def main(*, fixture_inference=False):
         page.get_by_role("button", name="Process audio", exact=True).click()
         expect(page.locator(".pageheading .badge").first).to_have_text("awaiting review", timeout=240000)
         expect(page.locator(".itemlist button").first).to_be_visible(timeout=10000)
+        if fixture_inference:
+            page.get_by_role("tab", name="Transcript", exact=True).click()
+            expect(page.get_by_text("Check the wording here against the audio; this passage crosses a processing boundary.", exact=True)).to_be_visible()
+            page.get_by_role("tab", name="Decisions & actions", exact=True).click()
         page.screenshot(path=str(proof / "review-1366.png"), full_page=True)
         for _ in range(20):
             button = page.get_by_role("button", name="Accept", exact=True)

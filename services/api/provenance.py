@@ -8,6 +8,7 @@ from . import config
 FILES = (
     "config/inference.toml",
     "services/worker/settings.py",
+    "services/worker/asr_chunks.py",
     "services/api/progress.py",
     "services/worker/stage.py",
     "services/worker/reconcile.py",

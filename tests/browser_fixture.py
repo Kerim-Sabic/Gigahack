@@ -19,7 +19,7 @@ TEXT = "Elena sends the report on 30 September. Confirmed."
 
 def fixture_stage(job, stage, spec):
     if stage == "whisper":
-        return {"segments": [{"start": 0, "end": 32000, "text": TEXT, "raw": {"fixture": True}, "words": []}]}
+        return {"segments": [{"start": 0, "end": 32000, "text": TEXT, "raw": {"fixture": True, "boundary_review": True}, "words": []}]}
     if stage != "extract":
         raise RuntimeError("CI fixture does not implement optional inference")
     source = spec["segments"][0]

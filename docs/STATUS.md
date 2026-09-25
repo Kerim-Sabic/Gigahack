@@ -1,3 +1,15 @@
+# Current ASR recovery continuation
+
+- Committed multilingual checkpoint 0b9a2a4b86b18a832b1597e467753adbaee22dff is remote-verified;
+  GitHub CI 36186616751 passed.
+- Bounded PCM reads and durable ASR checkpoints implemented. Actual supplied recording
+  completed in three chunks, with boundary-review flags and retained source offsets.
+- Actual ASR-child termination and same-job retry reused one saved chunk and completed.
+  This does not yet qualify whole-app crash recovery or arbitrary-length recordings.
+- Optional isolated environment installation and pip check completed; imports and real
+  inference verification are next.
+- See DECISIONS/009-asr-checkpoints.md for measurements, tests and remaining limits.
+
 # Current multilingual continuation
 
 - Supplied private recording processed by real Whisper twice. Per-window multilingual run

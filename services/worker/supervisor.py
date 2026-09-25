@@ -211,6 +211,8 @@ def process(job):
         event = Candidate.model_validate(e)
         for ref in event.evidence:
             segment = source[ref.segment_id]
+            if json.loads(segment["raw"]).get("boundary_review"):
+                event.uncertainties.append("Source crosses an audio processing boundary; verify wording against the audio")
             if json.loads(segment["alternatives"]):
                 for alternative in json.loads(segment["alternatives"]):
                     if alternative["text"].strip() != segment["text"].strip():

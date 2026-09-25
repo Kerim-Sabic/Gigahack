@@ -2,6 +2,7 @@ import type { Lang } from './i18n';
 let language:Lang='en';
 export function setUiLanguage(value:Lang){language=value;document.documentElement.lang=value;}
 const rows:[string,string,string][]=[
+ ["Check the wording here against the audio; this passage crosses a processing boundary.", "Verificați formularea cu înregistrarea audio; acest pasaj trece peste limita unui segment de procesare.", "Сверьте формулировку с аудио: этот фрагмент пересекает границу обработки."],
  ["Loading local model", "Se încarcă modelul local", "Загрузка локальной модели"],
  ["Transcribing audio", "Se transcrie înregistrarea", "Распознавание речи"],
  ["Reading transcript", "Se citește transcrierea", "Чтение расшифровки"],

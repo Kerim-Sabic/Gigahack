@@ -801,7 +801,8 @@ def test_quantity_survives_review_snapshot_and_human_replacement(client):
     assert client.get(base + "json").json()["items"][0]["quantity"] == body["quantity"]
 
 
-def test_asr_disagreement_withholds_structured_quantity_through_review(client, monkeypatch):
+@pytest.mark.parametrize("boundary", [False, True])
+def test_asr_disagreement_withholds_structured_quantity_through_review(client, monkeypatch, boundary):
     from services.worker import supervisor
     from services.api.quantities import enrich_quantity
 
@@ -810,10 +811,11 @@ def test_asr_disagreement_withholds_structured_quantity_through_review(client, m
     text = "The protocol mentions 7 mg."
     with transaction() as db:
         db.execute(
-            "UPDATE segments SET text=?, alternatives=? WHERE id=?",
+            "UPDATE segments SET text=?, alternatives=?, raw=? WHERE id=?",
             (
                 text,
                 canonical([{"engine": "explicit test alternative", "text": "The protocol mentions 1 mg."}]),
+                canonical({"boundary_review": boundary}),
                 sid,
             ),
         )
@@ -851,6 +853,7 @@ def test_asr_disagreement_withholds_structured_quantity_through_review(client, m
     response = client.get(f"/api/v1/meetings/{meeting['id']}/items").json()
     item = next(c for c in response["candidates"] if c["subject"] == "protocol numeric fact")
     assert item["body"]["value"] is None and item["body"]["quantity"] is None
+    assert any("processing boundary" in issue for issue in item["body"]["uncertainties"]) is boundary
     accepted = client.post(
         f"/api/v1/review-issues/{item['id']}/resolve",
         json={"revision": response["revision"], "action": "accepted"},

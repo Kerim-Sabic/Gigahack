@@ -63,6 +63,8 @@ class LLMSettings(LocalModelSettings):
 
 
 class ASRSettings(LocalModelSettings):
+    checkpoint_seconds: int = Field(ge=30, le=600)
+    overlap_seconds: int = Field(ge=1, le=10)
     beam_size: int = Field(ge=1, le=10)
     decode_window_seconds: int = Field(ge=5, le=30)
     retry_window_seconds: int = Field(ge=5, le=30)

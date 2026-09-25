@@ -24,6 +24,8 @@ split_depth = 8
 
 [asr]
 model_directory = "whisper"
+checkpoint_seconds = 300 # Bound decoded audio memory and persist completed chunks.
+overlap_seconds = 2 # Context around chunk boundaries; canonical word offsets select ownership.
 beam_size = 5
 decode_window_seconds = 25
 retry_window_seconds = 15

@@ -1,4 +1,5 @@
 import sys
+import wave
 from types import SimpleNamespace
 
 from services.worker.settings import load_settings
@@ -21,7 +22,11 @@ def test_code_switches_are_preserved_without_translation_or_recording_wide_label
             ]), SimpleNamespace(duration=2, language='ru')
 
     monkeypatch.setitem(sys.modules, 'faster_whisper', SimpleNamespace(WhisperModel=Model))
-    result = whisper({'audio': 'synthetic-contract-only.wav', 'run_dir': str(tmp_path), 'config': {'device': 'cpu', 'inference': load_settings().model_dump()}})
+    audio = tmp_path / 'synthetic-contract-only.wav'
+    with wave.open(str(audio), 'wb') as source:
+        source.setparams((1, 2, 16000, 0, 'NONE', 'not compressed'))
+        source.writeframes(b'\0\0' * 32000)
+    result = whisper({'audio': str(audio), 'run_dir': str(tmp_path), 'config': {'device': 'cpu', 'inference': load_settings().model_dump()}})
     assert observed['local'] and observed['multilingual']
     assert observed['language'] is None and observed['task'] == 'transcribe'
     assert [s['text'] for s in result['segments']] == texts

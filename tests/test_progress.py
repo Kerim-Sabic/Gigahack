@@ -25,3 +25,15 @@ def test_corrupt_progress_is_unknown_not_zero_success(tmp_path):
     folder.mkdir(parents=True)
     (folder / "progress.json").write_text('{"completed":100}')
     assert read_progress(tmp_path, {"id": "j", "state": "running", "stage": "whisper"}) is None
+
+
+def test_resumed_work_is_not_counted_as_new_eta_throughput(tmp_path):
+    clock = [0.0]
+    reporter = ProgressReporter(tmp_path, 'whisper', clock=lambda: clock[0], wall_clock=lambda: clock[0])
+    reporter.begin('transcribing', 100, 'seconds', initial_completed=60)
+    clock[0] = 5
+    reporter.advance(70)
+    clock[0] = 10
+    reporter.advance(80)
+    observed = json.loads((tmp_path / 'progress.json').read_text())
+    assert observed['eta_seconds'] == 10  # 20 new units / 10 seconds; 20 units remain.

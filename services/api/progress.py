@@ -29,12 +29,13 @@ class ProgressReporter:
         self.stage, self.clock, self.wall_clock = stage, clock, wall_clock
         self.begin("loading_model")
 
-    def begin(self, phase, total=None, unit="items"):
+    def begin(self, phase, total=None, unit="items", initial_completed=0):
         self.phase, self.total, self.unit = phase, total, unit
         self.started = self.clock()
-        self.completed, self.observations = 0.0, 0
+        self.completed, self.observations = float(initial_completed), 0
+        self.initial_completed = self.completed
         self.last_written = float("-inf")
-        self.advance(0, force=True)
+        self.advance(self.completed, force=True)
 
     def advance(self, completed, force=False):
         if not math.isfinite(completed) or completed < self.completed:
@@ -49,8 +50,9 @@ class ProgressReporter:
             return
         self.last_written = now
         eta = None
-        if self.total and self.observations >= 2 and elapsed >= 3 and completed > 0:
-            eta = elapsed / completed * max(0, self.total - completed)
+        observed_work = completed - self.initial_completed
+        if self.total and self.observations >= 2 and elapsed >= 3 and observed_work > 0:
+            eta = elapsed / observed_work * max(0, self.total - completed)
         value = ProgressView(stage=self.stage, phase=self.phase, completed=completed, total=self.total,
                              unit=self.unit, elapsed_seconds=elapsed, eta_seconds=eta, updated_at=self.wall_clock())
         try:

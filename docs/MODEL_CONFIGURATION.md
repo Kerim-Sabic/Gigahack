@@ -41,3 +41,11 @@ The initial detected language is only a recording summary. It must not be presen
 language annotation for every word. The optional Parakeet check now defaults to all transcript
 segments, including speech without numbers/negation; this costs additional processing time.
 Reducing `parakeet_audio_fraction` reduces coverage and may miss short code switches.
+
+ASR `checkpoint_seconds` bounds each PCM read (default 300 seconds), with two seconds
+of context on each side. Word midpoint ownership avoids publishing the same overlap window
+twice, and crossing hypotheses retain their complete raw text and a boundary-review flag.
+Checkpoints are atomic/fsynced and keyed to the actual audio hash, settings, device/retry
+profile and implementation identity. Corrupt or mismatching checkpoints are recomputed.
+This bounds waveform memory; total transcript/LLM state is still proportional to meeting size.
+Upload duration/container limits and full-pipeline long-file qualification are not yet removed.
