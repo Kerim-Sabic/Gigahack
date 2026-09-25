@@ -1,6 +1,7 @@
 from typing import Literal
 
 from pydantic import BaseModel
+from .progress import ProgressView
 
 
 class AccountSummary(BaseModel):
@@ -52,6 +53,7 @@ class JobView(BaseModel):
     attempt: int
     cancel: int
     created: float
+    progress: ProgressView | None = None
 
 
 class RecordingView(BaseModel):

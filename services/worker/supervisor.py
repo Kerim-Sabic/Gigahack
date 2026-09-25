@@ -67,6 +67,11 @@ def run_stage(job, stage, spec):
             "UPDATE meetings SET status=? WHERE id=?",
             ("transcribing" if stage == "whisper" else "reconciling", job["meeting_id"]),
         )
+    # Discard the previous attempt's display before this attempt starts.
+    try:
+        (folder / "progress.json").unlink(missing_ok=True)
+    except OSError:
+        pass  # Display artifacts do not authorize or block inference.
     log = open(folder / f"{stage}.log", "wb")
     env = stage_environment()
     from services.worker.resources import ResourceSampler

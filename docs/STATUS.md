@@ -1,3 +1,17 @@
+# Current multilingual continuation
+
+- Supplied private recording processed by real Whisper twice. Per-window multilingual run
+  preserves Romanian passages alongside Russian; no reference WER or speaker score available.
+  See PROVIDED_AUDIO_ACCEPTANCE.md. No meeting date/timezone or identities were invented.
+- Central frozen inference settings, source-language ASR, current-phase progress/ETA and
+  optional complete-segment comparison coverage implemented. 127 backend / 10 frontend
+  tests, strict build and lint pass. Synthetic fixture browser/PDF/Mailpit and RO/RU/zoom
+  checks pass in an isolated Linux namespace; actual models are not used by that fixture.
+- Parakeet and Community-1 model snapshots downloaded; gated access accepted. Optional
+  isolated dependency installation still running. Their actual inference is NOT VERIFIED.
+- Long-file bounded checkpoints, full-job ETA, H03, branding/UI/PDF finishing, packaging,
+  disconnected optional inference and target-laptop qualification remain open.
+
 # Current continuation checkpoint
 
 Current stage: generalize and verify semantic corrections before target/deployment readiness.

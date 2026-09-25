@@ -46,11 +46,14 @@ def resolve(raw, meeting_date):
     if not raw:
         return None
     raw = raw.strip().lower()
-    base = date.fromisoformat(meeting_date)
+    try:
+        base = date.fromisoformat(meeting_date) if meeting_date else None
+    except ValueError:
+        base = None
     if raw in ("tomorrow", "mâine", "завтра"):
-        return (base + timedelta(days=1)).isoformat()
+        return (base + timedelta(days=1)).isoformat() if base else None
     if raw in ("today", "astăzi", "сегодня"):
-        return base.isoformat()
+        return base.isoformat() if base else None
     if re.fullmatch(r"\d{4}-\d{2}-\d{2}", raw):
         try:
             return date.fromisoformat(raw).isoformat()
@@ -62,6 +65,8 @@ def resolve(raw, meeting_date):
             match = re.search(month + r"\s+(\d{1,2})(?:st|nd|rd|th)?", raw)
         if match:
             year = re.search(r"\b(20\d{2})\b", raw)
+            if not year and not base:
+                return None
             try:
                 return date(int(year[1]) if year else base.year, number, int(match[1])).isoformat()
             except ValueError:

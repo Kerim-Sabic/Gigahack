@@ -2323,6 +2323,16 @@
           "created": {
             "type": "number",
             "title": "Created"
+          },
+          "progress": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProgressView"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -2348,14 +2358,21 @@
             "title": "Title"
           },
           "date": {
-            "type": "string",
-            "format": "date",
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Date"
           },
           "timezone": {
             "type": "string",
             "title": "Timezone",
-            "default": "Europe/Chisinau"
+            "default": ""
           },
           "language": {
             "type": "string",
@@ -2389,8 +2406,7 @@
         "additionalProperties": false,
         "type": "object",
         "required": [
-          "title",
-          "date"
+          "title"
         ],
         "title": "Meeting"
       },
@@ -2498,14 +2514,21 @@
             "title": "Title"
           },
           "date": {
-            "type": "string",
-            "format": "date",
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Date"
           },
           "timezone": {
             "type": "string",
             "title": "Timezone",
-            "default": "Europe/Chisinau"
+            "default": ""
           },
           "language": {
             "type": "string",
@@ -2544,7 +2567,6 @@
         "type": "object",
         "required": [
           "title",
-          "date",
           "revision"
         ],
         "title": "MeetingEdit"
@@ -2653,6 +2675,98 @@
           "language"
         ],
         "title": "Preference"
+      },
+      "ProgressView": {
+        "properties": {
+          "stage": {
+            "type": "string",
+            "enum": [
+              "whisper",
+              "extract",
+              "parakeet",
+              "diarize"
+            ],
+            "title": "Stage"
+          },
+          "phase": {
+            "type": "string",
+            "enum": [
+              "loading_model",
+              "transcribing",
+              "extracting",
+              "checking",
+              "diarizing",
+              "stage_complete"
+            ],
+            "title": "Phase"
+          },
+          "completed": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Completed"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total"
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "seconds",
+              "segments",
+              "items",
+              "clips"
+            ],
+            "title": "Unit"
+          },
+          "elapsed_seconds": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Elapsed Seconds"
+          },
+          "eta_seconds": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eta Seconds"
+          },
+          "eta_scope": {
+            "type": "string",
+            "const": "current_phase",
+            "title": "Eta Scope",
+            "default": "current_phase"
+          },
+          "updated_at": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Updated At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "stage",
+          "phase",
+          "completed",
+          "unit",
+          "elapsed_seconds",
+          "updated_at"
+        ],
+        "title": "ProgressView"
       },
       "Queue": {
         "properties": {

@@ -1,4 +1,3 @@
-import re
 import subprocess
 
 from services.api import config
@@ -6,13 +5,14 @@ from services.api.db import canonical, transaction
 
 
 def optional_stages(job, spec, asset, segments, run_stage):
+    from .settings import settings_for
+
+    settings = settings_for(spec).optional
     if spec["config"].get("parakeet"):
-        budget, used, clips = int(asset["samples"] * 0.15), 0, []
+        budget, used, clips = int(asset["samples"] * settings.parakeet_audio_fraction), 0, []
         for s in segments:
-            if not re.search(r"\d|\b(?:not|no|nu|не)\b", s["text"], re.I):
-                continue
             start, end = max(0, s["start"] - 3200), min(asset["samples"], s["end"] + 3200)
-            if used + end - start > budget:
+            if settings.parakeet_audio_fraction < 1 and used + end - start > budget:
                 continue
             clip = config.DATA / "jobs" / job["id"] / (s["id"] + ".wav")
             subprocess.run(

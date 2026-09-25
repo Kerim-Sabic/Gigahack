@@ -6,6 +6,9 @@ from . import config
 
 
 FILES = (
+    "config/inference.toml",
+    "services/worker/settings.py",
+    "services/api/progress.py",
     "services/worker/stage.py",
     "services/worker/reconcile.py",
     "services/worker/optional.py",

@@ -6,7 +6,7 @@ import sqlite3
 import time
 import wave
 from contextlib import asynccontextmanager
-from datetime import date
+from datetime import date as CalendarDate
 from pathlib import Path
 from typing import Literal
 from zoneinfo import ZoneInfo
@@ -247,8 +247,8 @@ def account(body: Account, u=Depends(user)):
 
 class Meeting(Strict):
     title: str = Field(min_length=1, max_length=200)
-    date: date
-    timezone: str = "Europe/Chisinau"
+    date: CalendarDate | None = None
+    timezone: str = ""
     language: Literal["en", "ro", "ru"] = "en"
     classification: Literal["Medical", "Executive", "Administrative"] = "Administrative"
     participants: list[str] = Field(default_factory=list, max_length=100)
@@ -259,7 +259,8 @@ def create_meeting(body: Meeting, request: Request, u=Depends(user)):
     if u["role"] == "viewer":
         fail("read_only", 403)
     try:
-        ZoneInfo(body.timezone)
+        if body.timezone:
+            ZoneInfo(body.timezone)
     except (KeyError, ValueError):
         fail("invalid_timezone")
     with transaction() as c:
@@ -282,7 +283,7 @@ def create_meeting(body: Meeting, request: Request, u=Depends(user)):
             (
                 ident,
                 body.title,
-                str(body.date),
+                (body.date.isoformat() if body.date else ""),
                 body.timezone,
                 body.language,
                 body.classification,
@@ -328,7 +329,11 @@ def meeting(ident: str, u=Depends(user)):
                 (r["id"],),
             ).fetchone()
             r["acknowledged_chunks"], r["acknowledged_samples"], r["last_sequence"] = tuple(stats)
-        return m
+    from .progress import read_progress
+
+    for job in m["jobs"]:
+        job["progress"] = read_progress(config.DATA, job)
+    return m
 
 
 class MeetingEdit(Meeting):
@@ -338,7 +343,8 @@ class MeetingEdit(Meeting):
 @app.patch("/api/v1/meetings/{ident}")
 def update_meeting(ident: str, body: MeetingEdit, u=Depends(user)):
     try:
-        ZoneInfo(body.timezone)
+        if body.timezone:
+            ZoneInfo(body.timezone)
     except (KeyError, ValueError):
         fail("invalid_timezone")
     with transaction() as c:
@@ -350,9 +356,9 @@ def update_meeting(ident: str, body: MeetingEdit, u=Depends(user)):
         revision(c, m, body.revision)
         c.execute(
             "UPDATE meetings SET title=?,date=?,timezone=?,language=?,classification=? WHERE id=?",
-            (body.title, str(body.date), body.timezone, body.language, body.classification, ident),
+            (body.title, (body.date.isoformat() if body.date else ""), body.timezone, body.language, body.classification, ident),
         )
-        if str(body.date) != m["date"] or body.timezone != m["timezone"]:
+        if (body.date.isoformat() if body.date else "") != m["date"] or body.timezone != m["timezone"]:
             c.execute(
                 "UPDATE candidates SET review='needs_review' WHERE meeting_id=? AND review!='excluded'",
                 (ident,),
@@ -636,6 +642,9 @@ class Queue(Strict):
 def queue(ident: str, body: Queue, u=Depends(user)):
     from .capabilities import capabilities
 
+    from services.worker.settings import load_settings
+
+    inference_settings = load_settings().model_dump()
     available = capabilities()
     for name in ("parakeet", "diarization"):
         if getattr(body, name) and not available[name]["available"]:
@@ -658,6 +667,7 @@ def queue(ident: str, body: Queue, u=Depends(user)):
         settings = canonical(
             {
                 "device": body.device,
+                "inference": inference_settings,
                 "parakeet": body.parakeet,
                 "diarization": body.diarization,
                 "prompt_hash": prompt_hash,
@@ -810,7 +820,7 @@ class Correction(Strict):
     subject: str | None = Field(default=None, min_length=1, max_length=160)
     text: str = Field(min_length=1, max_length=2000)
     owner: str | None = Field(default=None, max_length=200)
-    due: date | None = None
+    due: CalendarDate | None = None
     condition: str | None = Field(default=None, max_length=2000)
     value: str | None = Field(default=None, max_length=200)
     resolved_issues: list[str] = Field(default_factory=list, max_length=30)

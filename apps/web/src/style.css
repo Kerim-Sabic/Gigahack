@@ -3,3 +3,5 @@
 input[type=checkbox]{width:20px;height:20px;min-height:20px;padding:0;accent-color:#176c67}label:has(>input[type=checkbox]){display:flex;align-items:center;gap:10px;min-height:44px}fieldset{border:1px solid #d7e0da;border-radius:8px;padding:16px;margin:16px 0}
 
 .mutation-controls{border:0;padding:0;margin:16px 0 0}
+
+.job-progress{width:100%;min-width:0;margin:12px 0}.job-progress progress{width:100%;height:12px;accent-color:#176c67}.progress-heading{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:13px}.job{flex-wrap:wrap}

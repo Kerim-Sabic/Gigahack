@@ -7,9 +7,9 @@ def capabilities():
     return {
         "parakeet": {
             "available": importlib.util.find_spec("nemo") is not None
-            and (config.MODELS / "parakeet/model.nemo").exists(),
+            and (config.MODELS / "parakeet/parakeet-tdt-0.6b-v3.nemo").exists(),
             "qualification": "not measured",
-            "prerequisite": "Prepare nvidia/parakeet-tdt-0.6b-v3 model.nemo and a compatible isolated NeMo environment",
+            "prerequisite": "Prepare nvidia/parakeet-tdt-0.6b-v3 parakeet-tdt-0.6b-v3.nemo and a compatible isolated NeMo environment",
             "license": "CC-BY-4.0 model; inspect model card before preparation",
         },
         "diarization": {

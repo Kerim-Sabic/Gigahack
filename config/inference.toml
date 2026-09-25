@@ -1,0 +1,42 @@
+# Developer-controlled local runtime. Effective values are frozen in every new job.
+# Bigger context/model/batches require a fresh memory and accuracy qualification.
+schema_version = 1
+
+[llm]
+model_directory = "qwen" # Must name prepared, manifest-verified local assets.
+model_file = "Qwen3.5-4B-Q4_K_M.gguf"
+context_tokens = 4096
+source_window_tokens = 1800
+reconciliation_tokens = 1800
+extraction_tokens = 768
+classification_tokens = 256
+category_tokens = 32
+field_tokens = 400
+reasoning_tokens = 768 # Interpretation only; zero disables thinking.
+reasoning_overhead_tokens = 32
+temperature = 0.0
+batch_size = 256
+micro_batch_size = 128
+gpu_layers = -1 # All layers; CPU profile still overrides to zero.
+request_timeout_seconds = 180
+startup_timeout_seconds = 180
+split_depth = 8
+
+[asr]
+model_directory = "whisper"
+beam_size = 5
+decode_window_seconds = 25
+retry_window_seconds = 15
+condition_on_previous_text = false
+multilingual = true # Detect language for each decoding window; never translate.
+vad_filter = true
+gpu_compute_type = "int8_float16"
+cpu_compute_type = "int8"
+
+[optional]
+parakeet_audio_fraction = 1.0 # Compare every transcript segment when the optional check is selected.
+parakeet_batch_size = 1
+diarization_batch_size = 16
+
+# Generation slots and GPU admission remain fixed at one. This is a safety invariant,
+# not an unqualified performance knob. No runtime setting enables network inference.

@@ -132,7 +132,7 @@ def render(data):
     )
     return f'''<!doctype html><html lang="{m["language"]}"><meta charset="utf-8"><title>{esc(m["title"])}</title>
 <style>body{{font:16px sans-serif;color:#203339;max-width:900px;margin:40px auto;padding:24px}}h1{{font-size:30px}}table{{border-collapse:collapse;width:100%}}td,th{{text-align:left;padding:12px;border-bottom:1px solid #ccd6d5}}footer{{margin-top:32px;font-size:12px}}@page{{size:A4;margin:18mm}}</style>
-<h1>{esc(title)}</h1><h2>{esc(m["title"])}</h2><p>{esc(m["date"])} · {esc(m["timezone"])} · {esc(m["classification"])}</p>
+<h1>{esc(title)}</h1><h2>{esc(m["title"])}</h2><p>{esc(m["date"] or labels["unknown"])} · {esc(m["timezone"] or labels["unknown"])} · {esc(m["classification"])}</p>
 <p style="white-space:pre-wrap">{esc(template.get("introduction", ""))}</p><h3>{labels["participants"]}</h3><p>{esc(", ".join(data["participants"]))}</p><h3>{labels["items"]}</h3>
 <table><thead><tr>{headers}</tr></thead><tbody>{rows}</tbody></table>
 <h3>{labels["unresolved"]}</h3><ul>{unresolved}</ul><h3>{labels["history"]}</h3><ul>{history}</ul>

@@ -12,11 +12,12 @@ export function MeetingDetails({meeting:m,role,busy,act,back}:{meeting:Meeting;r
     {processing&&<p className="notice">{tr('Cancel or finish processing before changing meeting details.')}</p>}
     <form key={m.revision} onSubmit={e=>{
       e.preventDefault();const f=new FormData(e.currentTarget);
-      act(()=>api(`/meetings/${m.id}`,'PATCH',{revision:m.revision,title:f.get('title'),date:f.get('date'),timezone:f.get('timezone'),language:f.get('language'),classification:f.get('classification'),participants:String(f.get('participants')).split('\n').map(s=>s.trim()).filter(Boolean)}));
+      act(()=>api(`/meetings/${m.id}`,'PATCH',{revision:m.revision,title:f.get('title'),date:f.get('date')||null,timezone:f.get('timezone'),language:f.get('language'),classification:f.get('classification'),participants:String(f.get('participants')).split('\n').map(s=>s.trim()).filter(Boolean)}));
     }}>
       <fieldset disabled={busy||processing}>
         <label>{tr('Title')}<input name="title" defaultValue={m.title} required maxLength={200}/></label>
-        <div className="formrow"><label>{tr('Date')}<input name="date" type="date" defaultValue={m.date} required/></label><label>{tr('Timezone')}<input name="timezone" defaultValue={m.timezone} required/></label></div>
+        <div className="formrow"><label>{tr('Date')}<input name="date" type="date" defaultValue={m.date}/></label><label>{tr('Timezone')}<input name="timezone" defaultValue={m.timezone}/></label></div>
+        <p className="caption">{tr("Leave date and timezone blank if unknown. Relative dates will need review.")}</p>
         <div className="formrow"><label>{tr('Minutes language')}<select name="language" defaultValue={m.language}><option value="en">English</option><option value="ro">Română</option><option value="ru">Русский</option></select></label><label>{tr('Classification')}<select name="classification" defaultValue={m.classification}>{['Administrative','Executive','Medical'].map(v=><option key={v} value={v}>{tr(v)}</option>)}</select></label></div>
         <label>{tr('Participants, one per line')}<textarea name="participants" defaultValue={m.participants?.map(p=>p.name).join('\n')} rows={3}/></label>
         <p className="caption">{tr('Changing the date or timezone requires another review. Previous approved versions remain in history.')}</p>

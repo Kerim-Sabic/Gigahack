@@ -845,19 +845,17 @@ export interface components {
             cancel: number;
             /** Created */
             created: number;
+            progress?: components["schemas"]["ProgressView"] | null;
         };
         /** Meeting */
         Meeting: {
             /** Title */
             title: string;
-            /**
-             * Date
-             * Format: date
-             */
-            date: string;
+            /** Date */
+            date?: string | null;
             /**
              * Timezone
-             * @default Europe/Chisinau
+             * @default
              */
             timezone: string;
             /**
@@ -914,14 +912,11 @@ export interface components {
         MeetingEdit: {
             /** Title */
             title: string;
-            /**
-             * Date
-             * Format: date
-             */
-            date: string;
+            /** Date */
+            date?: string | null;
             /**
              * Timezone
-             * @default Europe/Chisinau
+             * @default
              */
             timezone: string;
             /**
@@ -984,6 +979,40 @@ export interface components {
              * @enum {string}
              */
             language: "en" | "ro" | "ru";
+        };
+        /** ProgressView */
+        ProgressView: {
+            /**
+             * Stage
+             * @enum {string}
+             */
+            stage: "whisper" | "extract" | "parakeet" | "diarize";
+            /**
+             * Phase
+             * @enum {string}
+             */
+            phase: "loading_model" | "transcribing" | "extracting" | "checking" | "diarizing" | "stage_complete";
+            /** Completed */
+            completed: number;
+            /** Total */
+            total?: number | null;
+            /**
+             * Unit
+             * @enum {string}
+             */
+            unit: "seconds" | "segments" | "items" | "clips";
+            /** Elapsed Seconds */
+            elapsed_seconds: number;
+            /** Eta Seconds */
+            eta_seconds?: number | null;
+            /**
+             * Eta Scope
+             * @default current_phase
+             * @constant
+             */
+            eta_scope: "current_phase";
+            /** Updated At */
+            updated_at: number;
         };
         /** Queue */
         Queue: {

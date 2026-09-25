@@ -64,6 +64,8 @@ def main(*, fixture_inference=False):
             page.get_by_role("button", name="Meetings", exact=True).click()
         page.get_by_role("button", name="＋ New meeting", exact=True).click()
         page.get_by_label("Meeting title").fill("Synthetic end-to-end qualification")
+        page.get_by_label("Meeting date", exact=True).fill("2026-09-25")
+        page.get_by_label("Timezone", exact=True).fill("Europe/Chisinau")
         page.get_by_label("Participants, one per line").fill("Elena\nAndrei")
         page.get_by_role("button", name="Create meeting", exact=True).click()
         if fixture_inference:

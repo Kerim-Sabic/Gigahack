@@ -30,6 +30,36 @@ def new_meeting(c):
     return r.json()
 
 
+def test_queue_freezes_effective_developer_model_settings(client, monkeypatch):
+    from services.worker import settings
+
+    meeting = new_meeting(client)
+    asset = client.post(f"/api/v1/meetings/{meeting['id']}/uploads", files={"file": ("synthetic.wav", audio(), "audio/wav")}).json()["id"]
+    first = client.post(f"/api/v1/meetings/{meeting['id']}/jobs", json={"asset_id": asset})
+    assert first.status_code == 200
+    original = settings.load_settings()
+    changed = original.model_dump()
+    changed["llm"]["context_tokens"] = 8192
+    monkeypatch.setattr(settings, "load_settings", lambda: settings.InferenceSettings.model_validate(changed))
+    second = client.post(f"/api/v1/meetings/{meeting['id']}/jobs", json={"asset_id": asset})
+    assert second.status_code == 200 and second.json()["id"] != first.json()["id"]
+    with transaction() as c:
+        rows = {r["id"]: json.loads(r["config"])["inference"] for r in c.execute("SELECT id,config FROM jobs")}
+    assert rows[first.json()["id"]]["llm"]["context_tokens"] == 4096
+    assert rows[second.json()["id"]]["llm"]["context_tokens"] == 8192
+
+
+def test_unknown_meeting_metadata_is_preserved_without_current_date_defaults(client):
+    response = client.post("/api/v1/meetings", json={"title": "Unknown metadata", "date": None, "timezone": ""})
+    assert response.status_code == 200
+    meeting = response.json()
+    assert meeting["date"] == meeting["timezone"] == ""
+    updated = client.patch(f"/api/v1/meetings/{meeting['id']}", json={"title": meeting["title"], "revision": meeting["revision"], "date": "2027-01-02", "timezone": "Europe/Chisinau"})
+    assert updated.status_code == 200
+    restored = client.patch(f"/api/v1/meetings/{meeting['id']}", json={"title": meeting["title"], "revision": updated.json()["revision"], "date": None, "timezone": ""})
+    assert restored.status_code == 200 and restored.json()["date"] == ""
+
+
 def audio():
     stream = io.BytesIO()
     with wave.open(stream, "wb") as w:
