@@ -13,5 +13,10 @@
     "file": "cuda-12.4.1-EULA.html",
     "source": "https://docs.nvidia.com/cuda/archive/12.4.1/eula/index.html",
     "sha256": "c0e213c4c53fbc9b29dc3e8cea0fb06b0498a28eca01858d3611d975dd70f585"
+  },
+  {
+    "file": "cuda-12.8.0-EULA.html",
+    "source": "https://docs.nvidia.com/cuda/archive/12.8.0/eula/index.html",
+    "sha256": "6722d4c310a2ec9ad869ede3371a648fe2cfc2baaf8e1ece2c35e1dccc05752c"
   }
 ]

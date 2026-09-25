@@ -11,6 +11,7 @@ from filelock import FileLock
 import tempfile
 from services.api.config import DATA, ROOT
 from services.api.domain import Candidate, validate_evidence, reduce_events
+from services.worker.supervisor import stage_environment
 
 
 def evaluate():
@@ -55,6 +56,7 @@ def evaluate():
                 capture_output=True,
                 timeout=240,
                 cwd=ROOT,
+                env=stage_environment(),
             )
             row = {
                 "id": ident,

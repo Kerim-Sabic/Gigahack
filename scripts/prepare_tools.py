@@ -9,7 +9,7 @@ import httpx
 from services.api.config import ROOT
 
 
-def prepare():
+def prepare(mail_only=False):
     windows = platform.system() == "Windows"
     folder = ROOT / ".runtime/tools"
     folder.mkdir(parents=True, exist_ok=True)
@@ -31,10 +31,20 @@ def prepare():
     else:
         assets = [
             (
+                "llama",
+                "https://github.com/ggml-org/llama.cpp/releases/download/b11146/llama-b11146-bin-ubuntu-cuda-12.8-x64.tar.gz",
+            ),
+            (
+                "llama",
+                "https://github.com/ggml-org/llama.cpp/releases/download/b11146/cudart-llama-b11146-bin-ubuntu-cuda-12.8-x64.tar.gz",
+            ),
+            (
                 "mailpit",
                 "https://github.com/axllent/mailpit/releases/download/v1.31.2/mailpit-linux-amd64.tar.gz",
-            )
+            ),
         ]
+    if mail_only:
+        assets = [asset for asset in assets if asset[0] == "mailpit"]
     records = []
     for name, url in assets:
         target = folder / url.rsplit("/", 1)[1]
@@ -55,8 +65,16 @@ def prepare():
             with tarfile.open(target) as t:
                 t.extractall(dest, filter="data")
         records.append(dict(url=url, sha256=h))
-    (ROOT / "manifests/tools.lock.json").write_text(json.dumps(records, indent=2))
+    manifest = ROOT / "manifests/tools.lock.json"
+    existing = json.loads(manifest.read_text()) if manifest.exists() else []
+    combined = {r["url"]: r for r in existing}
+    combined.update({r["url"]: r for r in records})
+    manifest.write_text(json.dumps(list(combined.values()), indent=2))
 
 
 if __name__ == "__main__":
-    prepare()
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--mail-only", action="store_true")
+    prepare(parser.parse_args().mail_only)

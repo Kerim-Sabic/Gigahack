@@ -32,6 +32,16 @@ def kill_tree(pid):
         pass
 
 
+def stage_environment():
+    env = {**os.environ, "HF_HUB_OFFLINE": "1", "CUDA_VISIBLE_DEVICES": "0"}
+    if sys.platform == "linux":
+        libraries = sorted(Path(sys.prefix).glob("lib/python*/site-packages/nvidia/*/lib"))
+        libraries += sorted({p.parent for p in (config.ROOT / ".runtime/tools/llama").rglob("*.so*")})
+        existing = env.get("LD_LIBRARY_PATH", "")
+        env["LD_LIBRARY_PATH"] = ":".join([*(str(p) for p in libraries), *([existing] if existing else [])])
+    return env
+
+
 def run_stage(job, stage, spec):
     folder = config.DATA / "jobs" / job["id"]
     folder.mkdir(parents=True, exist_ok=True)
@@ -50,7 +60,7 @@ def run_stage(job, stage, spec):
             ("transcribing" if stage == "whisper" else "reconciling", job["meeting_id"]),
         )
     log = open(folder / f"{stage}.log", "wb")
-    env = {**os.environ, "HF_HUB_OFFLINE": "1", "CUDA_VISIBLE_DEVICES": "0"}
+    env = stage_environment()
     proc = subprocess.Popen(
         [sys.executable, "-m", "services.worker.stage", stage, str(source), str(target)],
         stdout=log,

@@ -40,8 +40,8 @@ Both directories are ignored by Git. Keep host storage encrypted and protected b
 Clone onto the Linux filesystem. Create/activate `.venv` with `python3 -m venv .venv` and
 `source .venv/bin/activate`. Install FFmpeg using your OS package manager. Install the locked Python
 requirements and build web assets as above. Prepare models and Mailpit with the same CLI.
-The current prepare-tools automatically installs llama.cpp on Windows only. On Linux, build pinned
-llama.cpp b11146 with CUDA and set `MOM_LLAMA_SERVER` to the resulting `llama-server` binary.
+The prepare-tools command installs pinned llama.cpp b11146 CUDA binaries for Windows x64 and
+Linux x64 (Ubuntu CUDA 12.8 build), plus Mailpit. Linux stage processes discover packaged CUDA library paths.
 This Linux installation path has not yet been rehearsed end-to-end. NVIDIA runtime packages and
 driver compatibility must be checked by doctor and real qualification. Use the Windows browser on localhost
 for microphone capture; plain LAN HTTP is not a secure microphone context.

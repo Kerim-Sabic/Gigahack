@@ -11,7 +11,7 @@ from playwright.sync_api import sync_playwright, expect
 from services.api.config import DATA
 
 
-def main():
+def main(*, fixture_inference=False):
     fixture = Path(os.environ.get("MOM_SYNTHETIC_AUDIO", DATA / "smoke/synthetic.wav")).resolve()
     if not fixture.exists():
         raise SystemExit("Set MOM_SYNTHETIC_AUDIO to a synthetic speech fixture.")
@@ -69,14 +69,14 @@ def main():
         assert messages["total"] >= 1
         browser.close()
     report = {
-        "kind": "real-model-browser-synthetic",
+        "kind": "fixture-inference-browser" if fixture_inference else "real-model-browser-synthetic",
         "elapsed_seconds": time.time() - started,
         "checks": [
             "login",
             "create",
             "upload",
-            "real_asr",
-            "real_extraction",
+            "fixture_asr" if fixture_inference else "real_asr",
+            "fixture_extraction" if fixture_inference else "real_extraction",
             "review",
             "snapshot",
             "approval",

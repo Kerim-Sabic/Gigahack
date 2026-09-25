@@ -44,3 +44,7 @@
 - Published hardening commit 4a7e607b86289ba54758c6d59140f4bd1113e3f9 and verified remote equality.
 - Qualification now explicitly fails if hardware differs or mandatory accuracy, egress or sustained thermal
   measurements remain unknown, even when a smoke workflow and memory samples pass.
+- GitHub clean Ubuntu CI passed at ef1242cfa52973709a6aabd146000099b6b2f407 after fixing test-directory setup.
+- Added explicitly test-only fixture browser harness; local browser/API/queue/PDF/Mailpit test passed in
+  9.079 s. Production worker has no fixture switch. CI extension pending execution.
+- Prepared pinned Linux CUDA llama.cpp/Mailpit and Linux Python environment without changing the host driver.
