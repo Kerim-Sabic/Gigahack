@@ -1,0 +1,89 @@
+{
+  "version": 1,
+  "split": "held-out",
+  "policy": "Freeze before implementation; do not run or tune against these cases until development fixes are ready. All subsequent attempts must be reported.",
+  "provenance": "AI-authored synthetic text; native RO/RU review not performed",
+  "cases": [
+    {
+      "id": "H01",
+      "meeting_date": "2027-03-01",
+      "turns": [
+        "We propose servicing the lift on 3 March.",
+        "Correction: 6 March.",
+        "Agreed."
+      ],
+      "expected": {
+        "category": "action",
+        "status": "confirmed",
+        "due": "2027-03-06"
+      }
+    },
+    {
+      "id": "H02",
+      "meeting_date": "2027-04-01",
+      "turns": [
+        "Irina va trimite raportul pe 8 aprilie. Aprobat.",
+        "Schimbăm doar responsabilul: Pavel. Termenul rămâne."
+      ],
+      "expected": {
+        "category": "action",
+        "status": "confirmed",
+        "owner": "Pavel",
+        "due": "2027-04-08"
+      }
+    },
+    {
+      "id": "H03",
+      "meeting_date": "2027-06-01",
+      "turns": [
+        "Проверка лифта назначена на 9 июня, согласовано.",
+        "Может быть, перенесём проверку на 11 июня?"
+      ],
+      "expected": {
+        "category": "action",
+        "status": "confirmed",
+        "due": "2027-06-09",
+        "pending": true
+      }
+    },
+    {
+      "id": "H04",
+      "meeting_date": "2026-09-25",
+      "turns": [
+        "Allocate 7 desks to Office R.",
+        "Make it 9 desks for Office R. Approved."
+      ],
+      "expected": {
+        "category": "decision",
+        "status": "confirmed",
+        "value": "9 desks",
+        "unit": "desks"
+      }
+    },
+    {
+      "id": "H05",
+      "meeting_date": "2026-09-25",
+      "turns": [
+        "The archive budget proposal is 1200 USD.",
+        "Correction: 1400 USD, approved."
+      ],
+      "expected": {
+        "category": "decision",
+        "status": "confirmed",
+        "value": "1400 USD",
+        "unit": "USD"
+      }
+    },
+    {
+      "id": "H06",
+      "meeting_date": "2026-09-25",
+      "turns": [
+        "Room R contains 3 pumps. Room S contains 8 pumps."
+      ],
+      "expected": {
+        "information_count": 2,
+        "no_actions": true
+      }
+    }
+  ]
+}

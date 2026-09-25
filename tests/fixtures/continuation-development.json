@@ -1,0 +1,229 @@
+{
+  "version": 1,
+  "split": "development",
+  "provenance": "AI-authored synthetic text; native RO/RU review not performed",
+  "cases": [
+    {
+      "id": "D01",
+      "meeting_date": "2027-02-01",
+      "turns": [
+        "Schedule inspection for Tuesday 2 February.",
+        "Correction: Thursday 4 February.",
+        "Confirmed."
+      ],
+      "expected": {
+        "category": "action",
+        "status": "confirmed",
+        "due": "2027-02-04"
+      }
+    },
+    {
+      "id": "D02",
+      "meeting_date": "2028-05-08",
+      "turns": [
+        "We propose checking the filters tomorrow.",
+        "Change the deadline to 12 May.",
+        "Agreed."
+      ],
+      "expected": {
+        "category": "action",
+        "status": "confirmed",
+        "due": "2028-05-12"
+      }
+    },
+    {
+      "id": "D03",
+      "meeting_date": "2026-10-01",
+      "turns": [
+        "Propunem verificarea pompelor pe 5 octombrie.",
+        "Nu, termenul este 7 octombrie.",
+        "Confirmăm."
+      ],
+      "expected": {
+        "category": "action",
+        "status": "confirmed",
+        "due": "2026-10-07"
+      }
+    },
+    {
+      "id": "D04",
+      "meeting_date": "2026-11-01",
+      "turns": [
+        "Предлагаем проверить оборудование 3 ноября.",
+        "Исправление: 5 ноября.",
+        "Согласовано."
+      ],
+      "expected": {
+        "category": "action",
+        "status": "confirmed",
+        "due": "2026-11-05"
+      }
+    },
+    {
+      "id": "D05",
+      "meeting_date": "2026-12-01",
+      "turns": [
+        "Trimitem raportul pe 4 decembrie.",
+        "Нет, 7 декабря.",
+        "Confirmed."
+      ],
+      "expected": {
+        "category": "action",
+        "status": "confirmed",
+        "due": "2026-12-07"
+      }
+    },
+    {
+      "id": "D06",
+      "meeting_date": "2026-10-01",
+      "turns": [
+        "The inspection on 5 October is approved.",
+        "Could we move the inspection to 7 October?",
+        "No, that change is rejected. Keep the approved date."
+      ],
+      "expected": {
+        "category": "action",
+        "status": "confirmed",
+        "due": "2026-10-05"
+      }
+    },
+    {
+      "id": "D07",
+      "meeting_date": "2026-10-01",
+      "turns": [
+        "The report deadline is 6 October, confirmed.",
+        "Maybe we could send it on 9 October instead?"
+      ],
+      "expected": {
+        "category": "action",
+        "status": "confirmed",
+        "due": "2026-10-06",
+        "pending": true
+      }
+    },
+    {
+      "id": "D08",
+      "meeting_date": "2026-11-01",
+      "turns": [
+        "Propose inspecting the storage room on 2 November.",
+        "The cafeteria has four windows.",
+        "The main entrance is blue.",
+        "There are two chairs in the office.",
+        "The archive is on the second floor.",
+        "Returning to the storage-room inspection: change the date to 4 November.",
+        "The inspection on 4 November is confirmed."
+      ],
+      "expected": {
+        "category": "action",
+        "status": "confirmed",
+        "due": "2026-11-04"
+      }
+    },
+    {
+      "id": "D09",
+      "meeting_date": "2026-10-01",
+      "turns": [
+        "Mara will send the report on 8 October. Approved.",
+        "Only the owner changes to Victor; keep the deadline."
+      ],
+      "expected": {
+        "category": "action",
+        "status": "confirmed",
+        "owner": "Victor",
+        "due": "2026-10-08"
+      }
+    },
+    {
+      "id": "D10",
+      "meeting_date": "2026-01-01",
+      "turns": [
+        "Schedule the inspection for 04/05. Confirmed; the date format and year are not specified."
+      ],
+      "expected": {
+        "category": "action",
+        "status": "confirmed",
+        "due": null
+      }
+    },
+    {
+      "id": "D11",
+      "meeting_date": "2026-09-25",
+      "turns": [
+        "Propose 12 chairs for Room C.",
+        "No, 16 chairs for Room C, agreed."
+      ],
+      "expected": {
+        "category": "decision",
+        "status": "confirmed",
+        "value": "16 chairs",
+        "unit": "chairs",
+        "scope_contains": "room c"
+      }
+    },
+    {
+      "id": "D12",
+      "meeting_date": "2026-09-25",
+      "turns": [
+        "A budget of 800 lei for the archive.",
+        "Correct it to 950 lei for the archive. Approved."
+      ],
+      "expected": {
+        "category": "decision",
+        "status": "confirmed",
+        "value": "950 lei",
+        "unit": "lei",
+        "scope_contains": "archive"
+      }
+    },
+    {
+      "id": "D13",
+      "meeting_date": "2026-09-25",
+      "turns": [
+        "Ward D has 14 beds. Ward E has 18 beds."
+      ],
+      "expected": {
+        "information_count": 2,
+        "no_actions": true
+      }
+    },
+    {
+      "id": "D14",
+      "meeting_date": "2026-09-25",
+      "turns": [
+        "This is a protocol discussion, not a prescription: the unit is 5 mg, not 5 ml."
+      ],
+      "expected": {
+        "no_actions": true,
+        "quantity_contains": "5 mg"
+      }
+    },
+    {
+      "id": "D15",
+      "meeting_date": "2026-09-25",
+      "turns": [
+        "Предлагаем бюджет 400 евро для архива.",
+        "Нет, 600 евро для архива. Утверждено."
+      ],
+      "expected": {
+        "category": "decision",
+        "status": "confirmed",
+        "value": "600 евро",
+        "unit": "евро"
+      }
+    },
+    {
+      "id": "D16",
+      "meeting_date": "2026-09-25",
+      "turns": [
+        "Propunem 30 de paturi pentru secția C.",
+        "Corecție: 34 de paturi pentru secția C, aprobat."
+      ],
+      "expected": {
+        "category": "decision",
+        "status": "confirmed",
+        "quantity_contains": "34",
+        "unit": "paturi"
+      }
+    }
+  ]
+}
