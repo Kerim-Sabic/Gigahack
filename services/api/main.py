@@ -874,6 +874,11 @@ def correct_item(ident: str, body: Correction, u=Depends(user)):
         }
         if "due" in changed:
             new["raw_due"] = None
+        if "value" in changed:
+            # Human replacement has its own provenance; never retain old machine quantity evidence.
+            new["quantity"] = None
+        elif "subject" in changed and new.get("quantity"):
+            new["quantity"] = {**new["quantity"], "scope": body.subject}
         for field in ("condition", "value"):
             if field in body.model_fields_set:
                 new[field] = getattr(body, field)

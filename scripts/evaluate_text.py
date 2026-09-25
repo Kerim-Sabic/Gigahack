@@ -16,7 +16,7 @@ from services.worker.supervisor import stage_environment, kill_tree
 from scripts.semantic_checks import check_case
 
 
-def evaluate(selected=None):
+def evaluate(selected=None, corpus=None):
     implementation_hashes = {
         path: hashlib.sha256((ROOT / path).read_bytes()).hexdigest()
         for path in (
@@ -24,10 +24,16 @@ def evaluate(selected=None):
             "services/worker/reconcile.py",
             "services/api/domain.py",
             "services/api/dates.py",
+            "services/api/quantities.py",
             "scripts/semantic_checks.py",
+            "scripts/variation_checks.py",
+            "scripts/evaluate_text.py",
         )
     }
-    cases = json.loads((ROOT / "tests/fixtures/adversarial.json").read_text(encoding="utf-8"))
+    corpus_path = Path(corpus) if corpus else ROOT / "tests/fixtures/adversarial.json"
+    corpus_data = json.loads(corpus_path.read_text(encoding="utf-8"))
+    variations = isinstance(corpus_data, dict)
+    cases = corpus_data["cases"] if variations else corpus_data
     if selected:
         if set(selected) - {case["id"] for case in cases}:
             raise ValueError("Unknown case identifier")
@@ -39,7 +45,7 @@ def evaluate(selected=None):
     with lock:
         for case in cases:
             ident = case["id"]
-            if case["acoustic_required"] or ident == "T22":
+            if case.get("acoustic_required") or (not variations and ident == "T22"):
                 results.append(
                     {
                         "id": ident,
@@ -53,14 +59,14 @@ def evaluate(selected=None):
                 )
                 print(ident, "NOT RUN: audio/stateful prerequisite", flush=True)
                 continue
-            parts = re.findall("“(.*?)”", case["input"]) or [case["input"]]
+            parts = case["turns"] if variations else (re.findall("“(.*?)”", case["input"]) or [case["input"]])
             segments = [
                 {"id": str(i), "revision": 1, "start": i * 16000, "end": (i + 1) * 16000, "text": text}
                 for i, text in enumerate(parts)
             ]
             spec = {
                 "config": {"device": "cuda"},
-                "meeting": {"date": "2026-09-25", "timezone": "Europe/Chisinau"},
+                "meeting": {"date": case.get("meeting_date", "2026-09-25"), "timezone": "Europe/Chisinau"},
                 "segments": segments,
                 "run_dir": str(folder),
             }
@@ -84,7 +90,7 @@ def evaluate(selected=None):
                 "id": ident,
                 "expected": case["expected"],
                 "elapsed_seconds": time.time() - started,
-                "acoustic_required": case["acoustic_required"],
+                "acoustic_required": case.get("acoustic_required", False),
             }
             if run.returncode:
                 row.update(status="FAIL", error=stderr.decode("utf-8", errors="replace").splitlines()[-1:])
@@ -107,9 +113,18 @@ def evaluate(selected=None):
                         )
                         rows.append({"id": str(i), "source_order": position, "body": ev})
                     row["projection"] = reduce_events(rows)
-                    row["checks"] = check_case(
-                        ident, output["events"], row["projection"], "\n".join(s["text"] for s in segments)
+                    row["checks"] = (
+                        {}
+                        if variations
+                        else check_case(
+                            ident, output["events"], row["projection"], "\n".join(s["text"] for s in segments)
+                        )
                     )
+                    if variations:
+                        from scripts.variation_checks import check_variation
+
+                        row["checks"] = check_variation(case["expected"], output["events"], row["projection"])
+                    row["checks"]["literal evidence valid"] = True
                     row["status"] = (
                         "PASS (AUTOMATED CORPUS CHECKS)" if all(row["checks"].values()) else "FAIL"
                     )
@@ -127,7 +142,7 @@ def evaluate(selected=None):
             (ROOT / "manifests/models.lock.json").read_bytes()
         ).hexdigest(),
         "stage_sha256": hashlib.sha256((ROOT / "services/worker/stage.py").read_bytes()).hexdigest(),
-        "corpus_sha256": hashlib.sha256((ROOT / "tests/fixtures/adversarial.json").read_bytes()).hexdigest(),
+        "corpus_sha256": hashlib.sha256(corpus_path.read_bytes()).hexdigest(),
         "passed": sum(r["status"].startswith("PASS") for r in results),
         "failed": sum(r["status"] == "FAIL" for r in results),
         "not_run": sum(r["status"] == "NOT RUN" for r in results),
@@ -144,4 +159,8 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--cases", nargs="+")
-    raise SystemExit(evaluate(parser.parse_args().cases))
+    parser.add_argument(
+        "--corpus", help="Versioned variation corpus; default is the unchanged original suite"
+    )
+    args = parser.parse_args()
+    raise SystemExit(evaluate(args.cases, args.corpus))

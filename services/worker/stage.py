@@ -226,6 +226,8 @@ def extract(spec):
             groups.append(current)
         events, raw = [], []
         schema = Extraction.model_json_schema()
+        # Quantity structure is derived from validated literal spans, not extra model guesses.
+        schema["$defs"]["Candidate"]["properties"].pop("quantity")
         for definition in schema.get("$defs", {}).values():
             if "properties" in definition:
                 definition["required"] = list(definition["properties"])
@@ -372,6 +374,9 @@ def extract(spec):
                     "kind propose = suggestion or tentative question; confirm = explicit approval; amend = accepted change; "
                     "reject = rejecting proposed action; cancel = cancelling previously accepted action; reopen = explicit reopening; "
                     "inform = information only. A tentative alternative NEVER amends an approved decision. "
+                    "Judge the source meaning in Romanian, Russian and English equally; explicit approval in any language confirms the referenced work. "
+                    "A bare future schedule without agreement is a proposal, not confirmation. "
+                    "An explicit correction of the preceding task's date/owner/amount is amend, even when expressed as a short fragment; it inherits that task's category. "
                     "Approve/agreed alone does not determine category: classify the actual object. Pure quantity/dose/fact is never an assigned task. "
                     "subject: reuse an earlier_topic_candidates subject ONLY for the SAME object and scope. Corrections to its amount/date/owner keep its subject. "
                     "Never merge distinct wards, objects or unrelated budgets. Same words alone are insufficient. If identity is uncertain return null and explain the issue. "
@@ -427,13 +432,14 @@ def extract(spec):
                     "messages": [
                         {
                             "role": "system",
-                            "content": "Classify this specific meeting content. action = work to perform, even if proposed, passive, unnamed, or scheduled (maintenance, sending, checking). decision = approving a budget, resource count, policy or meeting date without assigning work. information = descriptions, historical quotes, or unresolved questions with no commitment. The words approved/confirmed do NOT decide category. Classify what is being approved. Replacing a filter next week is action; approving expenditure is decision; stating an inventory count is information. Return only category.",
+                            "content": "Classify this specific meeting content. action = work to perform, even if proposed, passive, unnamed, or scheduled (maintenance, sending, checking). decision = approving a budget, resource count, policy or meeting date without assigning work. information = descriptions, historical quotes, or unresolved questions with no commitment. The words approved/confirmed do NOT decide category. Classify what is being approved. A correction fragment inherits the category of its referenced task or decision; a task's corrected date is not a separate information item. Replacing a filter next week is action; approving expenditure is decision; stating an inventory count is information. Return only category.",
                         },
                         {
                             "role": "user",
                             "content": json.dumps(
                                 {
                                     "event": event["text"],
+                                    "kind": event["kind"],
                                     "quotes": event["evidence"],
                                     "earlier_topics": context["earlier_topic_candidates"],
                                 },
@@ -583,6 +589,9 @@ def extract(spec):
                     event["due"] = resolve(field["value"], spec["meeting"]["date"])
                     if not event["due"]:
                         event["uncertainties"].append("Date expression unresolved: " + field["value"])
+            from services.api.quantities import enrich_quantity
+
+            enrich_quantity(event, by_id)
             validate_evidence(Extraction.model_validate({"events": [event]}).events[0], by_id)
             previous.append(event)
         return {"events": events, "raw": raw}

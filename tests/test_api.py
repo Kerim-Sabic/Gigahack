@@ -713,3 +713,59 @@ def test_t22_overlapping_worker_results_and_replay_create_one_item_and_delivery(
     assert first.json()["id"] == second.json()["id"]
     with transaction() as db:
         assert db.execute("SELECT COUNT(*) FROM outbox").fetchone()[0] == 1
+
+
+def test_quantity_survives_review_snapshot_and_human_replacement(client):
+    from services.api.quantities import enrich_quantity
+
+    meeting = new_meeting(client)
+    sid, cid, _ = seed_candidate(client, meeting)
+    text = "Approve 16 chairs for Room C."
+    with transaction() as db:
+        body = json.loads(db.execute("SELECT body FROM candidates WHERE id=?", (cid,)).fetchone()[0])
+        body.update(
+            subject="Room C",
+            category="decision",
+            text=text,
+            owner=None,
+            value="16",
+            evidence=[dict(segment_id=sid, revision=1, field="text", quote=text)],
+        )
+        enrich_quantity(body, {sid: {"text": text, "revision": 1}})
+        db.execute("UPDATE segments SET text=?,raw=? WHERE id=?", (text, text, sid))
+        db.execute(
+            "UPDATE candidates SET subject=?,body=? WHERE id=?", (body["subject"], canonical(body), cid)
+        )
+        db.execute("DELETE FROM evidence WHERE candidate_id=?", (cid,))
+    response = client.post(f"/api/v1/review-issues/{cid}/resolve", json={"revision": 1, "action": "accepted"})
+    assert response.status_code == 200, response.text
+    snapshot = client.post(f"/api/v1/meetings/{meeting['id']}/snapshots", json={"revision": 2})
+    assert snapshot.status_code == 200, snapshot.text
+    base = f"/api/v1/snapshots/{snapshot.json()['id']}/exports/"
+    exported = client.get(base + "json").json()
+    assert exported["items"][0]["quantity"] == body["quantity"]
+    assert "16 chairs" in client.get(base + "html").text
+    correction = client.post(
+        f"/api/v1/items/{cid}/corrections",
+        json={
+            "revision": 2,
+            "subject": "Room C",
+            "category": "decision",
+            "kind": "confirm",
+            "text": text,
+            "owner": None,
+            "due": None,
+            "condition": None,
+            "value": "18 chairs",
+            "reason": "Secretary correction based on reviewed notes",
+            "resolved_issues": [],
+        },
+    )
+    assert correction.status_code == 200, correction.text
+    with transaction() as db:
+        corrected = json.loads(
+            db.execute("SELECT body FROM candidates WHERE id=?", (correction.json()["id"],)).fetchone()[0]
+        )
+    assert corrected["quantity"] is None
+    # Immutable earlier exports keep their original literal quantity after correction.
+    assert client.get(base + "json").json()["items"][0]["quantity"] == body["quantity"]

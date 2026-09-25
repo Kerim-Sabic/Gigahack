@@ -18,6 +18,15 @@ class Citation(Strict):
     quote: str = Field(min_length=1, max_length=2000)
 
 
+class Quantity(Strict):
+    amount: str = Field(min_length=1, max_length=100)
+    unit: str | None = Field(default=None, max_length=100)
+    scope: str = Field(min_length=1, max_length=160)
+    raw: str = Field(min_length=1, max_length=200)
+    evidence: list[Citation] = Field(min_length=1, max_length=20)
+    uncertainties: list[str] = Field(default_factory=list)
+
+
 class Candidate(Strict):
     subject: str = Field(min_length=1, max_length=160)
     category: Literal["action", "decision", "information"]
@@ -28,6 +37,7 @@ class Candidate(Strict):
     raw_due: str | None = None
     condition: str | None = None
     value: str | None = None
+    quantity: Quantity | None = None
     changed_fields: list[Literal["text", "owner", "due", "condition", "value"]] = Field(default_factory=list)
     uncertainties: list[str] = Field(default_factory=list)
     evidence: list[Citation] = Field(min_length=1, max_length=20)
@@ -114,6 +124,19 @@ def validate_evidence(candidate, segments):
             value.casefold() in e.quote.casefold() for e in candidate.evidence if e.field == field
         ):
             raise ValueError(f"unsupported_{field}_value")
+    if candidate.quantity is not None:
+        from .quantities import parts
+
+        quantity = candidate.quantity
+        if quantity.raw != candidate.value or quantity.scope != candidate.subject:
+            raise ValueError("quantity_value_or_scope_mismatch")
+        if parts(quantity.raw) != {"amount": quantity.amount, "unit": quantity.unit}:
+            raise ValueError("quantity_parts_not_literal")
+        if any(
+            ref.field != "value" or ref not in candidate.evidence or quantity.raw not in ref.quote
+            for ref in quantity.evidence
+        ):
+            raise ValueError("quantity_evidence_mismatch")
     return refs
 
 
@@ -122,7 +145,18 @@ def event_key(event):
     # Different source revisions and field amendments must remain distinct.
     content = {
         k: event.get(k)
-        for k in ("subject", "category", "kind", "text", "owner", "due", "raw_due", "condition", "value")
+        for k in (
+            "subject",
+            "category",
+            "kind",
+            "text",
+            "owner",
+            "due",
+            "raw_due",
+            "condition",
+            "value",
+            "quantity",
+        )
     }
     content["changed_fields"] = sorted(set(event.get("changed_fields", [])))
     content["evidence"] = sorted(
@@ -153,6 +187,7 @@ def reduce_events(events):
                 "due": None,
                 "condition": None,
                 "value": None,
+                "quantity": None,
                 "history": [],
                 "pending": [],
                 "evidence": [],
@@ -189,6 +224,8 @@ def reduce_events(events):
                     item[f] = e[f]
                     updated_fields.add(f)
         item["category"] = e["category"]
+        if "value" in updated_fields:
+            item["quantity"] = e.get("quantity")
         # A partial amendment must keep the source of every unchanged projected field.
         # In particular, changing an owner cannot erase the approved date's citation.
         updated_fields.add("kind")

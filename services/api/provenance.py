@@ -13,6 +13,7 @@ FILES = (
     "services/worker/process_identity.py",
     "services/worker/assets.py",
     "services/api/domain.py",
+    "services/api/quantities.py",
     "services/api/dates.py",
     "manifests/models.lock.json",
     "manifests/tools.lock.json",

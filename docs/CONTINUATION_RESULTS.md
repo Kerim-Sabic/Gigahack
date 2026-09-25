@@ -40,3 +40,36 @@ Sixteen synthetic development variations and six held-out variations are version
 The held-out set is frozen before implementation and has not been run or used to select changes.
 These AI-authored RO/RU/EN examples still need native linguistic review. They do not substitute for
 human-recorded audio, WER/critical-error assessment or clinical validation.
+
+
+## Development attempts (all retained)
+
+- Attempt 1, run `1790362226457408500`: 3/4 focused cases pass. T01 fixed, but T06
+  regresses to tentative classification. Prior and current candidate context were both expanded.
+- Attempt 2, run `1790362458520799600`: 4/6 pass. T01, T09, T15, T30 pass;
+  T06 remains tentative and T10's category regresses to action. T10 now retains literal
+  `25 beds`, structured amount/unit/scope and source evidence. Explicit multilingual prompt
+  wording alone did not fix the classification anchoring.
+- Attempt 3, run `1790362697149107400`: all six focused cases pass, including T01/T06/T10.
+  Current candidate kind/category hints were removed from the independent check; enriched prior
+  event context remains. This avoids feeding the disputed classification back as a hint.
+  Stage SHA-256 `48bd0a5a328fa10a99bf21b85db85dd8b1d456b43c6f7072f9dd3233f55dd13c`.
+- After attempt 3, literal quantity ambiguity checks were strengthened for unrecognized units.
+  Backend/domain/API suite: 93 passed, one existing Starlette deprecation warning. A direct pytest
+  invocation hit an inaccessible host temporary directory; the documented `scripts.mom test`
+  runner uses its project-local test directory and passed. No host permissions were altered.
+- Attempt 4, run `1790362810483903700`: full original suite **25 text-model PASS, 0 FAIL,
+  5 NOT RUN in this text run**. Stage hash matches attempt 3; quantity helper hash is
+  `351ddfb788d483271f26c0e7e1df4fae96fd84ce66167abc484c4ddd697a33f0`.
+  The original corpus and assertions are unchanged. T08/T11/T26/T29 require audio and T22
+  requires stateful workflow. Earlier separate T22 and T26 silence evidence remains distinct.
+- Latest backend suite: **95 passed**, lint passed. Variation evaluator checks reject omitted
+  or extra commitments, wrong dates, missing structured units and wrong scope.
+- Attempt 5: the separate 16-case development variation run is in progress; held-out cases remain
+  unrun. A fixed-corpus pass does not establish general semantic or multilingual audio accuracy.
+
+Quantity derivation uses only the event's own literal, revision-valid citations; it never converts
+units, borrows another topic's unit or changes the speech act. Human value replacement clears stale
+machine quantity structure. API tests verify immutable JSON/HTML snapshots after replacement.
+The HTML/PDF template now includes the quantity column; actual UI/PDF visual verification is pending.
+No external dependency, model or model revision was added.

@@ -34,9 +34,35 @@ def context_for(event, segments, previous, token_count, budget=1800):
     def payload():
         source_ids = required | near | {r["segment_id"] for e in candidates for r in e["evidence"]}
         return {
-            "candidate": {k: event[k] for k in ("subject", "text", "evidence")},
+            "candidate": {
+                k: event.get(k)
+                for k in (
+                    "subject",
+                    "text",
+                    "owner",
+                    "raw_due",
+                    "condition",
+                    "value",
+                    "changed_fields",
+                    "evidence",
+                )
+            },
             "earlier_topic_candidates": [
-                {k: e[k] for k in ("subject", "text", "kind", "category")} for e in candidates
+                {
+                    k: e.get(k)
+                    for k in (
+                        "subject",
+                        "text",
+                        "kind",
+                        "category",
+                        "owner",
+                        "raw_due",
+                        "condition",
+                        "value",
+                        "changed_fields",
+                    )
+                }
+                for e in candidates
             ],
             "source": [s for s in segments if s["id"] in source_ids],
         }

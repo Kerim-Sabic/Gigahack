@@ -34,6 +34,7 @@ LABELS = {
         "due": "Due",
         "status": "Status",
         "condition": "Condition",
+        "value": "Quantity / value",
         "history": "Amendment history",
         "human": "Secretary amendment",
         "unknown": "Not specified",
@@ -52,6 +53,7 @@ LABELS = {
         "due": "Termen",
         "status": "Stare",
         "condition": "Condiție",
+        "value": "Cantitate / valoare",
         "history": "Istoricul modificărilor",
         "human": "Modificare a secretarului",
         "unknown": "Nespecificat",
@@ -82,6 +84,7 @@ LABELS = {
         "due": "Срок",
         "status": "Статус",
         "condition": "Условие",
+        "value": "Количество / значение",
         "history": "История изменений",
         "human": "Изменение секретаря",
         "unknown": "Не указано",
@@ -113,7 +116,7 @@ def render(data):
         return html.escape(str(value if value is not None else labels["unknown"]))
 
     rows = "".join(
-        f"<tr><td>{esc(i['text'])}</td><td>{esc(i['owner'])}</td><td>{esc(i['due'])}</td><td>{esc(labels.get(i['status'], i['status']))}</td><td>{esc(i['condition'])}</td></tr>"
+        f"<tr><td>{esc(i['text'])}</td><td>{esc(i['owner'])}</td><td>{esc(i['due'])}</td><td>{esc(labels.get(i['status'], i['status']))}</td><td>{esc(i['condition'])}</td><td>{esc(i.get('value'))}</td></tr>"
         for i in data["items"]
     )
     history = "".join(
@@ -122,7 +125,9 @@ def render(data):
         for e in i["history"]
     )
     unresolved = "".join(f"<li>{esc(x)}</li>" for x in data["unresolved"])
-    headers = "".join(f"<th>{esc(labels[k])}</th>" for k in ("task", "owner", "due", "status", "condition"))
+    headers = "".join(
+        f"<th>{esc(labels[k])}</th>" for k in ("task", "owner", "due", "status", "condition", "value")
+    )
     return f'''<!doctype html><html lang="{m["language"]}"><meta charset="utf-8"><title>{esc(m["title"])}</title>
 <style>body{{font:16px sans-serif;color:#203339;max-width:900px;margin:40px auto;padding:24px}}h1{{font-size:30px}}table{{border-collapse:collapse;width:100%}}td,th{{text-align:left;padding:12px;border-bottom:1px solid #ccd6d5}}footer{{margin-top:32px;font-size:12px}}@page{{size:A4;margin:18mm}}</style>
 <h1>{labels["title"]}</h1><h2>{esc(m["title"])}</h2><p>{esc(m["date"])} · {esc(m["timezone"])} · {esc(m["classification"])}</p>
@@ -156,7 +161,7 @@ def snapshot(ident: str, body: Revision, u=Depends(authenticated)):
             fail("processing_incomplete", 409)
         data = {
             "schema_version": 1,
-            "template_version": 2,
+            "template_version": 3,
             "application_version": "0.1.0",
             "meeting": m,
             "participants": [

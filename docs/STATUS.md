@@ -1,4 +1,21 @@
-# Status
+# Current continuation checkpoint
+
+Current stage: generalize and verify semantic corrections before target/deployment readiness.
+
+- T01/T10 root causes fixed; full original actual model run `1790362810483903700`:
+  25 text-model PASS, 0 FAIL, 5 outside text scope. Original gold assertions unchanged.
+- 95 backend/domain/API tests and Python lint pass. Frontend is unchanged since the fresh
+  continuation baseline (6 tests and strict build passed there).
+- Structured literal quantities preserve amount/unit/scope/raw/evidence. API review/snapshot
+  and human replacement tests pass. Quantity now appears in the minutes template; real
+  UI/PDF verification of this change is still pending.
+- Sixteen development variations running; six held-out variations remain frozen and unrun.
+- Complete mission remains active. See CONTINUATION_PLAN.md and CONTINUATION_RESULTS.md.
+- No new dependencies/models adopted. No package deletion, links or kit mutation performed.
+- No persistent app services currently started; evaluation temporarily owns port 8081.
+
+## Earlier first-build checkpoint (historical)
+
 
 Current stage: complete synthetic local workflow runs; acceptance gates remain open.
 Development hardware: two RTX 5080 16 GB GPUs, 128 GiB RAM. Target RTX 3070 Ti Laptop
