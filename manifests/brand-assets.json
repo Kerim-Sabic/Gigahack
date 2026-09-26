@@ -34,8 +34,8 @@
     },
     {
       "path": "apps/web/public/brand/symbol-mono.svg",
-      "sha256": "98a9414bbeb5dea1c4e58998809406e7b6de04e6f98d286fad5b766a357b8a1b",
-      "bytes": 207
+      "sha256": "e9ea57d9c87f80561635aadda08397fde01c0878f1f3390e0101443fc199fc10",
+      "bytes": 206
     },
     {
       "path": "apps/web/public/brand/symbol.png",
@@ -45,8 +45,9 @@
     },
     {
       "path": "apps/web/public/brand/symbol.svg",
-      "sha256": "f95960278cca52297aeea6814d54a0d2bf4b75bacbedeee0b07781e28a5f1ea9",
-      "bytes": 215
+      "sha256": "d527e772eb80112c82ab6c984260804b3eda3d65e6b572f99715aee546f8c567",
+      "bytes": 214
     }
-  ]
+  ],
+  "svg_line_endings": "LF enforced by .gitattributes; checksums are portable across Windows/Linux checkouts"
 }
