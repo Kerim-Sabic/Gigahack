@@ -156,3 +156,41 @@ browser and checkpoint evidence. Native acoustic accuracy and reviewed gap inser
 Decision 017 subsequently implements reviewed gap insertion and transcript-only reanalysis,
 verified with synthetic UI/API and actual local Qwen text checks. No human corrections were
 fabricated for this private recording; its acoustic accuracy remains unmeasured.
+
+## Fresh complete application run, 2026-09-26
+
+`full-app-1790420046710949713` uploaded the original M4A through the real browser UI,
+selected both optional engines, and ran the production API/supervisor and all actual models
+in an isolated Linux network namespace. It did not replay earlier Whisper results: three
+fresh ASR chunks, zero reused chunks. The inference code/config identity was unchanged from
+352acc4 throughout processing; input digests and stage receipts remain in the private run.
+
+The complete run reached awaiting review in **1,287.96 seconds**, with no browser page errors;
+the transcript tab and source audio playback were exercised. External IPv4/IPv6 probes failed
+with ENETUNREACH both before and after. Meeting date/timezone stayed unknown and participants
+stayed empty. This is development-host execution, not RTX 3070 Ti laptop qualification.
+
+| Stage | Receipt time | Peak process-tree RSS |
+|---|---:|---:|
+| Whisper | 230.40 s | 3,272,773,632 bytes |
+| Community-1 | 44.64 s | 2,467,545,088 bytes |
+| Parakeet + gap recovery | 96.63 s | 3,763,036,160 bytes |
+| Qwen extraction / source checks | 900.59 s | 9,920,061,440 bytes |
+
+RSS sums may double-count shared pages. Application-only VRAM is unmeasured; device totals
+include unrelated activity. Stage times exclude some UI/upload/supervisor overhead.
+
+- 198 transcript segments; 38 contain Latin-script characters. This is not a Romanian word
+  accuracy score. Results differ from earlier runs and are not selected by word-count gains.
+- 262 diarized turns / five anonymous clusters; no identified participants or DER score.
+- 198 comparison hypotheses, including 17 empty outputs, persisted without silent fusion.
+- 57 independent gap hypotheses: 52 nonempty context outputs / five empty. Context can repeat
+  adjacent words; these are not 52 confirmed corrections.
+- 74 audio observations persisted (57 possible gaps + 17 empty comparisons).
+- 35 extracted candidates, **all unreviewed**; zero accepted events, snapshots and outbox rows.
+
+Current-phase progress and ETA were observed, including 34/35 source checks with about 20s
+remaining for that phase. This is not a whole-job ETA. The run establishes successful fresh
+processing and persistence, not perfect code-switch recognition, speaker accuracy or unlimited
+length/crash guarantees. No reference transcript, speaker annotations or native review exists.
+Private transcript/report copies are in the user-facing outputs directory, never in Git.

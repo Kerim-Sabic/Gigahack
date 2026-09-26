@@ -14,6 +14,7 @@ import psutil
 from filelock import FileLock, Timeout
 
 from services.api import config
+from services.api.brand import NAME as PRODUCT_NAME
 from services.api.audio import atomic_write, sha
 from services.api.db import canonical, migrate, transaction, uid
 from services.api.domain import Candidate, event_key, validate_evidence
@@ -373,7 +374,9 @@ def deliver_one():
         msg = EmailMessage()
         msg["From"] = os.environ.get("MOM_SMTP_FROM", "minutes@secure-mom.test")
         msg["To"] = ", ".join(json.loads(row["addresses"]))
-        msg["Subject"] = "Approved minutes: " + json.loads(row["body"])["meeting"]["title"]
+        document = json.loads(row["body"])
+        display_name = document.get("product_name", PRODUCT_NAME)
+        msg["Subject"] = display_name + " · Approved minutes: " + document["meeting"]["title"]
         msg["Message-ID"] = row["message_id"]
         msg.set_content("Approved meeting minutes are included as HTML. No audio attached.")
         msg.add_alternative(row["html"], subtype="html")

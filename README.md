@@ -1,4 +1,7 @@
-# Secure MOM
+# Notavra
+
+Product name: **Notavra**. Repository: Gigahack. Original challenge: Secure MOM.
+Display identity is centralized in `config/brand.json`; see [brand notes](docs/BRAND.md).
 
 Local meeting audio → original transcript → evidence review → approved minutes → local SMTP.
 **In active implementation.** A real synthetic upload-to-PDF-to-Mailpit workflow has passed on the

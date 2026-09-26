@@ -1,7 +1,7 @@
 # Current implementation status
 
 Complete mission remains active. The last verified remote checkpoint is
-a3d0096844455a4d06de530b48b59ac14c22e527 (CI 36235636106 PASS). It contains multilingual
+352acc47c5107480054263ee4281b63abb64800f (CI 36236901925 PASS). It contains multilingual
 transcription, frozen developer settings, current-step ETA and bounded ASR checkpoints.
 It also includes atomic recording/stage recovery and kernel-backed model-process ownership.
 Exact bounded audio clips and optional-model excerpt results are included. Full-recording
@@ -11,6 +11,16 @@ resource-aware long uploads and RF64 source playback. Source-first speech-act re
 the known H03 regression, eight new development contrasts and all 25 original text cases.
 
 ## Current evidence
+
+- Fresh complete provided-recording browser/API/actual-model run passes offline in 1,287.96s:
+  198 segments, 262 diarized turns/five clusters, 198 comparison and 57 recovery hypotheses,
+  35 unreviewed candidates, 74 audio flags. Source playback passes; no browser errors, approvals
+  or deliveries. See PROVIDED_AUDIO_ACCEPTANCE for timings, RAM and accuracy limitations.
+- Notavra display identity and source-bracket mark now integrate UI, metadata, frozen snapshots
+  and email without an internal rename. Nine synthetic multilingual document-layout cases pass;
+  overflow fixed, repeated headers/page numbers and explicit empty sections added. Updated
+  synthetic browser/PDF/Mailpit flow passes. See Decision 018.
+
 
 - 170 backend tests pass locally with two Linux-only checks skipped; those ownership/RF64
   checks pass in Linux. Current frontend checkpoint: 12 tests and strict build pass.
@@ -65,7 +75,7 @@ pass returned no text in three windows with substantial model-detected speech; 9
 hypotheses fall outside Whisper clips. These are review signals, not gold accuracy results.
 Actual production supervisor/adapter integration passed offline using prior real Whisper
 segments: all 194 alternatives and speaker labels persisted. Availability now requires verified
-Linux/WSL runtime registration. Full UI flow and target fit remain unqualified. The optional inventory now contains 233 components including pinned pip 26.2.1;
+Linux/WSL runtime registration. Fresh provided-recording UI processing now passes; human accuracy and target fit remain unqualified. The optional inventory now contains 233 components including pinned pip 26.2.1;
 all 233 have no current OSV matches. Supplied/upstream notices are retained; release linkage
 and remaining distribution-notice review are still open.
 A fresh 182-package candidate plus pip removes 50 unused packages. Worker startup verifies exact

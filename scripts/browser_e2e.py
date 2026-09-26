@@ -87,6 +87,7 @@ def main(*, fixture_inference=False):
         expect(page.locator(".itemlist button").first).to_be_visible(timeout=10000)
         if fixture_inference:
             checks = page.get_by_role("region", name="Audio passages to check")
+            checks.locator("summary").first.click()
             expect(checks.get_by_text("Possible speech outside the transcript.", exact=True)).to_be_visible()
             checks.get_by_role("button", name="Play passage", exact=False).click()
             page.wait_for_function("() => document.querySelector('audio').currentSrc.includes('/assets/') && document.querySelector('audio').readyState >= 2")

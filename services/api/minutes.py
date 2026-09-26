@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 
 from . import config
+from .brand import NAME as PRODUCT_NAME
 from .db import audit, canonical, transaction, uid
 from .domain import Strict
 
@@ -25,6 +26,10 @@ def authenticated(request: Request):
 
 LABELS = {
     "en": {
+        "no_items": "No reviewed decisions or actions.",
+        "no_history": "No amendments recorded.",
+        "no_unresolved": "No unresolved matters recorded.",
+        "no_participants": "No participants entered.",
         "title": "Meeting minutes",
         "items": "Decisions and actions",
         "participants": "Participants",
@@ -45,6 +50,10 @@ LABELS = {
         "audio_flags": "Automated audio flags from the latest analysis: {count}. Review the source recording; these may be false alarms. Transcript edits do not recalculate these flags.",
     },
     "ro": {
+        "no_items": "Nu există decizii sau acțiuni verificate.",
+        "no_history": "Nu sunt înregistrate modificări.",
+        "no_unresolved": "Nu sunt înregistrate aspecte nerezolvate.",
+        "no_participants": "Nu sunt introduși participanți.",
         "title": "Proces-verbal",
         "items": "Decizii și acțiuni",
         "participants": "Participanți",
@@ -77,6 +86,10 @@ LABELS = {
         "inform": "informare",
     },
     "ru": {
+        "no_items": "Нет проверенных решений или действий.",
+        "no_history": "Изменения не зафиксированы.",
+        "no_unresolved": "Нерешённые вопросы не зафиксированы.",
+        "no_participants": "Участники не указаны.",
         "title": "Протокол совещания",
         "items": "Решения и действия",
         "participants": "Участники",
@@ -133,13 +146,16 @@ def render(data):
     headers = "".join(
         f"<th>{esc(labels[k])}</th>" for k in ("task", "owner", "due", "status", "condition", "value")
     )
+    table = f"<table><thead><tr>{headers}</tr></thead><tbody>{rows}</tbody></table>" if data["items"] else f"<p>{labels['no_items']}</p>"
+    history = f"<ul>{history}</ul>" if history else f"<p>{labels['no_history']}</p>"
+    unresolved = f"<ul>{unresolved}</ul>" if unresolved else f"<p>{labels['no_unresolved']}</p>"
     return f'''<!doctype html><html lang="{m["language"]}"><meta charset="utf-8"><title>{esc(m["title"])}</title>
-<style>body{{font:16px sans-serif;color:#203339;max-width:900px;margin:40px auto;padding:24px}}h1{{font-size:30px}}table{{border-collapse:collapse;width:100%}}td,th{{text-align:left;padding:12px;border-bottom:1px solid #ccd6d5}}footer{{margin-top:32px;font-size:12px}}@page{{size:A4;margin:18mm}}</style>
+<style>*{{box-sizing:border-box}}body{{font:14px/1.5 sans-serif;color:#183438;max-width:900px;margin:32px auto;padding:24px;overflow-wrap:anywhere}}h1{{font-size:28px;line-height:1.2}}h2{{font-size:20px}}h3{{font-size:15px;margin-top:24px;break-after:avoid}}table{{border-collapse:collapse;table-layout:fixed;width:100%;font-size:12px}}td,th{{text-align:left;vertical-align:top;padding:9px 6px;border-bottom:1px solid #ccd6d5;overflow-wrap:anywhere}}th{{background:#edf5f2}}th:first-child{{width:28%}}th:nth-child(2){{width:18%}}th:nth-child(3){{width:12%}}th:nth-child(4){{width:16%}}th:nth-child(5){{width:12%}}th:nth-child(6){{width:14%}}thead{{display:table-header-group}}tr{{break-inside:avoid}}footer{{margin-top:32px;font-size:11px;border-top:2px solid #287f78;padding-top:12px}}@page{{size:A4;margin:18mm;@bottom-right{{content:counter(page);font:10px sans-serif;color:#587074}}}}@media print{{body{{max-width:none;margin:0;padding:0;font-size:12px}}table{{font-size:11px}}a{{color:inherit}}}}</style>
 <h1>{esc(title)}</h1><h2>{esc(m["title"])}</h2><p>{esc(m["date"] or labels["unknown"])} · {esc(m["timezone"] or labels["unknown"])} · {esc(m["classification"])}</p>
-<p style="white-space:pre-wrap">{esc(template.get("introduction", ""))}</p><h3>{labels["participants"]}</h3><p>{esc(", ".join(data["participants"]))}</p><h3>{labels["items"]}</h3>
-<table><thead><tr>{headers}</tr></thead><tbody>{rows}</tbody></table>
-<h3>{labels["unresolved"]}</h3><ul>{unresolved}</ul><h3>{labels["history"]}</h3><ul>{history}</ul>
-<footer>Secure MOM · {labels["revision"]} {m["revision"]} · {labels["evidence"]}</footer></html>'''
+<p style="white-space:pre-wrap">{esc(template.get("introduction", ""))}</p><h3>{labels["participants"]}</h3><p>{esc(", ".join(data["participants"]) or labels["no_participants"])}</p><h3>{labels["items"]}</h3>
+{table}
+<h3>{labels["unresolved"]}</h3>{unresolved}<h3>{labels["history"]}</h3>{history}
+<footer>{esc(data.get("product_name", PRODUCT_NAME))} · {labels["revision"]} {m["revision"]} · {labels["evidence"]}</footer></html>'''
 
 
 class Revision(Strict):
@@ -169,7 +185,8 @@ def snapshot(ident: str, body: Revision, u=Depends(authenticated)):
             fail("processing_incomplete", 409)
         data = {
             "schema_version": 1,
-            "template_version": 5,
+            "template_version": 6,
+            "product_name": PRODUCT_NAME,
             "template": load_template(c, m["classification"]),
             "application_version": "0.1.0",
             "meeting": m,

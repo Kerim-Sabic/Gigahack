@@ -15,7 +15,7 @@ export function AudioChecks({jobId,running,play,revision,readOnly=true,disabled=
  if(!checks.data?.total)return null;
  const page=checks.data;
  return <section className="notice" aria-label={tr('Audio passages to check')}>
-  <h3>{tr('Audio passages to check')} ({page.total})</h3>
+  <details><summary>{tr('Audio passages to check')} ({page.total})</summary>
   <p>{tr('These automated flags may be wrong. Compare any recovery hypothesis with the source before correcting the transcript.')}</p>
   <p>{tr('Flags come from the latest analysis of this recording. Transcript edits do not recalculate them.')}</p>
   {error&&<p role="alert">{error}</p>}
@@ -43,5 +43,5 @@ export function AudioChecks({jobId,running,play,revision,readOnly=true,disabled=
    </details>}
   </li>)}</ul>
   <div className="toolbar"><button disabled={offset===0} onClick={()=>setOffset(Math.max(0,offset-20))}>{tr('Previous')}</button><button disabled={offset+20>=page.total} onClick={()=>setOffset(offset+20)}>{tr('Next')}</button></div>
- </section>;
+ </details></section>;
 }

@@ -1,0 +1,52 @@
+{
+  "purpose": "Display assets; no inference dependency or downloaded model weights",
+  "display_config": "config/brand.json",
+  "concept_tool": "Built-in image_gen; model revision not exposed by tool",
+  "concept_prompt": "docs/brand/generation-prompt.txt",
+  "concept_image": "docs/brand/notavra-concepts.png",
+  "concept_sha256": "a0031ccefbabc0231f5546ea7c765298350875ca528689fe15de09b009224574",
+  "derivation": "Original hand-simplified SVG paths from selected concept 01; generated sheet is not used at runtime",
+  "font": {
+    "package": "@fontsource/noto-sans",
+    "version": "5.3.0",
+    "license": "OFL-1.1",
+    "notice": "docs/brand/Noto-Sans-OFL.txt",
+    "source": "https://github.com/notofonts/latin-greek-cyrillic"
+  },
+  "renderer": "scripts/render_brand.py; existing pinned Playwright/Chromium",
+  "assets": [
+    {
+      "path": "apps/web/public/brand/favicon.png",
+      "sha256": "be702be8f73b2012aa75ba616525cdb8a0d573a1ce178651ecb8b5c91c064fb3",
+      "bytes": 538,
+      "png_color_type": 6
+    },
+    {
+      "path": "apps/web/public/brand/lockup.png",
+      "sha256": "4fa5f9461b5c5d779a14d24d769b479d907c6ba8da7be3f815f71f58dfa32d8c",
+      "bytes": 19585,
+      "png_color_type": 6
+    },
+    {
+      "path": "apps/web/public/brand/lockup.svg",
+      "sha256": "63f49a2a2c2cd5dafe23248c4fb8e3bb524fc7f009de914c6d53b4bb5e336bbf",
+      "bytes": 18486
+    },
+    {
+      "path": "apps/web/public/brand/symbol-mono.svg",
+      "sha256": "98a9414bbeb5dea1c4e58998809406e7b6de04e6f98d286fad5b766a357b8a1b",
+      "bytes": 207
+    },
+    {
+      "path": "apps/web/public/brand/symbol.png",
+      "sha256": "69b9f21b755ce199b3133a27ba3ed7f7bfec305f4a4a98baf98febc0de6021ed",
+      "bytes": 5510,
+      "png_color_type": 6
+    },
+    {
+      "path": "apps/web/public/brand/symbol.svg",
+      "sha256": "f95960278cca52297aeea6814d54a0d2bf4b75bacbedeee0b07781e28a5f1ea9",
+      "bytes": 215
+    }
+  ]
+}

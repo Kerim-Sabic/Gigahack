@@ -11,6 +11,7 @@ it('plays the original asset interval and pages through review observations',asy
  vi.mocked(api).mockImplementation(async(path)=>({asset_id:'source-audio',total:21,items:[{kind:'speech_without_transcript',start:path.includes('offset=20')?32000:16000,end:48000,hypotheses:[{text:'Обсудим cererea.',attempt:'short_retry',source_start:0,source_end:64000}]}]}));
  const play=vi.fn();
  render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}><AudioChecks jobId="job" running={false} play={play}/></QueryClientProvider>);
+ fireEvent.click(await screen.findByText('Audio passages to check (21)'));
  fireEvent.click(await screen.findByRole('button',{name:/Play passage 1.0/}));
  expect(play).toHaveBeenCalledWith(expect.objectContaining({asset_id:'source-audio',start:16000,end:48000}));
  expect(screen.getByText(/These automated flags may be wrong/)).toBeTruthy();
@@ -26,6 +27,7 @@ it('plays the original asset interval and pages through review observations',asy
 it('requires reviewed human wording and preserves the form after a rejected correction',async()=>{
  vi.mocked(api).mockImplementation(async(_path,method)=>{if(method==='POST')throw new Error('Revision changed');return {asset_id:'source',total:1,items:[{kind:'speech_without_transcript',start:16000,end:32000,hypotheses:[{text:'Do not silently copy context',attempt:'initial',source_start:0,source_end:48000}]}]};});
  render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}><AudioChecks jobId="job" running={false} play={vi.fn()} revision={3} readOnly={false}/></QueryClientProvider>);
+ fireEvent.click(await screen.findByText('Audio passages to check (1)'));
  fireEvent.click(await screen.findByText('Add reviewed words'));
  const words=screen.getByLabelText('Corrected words for this interval') as HTMLTextAreaElement;
  expect(words.value).toBe('');
