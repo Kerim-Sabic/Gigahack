@@ -503,7 +503,7 @@ def test_migration_upgrade_keeps_existing_accounts(tmp_path, monkeypatch):
         c.execute("INSERT INTO users VALUES('u','existing','hash','secretary','en')")
     migrate()
     with transaction() as c:
-        assert c.execute("SELECT MAX(version) FROM schema_version").fetchone()[0] == 3
+        assert c.execute("SELECT MAX(version) FROM schema_version").fetchone()[0] == 4
         assert c.execute("SELECT name FROM users").fetchone()[0] == "existing"
 
 
@@ -983,6 +983,14 @@ def test_audio_checks_are_paginated_idempotent_and_membership_protected(client):
     page = client.get(path + "?offset=1&limit=1").json()
     assert page["total"] == 2 and len(page["items"]) == 1
     assert page["items"][0]["start"] == 16000 and page["asset_id"] == asset
+    assert page["items"][0]["hypotheses"] == []
+    hypothesis = {"engine": "parakeet", "text": "Обсудим cererea.", "attempt": "initial",
+                  "source_start": 0, "source_end": 32000, "primary_start": 16000,
+                  "primary_end": 32000, "timestamps": {}, "review": "unreviewed"}
+    with transaction() as c:
+        c.execute("UPDATE audio_checks SET hypotheses=? WHERE job_id=? AND start=16000",
+                  (canonical([hypothesis]), job["id"]))
+    assert client.get(path + "?offset=1&limit=1").json()["items"][0]["hypotheses"] == [hypothesis]
     save_checks(job, "speech_without_transcript", [])
     assert client.get(path).json()["total"] == 0
     save_checks(job, "empty_second_recognizer", intervals)

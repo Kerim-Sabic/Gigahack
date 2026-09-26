@@ -1,7 +1,7 @@
 # Current implementation status
 
 Complete mission remains active. The last verified remote checkpoint is
-ff64cc65c4d25dd1f221d9add6b02c1e7b2c1208 (CI 36200041080 PASS). It contains multilingual
+5fb5820a2f36de4b1f8362abed466fcf364ab0b0 (CI 36234696489 PASS). It contains multilingual
 transcription, frozen developer settings, current-step ETA and bounded ASR checkpoints.
 It also includes atomic recording/stage recovery and kernel-backed model-process ownership.
 Exact bounded audio clips and optional-model excerpt results are included. Full-recording
@@ -12,7 +12,7 @@ the known H03 regression, eight new development contrasts and all 25 original te
 
 ## Current evidence
 
-- 165 backend tests pass locally with two Linux-only checks skipped; those ownership/RF64
+- 167 backend tests pass locally with two Linux-only checks skipped; those ownership/RF64
   checks pass in Linux. Current frontend checkpoint: 11 tests and strict build pass.
 - Hard-killing a model stage now terminates its owned child through Windows Job Objects or
   Linux parent-death binding; the actual tests preserve an unrelated running process.
@@ -38,6 +38,13 @@ the known H03 regression, eight new development contrasts and all 25 original te
   The prior 16-case development result remains historical; see Decision 015.
 
 ## Optional models
+
+Current gap recovery independently processes diarizer-positive intervals outside the existing
+transcript when both options are enabled. Bounded/checkpointed hypotheses are shown with source
+context, without automatic transcript fusion. Actual app run persisted 56 hypotheses (52 nonempty
+context outputs, four empty), including 115 word midpoints inside 35 flagged gaps. These are not
+human-verified recovered words. Reviewed insertion and full accuracy qualification remain open;
+see Decision 016. The real optional run took 144.57s; the synthetic browser workflow passes.
 
 Pinned Parakeet and Community-1 assets downloaded; user accepted Community-1 access terms.
 Model cards, CC-BY-4.0 attribution/license and checksums are recorded separately. Weights and

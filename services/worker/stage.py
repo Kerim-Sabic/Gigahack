@@ -652,7 +652,10 @@ def parakeet(spec):
                 "text": hypothesis.text, "timestamps": hypothesis.timestamp,
             })
         progress.advance(len(outputs))
-    return {"hypotheses": outputs}
+    from services.worker.gap_recovery import recover_gaps
+
+    recovery = recover_gaps(model, spec, settings_for(spec).optional, progress)
+    return {"hypotheses": outputs, "recovery_hypotheses": recovery}
 
 
 def diarize(spec):

@@ -43,6 +43,13 @@ language annotation for every word. The optional Parakeet check now defaults to 
 segments, including speech without numbers/negation; this costs additional processing time.
 Reducing `parakeet_audio_fraction` reduces coverage and may miss short code switches.
 
+When Parakeet and diarization are both enabled, `recovery_window_seconds` (20),
+`recovery_retry_seconds` (10) and `recovery_padding_seconds` (2) control separate suspected-gap
+hypotheses. The retry must be shorter and the primary plus padding may not exceed 25 seconds.
+An empty longer window gets one subdivision pass; shorter empty output stays visible.
+Gap review is independent of the comparison fraction and never automatically changes the
+transcript. See DECISIONS/016-gap-recovery-hypotheses.md for measured behavior and open gates.
+
 ASR `checkpoint_seconds` bounds each PCM read (default 300 seconds), with two seconds
 of context on each side. Word midpoint ownership avoids publishing the same overlap window
 twice, and crossing hypotheses retain their complete raw text and a boundary-review flag.

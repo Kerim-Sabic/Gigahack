@@ -137,3 +137,18 @@ plus 24 empty second-recognizer hypotheses. Speaker overlaps are unioned; nonemp
 spans are subtracted; gaps under 0.5 seconds are not flagged. This is a review signal from
 imperfect model outputs, not 102 seconds of human-confirmed missing speech. Private source
 intervals and count report remain ignored. No new acoustic inference occurred in this replay.
+
+## Actual recovery adapter run
+
+`app-optional-1790417657788376240` reran both optional models on the same private recording
+and replayed prior real Whisper segments. The production adapter persisted 194 comparison
+records, 194 speaker labels and 56 independent gap hypotheses. In 144.57s, 52 gap context
+hypotheses were nonempty and four empty. Of 451 context-word hypotheses, 115 midpoints fall
+inside 35 flagged gaps. Context can repeat neighboring transcript words; these counts are not
+human-confirmed corrections. No transcript segments, candidates, approvals or deliveries were
+added by recovery. The review UI now exposes separate context playback and hypotheses.
+
+The separate real `recovery-stress-1790417989021120246` run exercised 90–150s and 660–690s
+preselected source intervals: three empty initial windows led to six shorter retries, only one
+of which was nonempty. Failures remain visible. Decision 016 records implementation, resource,
+browser and checkpoint evidence. Native acoustic accuracy and reviewed gap insertion remain open.

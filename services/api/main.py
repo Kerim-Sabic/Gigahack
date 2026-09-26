@@ -780,10 +780,11 @@ def audio_checks(ident: str, offset: int = 0, limit: int = 50, u=Depends(user)):
         if not job:
             fail("job_not_found", 404)
         access(c, job["meeting_id"], u)
-        rows = c.execute("SELECT kind,start,end FROM audio_checks WHERE job_id=? ORDER BY start,end,kind LIMIT ? OFFSET ?",
+        rows = c.execute("SELECT kind,start,end,hypotheses FROM audio_checks WHERE job_id=? ORDER BY start,end,kind LIMIT ? OFFSET ?",
                          (ident, min(max(limit, 1), 100), max(offset, 0))).fetchall()
         total = c.execute("SELECT COUNT(*) FROM audio_checks WHERE job_id=?", (ident,)).fetchone()[0]
-        return {"asset_id": job["asset_id"], "total": total, "items": [dict(r) for r in rows],
+        return {"asset_id": job["asset_id"], "total": total,
+                "items": [{**dict(r), "hypotheses": json.loads(r["hypotheses"])} for r in rows],
                 "scope": "Automated observations from this processing attempt; not proof of missing speech or transcript accuracy"}
 
 

@@ -760,6 +760,8 @@ export interface components {
             start: number;
             /** End */
             end: number;
+            /** Hypotheses */
+            hypotheses?: components["schemas"]["RecoveryHypothesis"][];
         };
         /** AudioChecksPage */
         AudioChecksPage: {
@@ -1110,6 +1112,38 @@ export interface components {
             acknowledged_samples: number;
             /** Last Sequence */
             last_sequence: number | null;
+        };
+        /** RecoveryHypothesis */
+        RecoveryHypothesis: {
+            /**
+             * Engine
+             * @constant
+             */
+            engine: "parakeet";
+            /** Text */
+            text: string;
+            /**
+             * Attempt
+             * @enum {string}
+             */
+            attempt: "initial" | "short_retry";
+            /** Source Start */
+            source_start: number;
+            /** Source End */
+            source_end: number;
+            /** Primary Start */
+            primary_start: number;
+            /** Primary End */
+            primary_end: number;
+            /** Timestamps */
+            timestamps: {
+                [key: string]: unknown;
+            };
+            /**
+             * Review
+             * @constant
+             */
+            review: "unreviewed";
         };
         /** RetryDelivery */
         RetryDelivery: {

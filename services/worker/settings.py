@@ -81,6 +81,17 @@ class OptionalSettings(FrozenSettings):
     parakeet_audio_fraction: float = Field(gt=0, le=1)
     parakeet_batch_size: int = Field(ge=1, le=8)
     diarization_batch_size: int = Field(ge=1, le=64)
+    recovery_window_seconds: int = Field(default=20, ge=5, le=25)
+    recovery_retry_seconds: int = Field(default=10, ge=5, le=20)
+    recovery_padding_seconds: int = Field(default=2, ge=0, le=5)
+
+    @model_validator(mode="after")
+    def recovery_windows(self):
+        if self.recovery_retry_seconds >= self.recovery_window_seconds:
+            raise ValueError("recovery_retry_must_be_shorter")
+        if self.recovery_window_seconds + 2 * self.recovery_padding_seconds > 25:
+            raise ValueError("recovery_context_exceeds_25_seconds")
+        return self
 
     @field_validator("runtime_prefix")
     @classmethod

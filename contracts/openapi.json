@@ -2041,6 +2041,13 @@
             "type": "integer",
             "exclusiveMinimum": 0.0,
             "title": "End"
+          },
+          "hypotheses": {
+            "items": {
+              "$ref": "#/components/schemas/RecoveryHypothesis"
+            },
+            "type": "array",
+            "title": "Hypotheses"
           }
         },
         "type": "object",
@@ -3038,6 +3045,70 @@
           "last_sequence"
         ],
         "title": "RecordingView"
+      },
+      "RecoveryHypothesis": {
+        "properties": {
+          "engine": {
+            "type": "string",
+            "const": "parakeet",
+            "title": "Engine"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "attempt": {
+            "type": "string",
+            "enum": [
+              "initial",
+              "short_retry"
+            ],
+            "title": "Attempt"
+          },
+          "source_start": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Source Start"
+          },
+          "source_end": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Source End"
+          },
+          "primary_start": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Primary Start"
+          },
+          "primary_end": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Primary End"
+          },
+          "timestamps": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Timestamps"
+          },
+          "review": {
+            "type": "string",
+            "const": "unreviewed",
+            "title": "Review"
+          }
+        },
+        "type": "object",
+        "required": [
+          "engine",
+          "text",
+          "attempt",
+          "source_start",
+          "source_end",
+          "primary_start",
+          "primary_end",
+          "timestamps",
+          "review"
+        ],
+        "title": "RecoveryHypothesis"
       },
       "RetryDelivery": {
         "properties": {

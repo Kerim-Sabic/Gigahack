@@ -88,10 +88,23 @@ class SegmentView(BaseModel):
     words: str
 
 
+class RecoveryHypothesis(BaseModel):
+    engine: Literal["parakeet"]
+    text: str
+    attempt: Literal["initial", "short_retry"]
+    source_start: int = Field(ge=0)
+    source_end: int = Field(gt=0)
+    primary_start: int = Field(ge=0)
+    primary_end: int = Field(gt=0)
+    timestamps: dict
+    review: Literal["unreviewed"]
+
+
 class AudioCheckView(BaseModel):
     kind: Literal["speech_without_transcript", "empty_second_recognizer"]
     start: int = Field(ge=0)
     end: int = Field(gt=0)
+    hypotheses: list[RecoveryHypothesis] = Field(default_factory=list)
 
 
 class AudioChecksPage(BaseModel):

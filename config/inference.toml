@@ -40,6 +40,9 @@ runtime_prefix = "" # Prepared Linux/WSL environment; MOM_OPTIONAL_RUNTIME may o
 parakeet_audio_fraction = 1.0 # Compare every transcript segment when the optional check is selected.
 parakeet_batch_size = 1
 diarization_batch_size = 16
+recovery_window_seconds = 20 # Suspected speech gaps; preserve hypotheses separately for review.
+recovery_retry_seconds = 10 # One shorter pass only when a longer window returns no text.
+recovery_padding_seconds = 2 # Context around each gap; total clip stays at most 25 seconds.
 
 # Generation slots and GPU admission remain fixed at one. This is a safety invariant,
 # not an unqualified performance knob. No runtime setting enables network inference.

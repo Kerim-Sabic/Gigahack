@@ -16,6 +16,7 @@ FILES = (
     "services/worker/reconcile.py",
     "services/worker/optional.py",
     "services/worker/audio_checks.py",
+    "services/worker/gap_recovery.py",
     "services/worker/optional_runtime.py",
     "services/worker/supervisor.py",
     "services/worker/resources.py",
