@@ -306,6 +306,7 @@ def main():
         ],
     )
     parser.add_argument("--path")
+    parser.add_argument("--wheelhouse", help="Verified prior offline kit wheelhouse; prepare-offline only")
     args = parser.parse_args()
     if args.command == "doctor":
         report = doctor()
@@ -321,7 +322,7 @@ def main():
     elif args.command == "prepare-offline":
         from scripts.offline_package import prepare
 
-        prepare(args.path)
+        prepare(args.path, args.wheelhouse)
     elif args.command == "verify-assets":
         verify_assets()
     elif args.command == "verify-optional":

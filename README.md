@@ -86,12 +86,17 @@ This is not qualified for real hospital use or medical treatment recommendations
 
 ## Prepared Windows offline kit
 
-After online preparation, run `python -m scripts.mom prepare-offline --path /new/kit/directory`.
-The platform-specific kit includes models, native tools, compiled UI/fonts, local Chromium and a pinned
-wheelhouse. It excludes accounts, meeting data and secrets. On the destination with matching Python 3.12,
+After preparation and committing the reviewed source, run
+`python -m scripts.mom prepare-offline --path /new/kit/directory --wheelhouse /existing/verified/kit/wheels`.
+The builder verifies the prior wheel inventory and matching lock, rebuilds the frontend locally,
+checks space for an ordinary copy plus installation, and never changes the prior kit.
+This Windows **core** package includes pinned Whisper/Qwen, native tools, compiled UI/fonts, local Chromium and a pinned
+wheelhouse. Optional Parakeet/Community-1 and their Linux runtime are excluded and remain a separate
+preparation. It excludes accounts, meeting data and secrets. On the destination with matching Python 3.12,
 run `python install_offline.py` from the kit, then from `application` run
 `.venv\Scripts\python -m scripts.mom start`. FFmpeg/ffprobe and a compatible NVIDIA driver are
-external host prerequisites. Preparation and no-index installation were exercised; a complete Linux
+external host prerequisites. Earlier kit preparation and no-index installation were exercised; version-2
+package installation is separately recorded in the status notes. A complete Linux
 isolated workflow also passed. The Windows kit has not been rehearsed with host egress blocked. The kit is an internal deployment artifact, not a public binary release.
 
 Synthetic browser microphone check (services running and qualification credentials set):

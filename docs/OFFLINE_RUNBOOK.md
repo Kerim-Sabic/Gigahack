@@ -42,3 +42,19 @@ Executed successfully on prepared Ubuntu 24.04 WSL: 84.589 s total, no owned ser
 This supersedes the earlier worker-only scope for Linux, but says nothing about Windows host egress.
 Read the report at the printed data directory's proofs/isolated-app.json; keep it and the synthetic
 screenshots locally. Do not open a live Linux SQLite database from Windows.
+
+## Version-2 core package refresh
+
+Use `python -m scripts.mom prepare-offline --path /new/kit --wheelhouse /prior/kit/wheels`
+from clean committed prepared Windows source. The builder creates ordinary copies and leaves the
+prior kit unchanged; it verifies compatible wheel hashes/lock and includes configuration, committed
+source/notices, built UI and pinned core assets. It does not package the optional Linux runtime.
+See Decision 020. Copy the resulting directory to the destination, verify the authenticated source
+of that delivery, and run `python install_offline.py` with networking disconnected. Do not overlay
+an existing installation. Keep the prior installation for rollback; migrate data only with the
+separate stopped backup/restore procedure. On failure, retain the report/partial directory and
+correct the prerequisite before preparing a new destination; no cleanup or replacement is automatic.
+
+Python, FFmpeg/ffprobe and NVIDIA drivers remain host prerequisites. Windows host egress and target
+8 GB qualification remain separate from no-index installation. A complete current Linux package
+including optional dependencies still needs distribution qualification.
