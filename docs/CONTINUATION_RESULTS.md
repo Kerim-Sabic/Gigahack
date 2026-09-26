@@ -204,3 +204,22 @@ or difficult speech. Models and dependencies remain unchanged. Raw waveforms are
 Actual Qwen run 1790371439051700000 selected T10 only after kernel-backed model ownership:
 PASS, 36.99s. This exercised the real Windows llama-server child. It is not a fresh full
 semantic-suite pass and does not close the held-out H03 tentative-date failure.
+
+## Source-first speech-act regression, 2026-09-26
+
+Known H03 reproduced at `1790415514152556100`: FAIL, 40.43s. Original evidence was valid;
+the tentative alternative was still incorrectly classified as an amendment.
+After removing generated paraphrases/field changes from classification context and clarifying
+asserted versus suggested corrections, `1790415860675546400` passes H03 in 38.08s.
+This is a known regression fix, not new held-out accuracy. No gold expectation changed.
+
+New synthetic development contrasts `speech-act-development.json`, frozen before execution,
+pass 8/8 in run `1790415949896801800`, 307.28s total. EN, RO, RU and mixed RO/RU pairs
+retain tentative alternatives and apply definite corrections. These are text checks, not
+audio recognition, native-language adjudication or human accuracy scores. All attempts and
+raw outputs remain local. Decision 015 records the change and its limits.
+
+Original corpus run `1790416268868794800` (723.32s): 25 text PASS / 0 FAIL / five audio/stateful
+NOT RUN. Original and held-out gold hashes remain unchanged. The command's nonzero exit
+indicates incomplete 30-case coverage, not a failed executed text case. This is fresh real
+Qwen inference, with no fixture injection. Prior 16-case development results remain historical.

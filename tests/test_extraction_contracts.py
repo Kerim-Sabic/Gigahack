@@ -83,6 +83,7 @@ def test_reconciliation_context_keeps_current_evidence_under_budget():
     result = context_for(event, segments, [prior], len, budget=700)
     assert any(s["id"] == "10" for s in result["source"])
     assert result["candidate"]["subject"] == "Ward B budget"
+    assert set(result["candidate"]) == {"subject", "evidence"}
     assert len(json.dumps(result, ensure_ascii=False)) <= 700
     assert event["subject"] == "Ward B budget"  # Retrieval itself never merges subjects.
     with pytest.raises(RuntimeError, match="reconciliation_source_exceeds_context"):

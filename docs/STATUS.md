@@ -1,12 +1,14 @@
 # Current implementation status
 
 Complete mission remains active. The last verified remote checkpoint is
-7b97596fde98ef491c6d5adb794f406f54cae060 (CI 36198246292 PASS). It contains multilingual
+ff64cc65c4d25dd1f221d9add6b02c1e7b2c1208 (CI 36200041080 PASS). It contains multilingual
 transcription, frozen developer settings, current-step ETA and bounded ASR checkpoints.
 It also includes atomic recording/stage recovery and kernel-backed model-process ownership.
 Exact bounded audio clips and optional-model excerpt results are included. Full-recording
 experimental results and the separate license inventory are recorded. The verified isolated optional runtime is connected to the API and supervisor. Current changes
-add source-linked audio coverage observations and freeze warning counts into exported minutes.
+include source-linked audio coverage observations, frozen warning counts in exported minutes,
+resource-aware long uploads and RF64 source playback. Source-first speech-act review now passes
+the known H03 regression, eight new development contrasts and all 25 original text cases.
 
 ## Current evidence
 
@@ -31,7 +33,9 @@ add source-linked audio coverage observations and freeze warning counts into exp
   The fixture tests workflow and includes a boundary-review notice; inference is test-only.
 - Full original semantic attempt 19: 25/25 text cases passed; development 16/16 passed.
   Held-out attempt 21: 5/6 passed; H03 incorrectly accepted a tentative Russian date change.
-  These prior model results are not fresh inference of every later runtime change.
+  The current source-first fix passes that known regression, eight EN/RO/RU/mixed-language
+  contrasts and the original 25 text cases. This is not new held-out or acoustic accuracy.
+  The prior 16-case development result remains historical; see Decision 015.
 
 ## Optional models
 

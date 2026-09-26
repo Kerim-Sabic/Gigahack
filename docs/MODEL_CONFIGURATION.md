@@ -27,7 +27,8 @@ Q4_K_M file, 4096 context, 768 extraction output, temperature zero and one gener
 
 `reasoning_tokens` applies only to independent interpretation passes; zero disables thinking.
 The non-thinking initial extractor is unchanged. The current 768-token reasoning choice has
-a measured latency cost and an open held-out semantic failure; see DECISIONS/007-bounded-interpretation.md.
+a measured latency cost and open semantic acceptance; see DECISIONS/007-bounded-interpretation.md
+and DECISIONS/015-source-first-speech-act-review.md for the known tentative-date regression fix.
 Single GPU admission and one generation slot are enforced invariants. They are deliberately
 not exposed as unqualified parallelism knobs. Prompt text and evidence validation remain
 reviewable code in `services/worker/stage.py` and the domain modules.

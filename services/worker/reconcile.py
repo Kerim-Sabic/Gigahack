@@ -34,16 +34,12 @@ def context_for(event, segments, previous, token_count, budget=1800):
     def payload():
         source_ids = required | near | {r["segment_id"] for e in candidates for r in e["evidence"]}
         return {
+            # Extraction paraphrases can lose a hedge or question. Do not prime the
+            # independent speech-act review with that text or inferred field changes.
             "candidate": {
                 k: event.get(k)
                 for k in (
                     "subject",
-                    "text",
-                    "owner",
-                    "raw_due",
-                    "condition",
-                    "value",
-                    "changed_fields",
                     "evidence",
                 )
             },

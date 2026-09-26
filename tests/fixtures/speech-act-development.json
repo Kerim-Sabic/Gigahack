@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "split": "development",
+  "policy": "Known-failure-informed development contrasts, never held-out accuracy evidence. Freeze expected outcomes before running.",
+  "provenance": "AI-authored synthetic text; native speaker review not performed. Tests speech-act interpretation, not audio language recognition.",
+  "cases": [
+    {"id": "S01", "meeting_date": "2027-07-01", "turns": ["We agreed that Ana will inspect the generator on 5 July.", "Could we move that inspection to 7 July instead?"], "expected": {"category": "action", "status": "confirmed", "owner": "Ana", "due": "2027-07-05", "pending": true}},
+    {"id": "S02", "meeting_date": "2027-07-01", "turns": ["We agreed that Ana will inspect the generator on 5 July.", "Correction: the inspection is on 7 July, not 5 July. Agreed."], "expected": {"category": "action", "status": "confirmed", "owner": "Ana", "due": "2027-07-07"}},
+    {"id": "S03", "meeting_date": "2027-07-01", "turns": ["Irina va verifica filtrul pe 5 iulie. Aprobat.", "Poate mutăm verificarea pe 7 iulie?"], "expected": {"category": "action", "status": "confirmed", "owner": "Irina", "due": "2027-07-05", "pending": true}},
+    {"id": "S04", "meeting_date": "2027-07-01", "turns": ["Irina va verifica filtrul pe 5 iulie. Aprobat.", "Corectăm termenul verificării: 7 iulie. Aprobat."], "expected": {"category": "action", "status": "confirmed", "owner": "Irina", "due": "2027-07-07"}},
+    {"id": "S05", "meeting_date": "2027-07-01", "turns": ["Проверка генератора назначена на 5 июля. Согласовано.", "А если перенести эту проверку на 7 июля?"], "expected": {"category": "action", "status": "confirmed", "due": "2027-07-05", "pending": true}},
+    {"id": "S06", "meeting_date": "2027-07-01", "turns": ["Проверка генератора назначена на 5 июля. Согласовано.", "Исправляем срок проверки: 7 июля. Согласовано."], "expected": {"category": "action", "status": "confirmed", "due": "2027-07-07"}},
+    {"id": "S07", "meeting_date": "2027-07-01", "turns": ["Проверка генератора назначена на 5 июля. Согласовано.", "Poate перенесём проверку на 7 июля?"], "expected": {"category": "action", "status": "confirmed", "due": "2027-07-05", "pending": true}},
+    {"id": "S08", "meeting_date": "2027-07-01", "turns": ["Проверка генератора назначена на 5 июля. Согласовано.", "Исправляем срок проверки: 7 июля. Confirmăm."], "expected": {"category": "action", "status": "confirmed", "due": "2027-07-07"}}
+  ]
+}
