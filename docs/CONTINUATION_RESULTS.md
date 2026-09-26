@@ -223,3 +223,21 @@ Original corpus run `1790416268868794800` (723.32s): 25 text PASS / 0 FAIL / fiv
 NOT RUN. Original and held-out gold hashes remain unchanged. The command's nonzero exit
 indicates incomplete 30-case coverage, not a failed executed text case. This is fresh real
 Qwen inference, with no fixture injection. Prior 16-case development results remain historical.
+
+## Extraction checkpoint recovery, 2026-09-26
+
+Tracked operator command `python -m scripts.mom qualify-recovery`: PASS, run
+`app-crash-1790422794049692413`, 142.16s. Actual Qwen processes seeded synthetic Russian
+text; API and supervisor are hard-killed after one event checkpoint. Three owned descendants
+exit, the unrelated sentinel survives, no candidate publishes before recovery. Restarted
+services recover the same job on attempt two, reuse one group/event and show awaiting review
+in the browser. Both semantic checks pass (confirmed 9 June; tentative 11 June retained).
+Two candidates, zero accepted events/snapshots/outbox; IPv4/IPv6 ENETUNREACH before/after.
+This is a known text regression and process-crash test, not acoustic or physical power-loss
+qualification. A previous final-code helper run also passed in 144.62s.
+
+Five checkpoint/cleanup tests pass; total backend 175 pass, two Linux-only checks skipped
+on Windows. Lint and strict frontend build pass. No model, dependency, prompt or gold change.
+Raw journal creation failure initially escaped process cleanup; a regression test reproduced
+it and now confirms cleanup. Full transcript/event aggregate memory remains unbounded by
+meeting length. Decision 019 records checkpoint identity and validation policy.

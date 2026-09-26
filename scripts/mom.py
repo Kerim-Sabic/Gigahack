@@ -302,6 +302,7 @@ def main():
             "backup",
             "restore",
             "qualify-target",
+            "qualify-recovery",
         ],
     )
     parser.add_argument("--path")
@@ -341,6 +342,8 @@ def main():
                 [sys.executable, "-m", "pytest", "-q", "--basetemp", str(config.DATA / "test-temp")]
             )
         )
+    elif args.command == "qualify-recovery":
+        raise SystemExit(subprocess.call([sys.executable, "-m", "scripts.qualify_crash_recovery"], cwd=config.ROOT))
     elif args.command == "backup":
         backup(args.path)
     elif args.command == "restore":

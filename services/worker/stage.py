@@ -160,6 +160,17 @@ def extract(spec):
     manifest = json.loads((ROOT / "manifests/models.lock.json").read_text(encoding="utf-8"))
     if llm.model_file not in manifest.get(llm.model_directory, {}).get("files", {}) or not model.is_file():
         raise RuntimeError("selected_llm_not_prepared_and_pinned")
+    from services.api.audio import sha
+    from services.api.provenance import runtime_identity
+    from services.worker.extraction_checkpoints import ExtractionCheckpoints, digest
+
+    checkpoints = ExtractionCheckpoints(spec["run_dir"], {
+        "sources": spec["segments"], "date": spec["meeting"]["date"],
+        "timezone": spec["meeting"]["timezone"], "config": spec["config"],
+        "resolved_llm": llm.model_dump(), "implementation": runtime_identity(),
+        "model_sha256": sha(model), "server_sha256": sha(Path(exe)),
+        "canonical_audio_hash": spec.get("canonical_audio_hash"),
+    })
     key = os.urandom(24).hex()
     args = [
         exe,
@@ -203,6 +214,7 @@ def extract(spec):
     )
     raw_path = Path(spec["run_dir"]) / f"raw-extraction-{time.time_ns()}.jsonl"
     try:
+        raw_path.touch()
         ready = False
         for _ in range(llm.startup_timeout_seconds):
             if process.poll() is not None:
@@ -334,7 +346,13 @@ def extract(spec):
         progress.begin("extracting", len(spec["segments"]), "segments")
         covered = 0
         for group in groups:
-            events.extend(generate(group))
+            group_sources = {s["id"]: s for s in group}
+            completed = checkpoints.load("group", group, group_sources)
+            if completed is None:
+                raw.clear()
+                completed = generate(group)
+                checkpoints.save("group", group, completed, raw, group_sources)
+            events.extend(completed)
             covered += len(group)
             progress.advance(covered)
         # Separate, bounded consistency pass. This remains a model proposal, never verification.
@@ -373,7 +391,20 @@ def extract(spec):
             return len(response.json()["tokens"])
 
         progress.begin("checking", len(events) or None, "items")
-        for event in events:
+        previous_digest = checkpoints.identity
+        for position, event in enumerate(events):
+            checkpoint_request = {"event": event, "previous_digest": previous_digest}
+            completed = checkpoints.load("event", checkpoint_request, by_id)
+            if completed is not None:
+                event = completed[0]
+                events[position] = event
+                previous.append(event)
+                previous_digest = digest({"previous": previous_digest, "event": event})
+                progress.advance(len(previous))
+                continue
+            # Keep diagnostic response memory bounded to this item, not the whole meeting.
+            raw.clear()
+            checkpoint_request = json.loads(json.dumps(checkpoint_request))
             context = context_for(event, spec["segments"], previous, tokens, budget=llm.reconciliation_tokens)
             relevant = [by_id[i] for i in dict.fromkeys(e["segment_id"] for e in event["evidence"])]
             check_messages = [
@@ -616,10 +647,16 @@ def extract(spec):
             from services.api.quantities import enrich_quantity
 
             enrich_quantity(event, by_id)
-            validate_evidence(Extraction.model_validate({"events": [event]}).events[0], by_id)
+            validated_event = Extraction.model_validate({"events": [event]}).events[0]
+            validate_evidence(validated_event, by_id)
+            event = validated_event.model_dump()
+            events[position] = event
+            checkpoints.save("event", checkpoint_request, [event], raw, by_id)
             previous.append(event)
+            previous_digest = digest({"previous": previous_digest, "event": event})
             progress.advance(len(previous))
-        return {"events": events, "raw": raw}
+        return {"events": events, "raw_artifact": raw_path.name,
+                "checkpoint_identity": checkpoints.identity, "reused_units": checkpoints.reused}
     finally:
         client.close()
         process.terminate()

@@ -1,5 +1,18 @@
 # Recovery
 
+Extraction now resumes validated source groups and reconciled events within the same job.
+Source/configuration/model/runtime changes invalidate these units; corrupt or oversized units
+are recomputed. Completed units retain raw replies and never constitute human approval.
+See [Decision 019](DECISIONS/019-extraction-checkpoints.md).
+
+After preparing Linux/WSL models, tools and Chromium, stop managed processing and run
+`python -m scripts.mom qualify-recovery`. This creates isolated synthetic data, blocks external
+networking, hard-kills its own API/supervisor during actual extraction, then verifies automatic
+lease recovery, checkpoint reuse and the browser's awaiting-review state. It also checks that
+owned children exit and an unrelated sentinel survives. It does not alter existing meetings.
+The command requires Linux user/network namespace support and writes a private report under
+`.runtime/app-crash-*`. It tests process crashes, not physical power loss or microphone loss.
+
 Source audio is retained after failed/cancelled processing. Retry uses stage artifact input hashes;
 changing source revisions invalidates extraction inputs. Worker leases older than 30 seconds are requeued
 on startup. Never manually reset an outbox row marked uncertain: inspect Mailpit/internal SMTP first.

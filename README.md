@@ -109,6 +109,8 @@ Fast fixture browser check: stop managed services, prepare Mailpit, then run
 labeled fixture inference. It exercises the real UI/API/queue/evidence/PDF/SMTP plumbing.
 
 Complete Linux app offline rehearsal: `python -m scripts.qualify_isolated_app --path /path/to/synthetic.wav`.
+Actual extraction crash/restart rehearsal: `python -m scripts.mom qualify-recovery` (prepared
+Linux/WSL, isolated synthetic data, actual model, no active GPU job). See [recovery](docs/RECOVERY.md).
 See [scope and evidence](docs/OFFLINE_RUNBOOK.md). Run `python -m scripts.mom doctor` before startup;
 it reports missing preparation with repair actions, not product or target-device qualification.
 

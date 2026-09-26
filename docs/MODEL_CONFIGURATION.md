@@ -1,5 +1,13 @@
 # Developer model configuration
 
+Extraction work-unit checkpoints bind to the complete frozen configuration, resolved LLM
+settings, model/executable bytes, source revisions and implementation identity. Changing
+context, output budgets or another setting recomputes affected work; do not edit private
+checkpoint files to apply settings. Raw replies remain in attempt journals. The stage output
+contains `raw_artifact`, `checkpoint_identity` and `reused_units` alongside `events`, rather
+than duplicating all raw responses in memory. Total transcript/event state still grows with
+meeting length. See [Decision 019](DECISIONS/019-extraction-checkpoints.md).
+
 Edit `config/inference.toml`. This is the single configuration for prepared LLM selection,
 context and source windows, output/reasoning budgets, temperature, GPU layers, batching,
 timeouts and recursive splitting; ASR model/beam/window/compute choices; and optional-stage

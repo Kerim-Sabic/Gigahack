@@ -9,6 +9,7 @@ FILES = (
     "config/inference.toml",
     "services/worker/settings.py",
     "services/worker/asr_chunks.py",
+    "services/worker/extraction_checkpoints.py",
     "services/api/progress.py",
     "services/api/transcript_state.py",
     "services/api/audio.py",

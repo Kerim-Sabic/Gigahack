@@ -1,7 +1,7 @@
 # Current implementation status
 
 Complete mission remains active. The last verified remote checkpoint is
-352acc47c5107480054263ee4281b63abb64800f (CI 36236901925 PASS). It contains multilingual
+43927c26f2c61c66a209706c7c2fac651a39b71f (CI 36238714648 PASS). It contains multilingual
 transcription, frozen developer settings, current-step ETA and bounded ASR checkpoints.
 It also includes atomic recording/stage recovery and kernel-backed model-process ownership.
 Exact bounded audio clips and optional-model excerpt results are included. Full-recording
@@ -11,6 +11,12 @@ resource-aware long uploads and RF64 source playback. Source-first speech-act re
 the known H03 regression, eight new development contrasts and all 25 original text cases.
 
 ## Current evidence
+
+- Actual offline API/supervisor crash/restart rehearsal passes in 142.16s using synthetic
+  Russian text and real Qwen. The same job resumes on attempt two, reuses one group/event,
+  returns to awaiting review, and creates no approvals or deliveries. Three owned descendants
+  exit while an unrelated sentinel survives. Run `python -m scripts.mom qualify-recovery`;
+  see Decision 019 for limits.
 
 - Fresh complete provided-recording browser/API/actual-model run passes offline in 1,287.96s:
   198 segments, 262 diarized turns/five clusters, 198 comparison and 57 recovery hypotheses,
@@ -22,7 +28,7 @@ the known H03 regression, eight new development contrasts and all 25 original te
   synthetic browser/PDF/Mailpit flow passes. See Decision 018.
 
 
-- 170 backend tests pass locally with two Linux-only checks skipped; those ownership/RF64
+- 175 backend tests pass locally with two Linux-only checks skipped; those ownership/RF64
   checks pass in Linux. Current frontend checkpoint: 12 tests and strict build pass.
 - Reviewed gap insertion now has idempotent receipts, overlap/revision/authorization guards
   and mandatory transcript reanalysis. Transcript-only jobs preserve audio checks and bypass
@@ -30,13 +36,13 @@ the known H03 regression, eight new development contrasts and all 25 original te
   reanalysis, re-review and export/Mailpit flow passes. See Decision 017 for scope and limits.
 - Hard-killing a model stage now terminates its owned child through Windows Job Objects or
   Linux parent-death binding; the actual tests preserve an unrelated running process.
-  New CUDA silence inference passes in 7.00s. Full application crash rehearsal remains open.
+  New CUDA silence inference passes in 7.00s. The actual API/supervisor crash rehearsal now passes; see Decision 019.
 - Actual supplied private recording: original Whisper pass 152.94s / 205 segments; per-window
   multilingual pass 184.49s / 176 segments; chunked pass 166.71s / 194 segments. Romanian
   passages appear alongside Russian. No reference transcript, participant identities or
   date/timezone were supplied, so none are invented and accuracy is not scored as perfect.
 - Actual ASR-child termination/retry reused one durable chunk and finished three chunks.
-  This is not yet whole-app crash recovery or arbitrary-length qualification.
+  The separate extraction crash rehearsal now passes; arbitrary-length qualification remains open.
 - New stage cache validation rejects corrupt output/receipt pairs. Inputs, outputs, receipts
   and normalized audio publish atomically after fsync. Recording finalization decodes outside
   the database writer transaction; same-request retry is idempotent and chunks survive failure.
@@ -103,8 +109,8 @@ aggregate-memory and crash recovery work; finite hardware cannot promise failure
 Default byte/duration caps are removed; RF64, paged recording assembly, storage checks and
 sectioned source playback are implemented. Actual 1.728 GB / 2.5-hour silence upload and all
 30 real Whisper chunks passed. This does not qualify long speech or optional diarization.
-Extraction checkpoints and bounded transcript state remain open.
-Full-app crash/fencing, final corrected real-model evaluation, multilingual human assessment,
+Validated extraction checkpoints and actual API/supervisor crash recovery now pass.
+Bounded aggregate transcript state, physical power-loss qualification, final real-model evaluation, multilingual human assessment,
 long-distance reconciliation, retention/settings, branding/UI/PDF finishing, final demo,
 current-source packaging and final offline qualification remain required.
 
