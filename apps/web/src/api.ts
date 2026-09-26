@@ -11,4 +11,4 @@ export async function api<T = any>(path: string, method = 'GET', body?: unknown)
   return json;
 }
 import type { components } from './generated/api';
-export type Meeting = components['schemas']['MeetingView'] & Partial<Pick<components['schemas']['MeetingDetail'], 'assets'|'jobs'|'participants'|'recordings'>>;
+export type Meeting = components['schemas']['MeetingView'] & Partial<Pick<components['schemas']['MeetingDetail'], 'assets'|'jobs'|'participants'|'recordings'|'transcript_pending_assets'>>;

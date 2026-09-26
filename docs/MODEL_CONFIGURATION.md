@@ -50,6 +50,11 @@ An empty longer window gets one subdivision pass; shorter empty output stays vis
 Gap review is independent of the comparison fraction and never automatically changes the
 transcript. See DECISIONS/016-gap-recovery-hypotheses.md for measured behavior and open gates.
 
+After a reviewer adds missing words or edits the transcript, use **Reanalyze corrected transcript**.
+This queues `transcript_only: true` with the frozen LLM profile and saved source revisions;
+Whisper, Parakeet and diarization are not rerun. New minutes require successful analysis and
+renewed review. Earlier audio checks and immutable minutes remain available. See Decision 017.
+
 ASR `checkpoint_seconds` bounds each PCM read (default 300 seconds), with two seconds
 of context on each side. Word midpoint ownership avoids publishing the same overlap window
 twice, and crossing hypotheses retain their complete raw text and a boundary-review flag.

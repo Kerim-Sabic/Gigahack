@@ -87,7 +87,7 @@ def main(*, fixture_inference=False):
         expect(page.locator(".itemlist button").first).to_be_visible(timeout=10000)
         if fixture_inference:
             checks = page.get_by_role("region", name="Audio passages to check")
-            expect(checks.get_by_text("The second recognizer returned no text here.", exact=True)).to_be_visible()
+            expect(checks.get_by_text("Possible speech outside the transcript.", exact=True)).to_be_visible()
             checks.get_by_role("button", name="Play passage", exact=False).click()
             page.wait_for_function("() => document.querySelector('audio').currentSrc.includes('/assets/') && document.querySelector('audio').readyState >= 2")
             page.evaluate("() => document.querySelector('audio').pause()")
@@ -98,10 +98,23 @@ def main(*, fixture_inference=False):
             page.evaluate("() => document.querySelector('audio').pause()")
             page.get_by_role("tab", name="Transcript", exact=True).click()
             expect(page.get_by_text("Check the wording here against the audio; this passage crosses a processing boundary.", exact=True)).to_be_visible()
+            checks.get_by_text("Add reviewed words", exact=True).click()
+            checks.get_by_label("Corrected words for this interval", exact=True).fill("Synthetic reviewed note: cererea сегодня.")
+            checks.get_by_label("Reason for correction", exact=True).fill("Explicit synthetic browser recovery check")
+            checks.get_by_label("I listened to this interval and checked these words.", exact=True).check()
+            checks.get_by_role("button", name="Save reviewed words", exact=True).click()
+            expect(checks.get_by_text("Reviewed words added to the transcript.", exact=True)).to_be_visible()
+            expect(page.get_by_text("Synthetic reviewed note: cererea сегодня.", exact=True)).to_be_visible()
+            page.get_by_role("button", name="Reanalyze corrected transcript", exact=True).click()
+            expect(page.get_by_text("The transcript changed. Reanalyze it before creating new minutes.", exact=True)).to_have_count(0, timeout=30000)
+            expect(checks.get_by_text("Reviewed words added to the transcript.", exact=True)).to_be_visible()
             page.get_by_role("tab", name="Decisions & actions", exact=True).click()
+            expect(page.locator(".detail .badge")).to_have_text("Review: unreviewed", timeout=30000)
         page.screenshot(path=str(proof / "review-1366.png"), full_page=True)
         for _ in range(20):
             button = page.get_by_role("button", name="Accept", exact=True)
+            if page.locator(".detail .badge").inner_text().strip() != "Review: accepted":
+                expect(button).to_be_enabled(timeout=30000)
             if button.is_enabled():
                 button.click()
                 expect(page.locator(".detail .badge")).to_have_text("Review: accepted", timeout=10000)
@@ -121,9 +134,9 @@ def main(*, fixture_inference=False):
             snapshot_json = page.request.get(
                 "http://127.0.0.1:8765" + page.get_by_role("link", name="JSON ↗").get_attribute("href")
             ).json()
-            assert snapshot_json["audio_checks"][0]["count"] == 1
+            assert snapshot_json["audio_checks"] == []
             assert snapshot_json["unresolved"].count("Source crosses an audio processing boundary; verify wording against the audio") == 1
-            assert any("Automated audio flags" in warning for warning in snapshot_json["unresolved"])
+            assert not any("Automated audio flags" in warning for warning in snapshot_json["unresolved"])
             assert snapshot_json["template"]["version"] == 1
             assert snapshot_json["template"]["titles"]["en"] == "Synthetic template minutes"
             assert snapshot_json["template"]["introduction"] == "Synthetic configured introduction"

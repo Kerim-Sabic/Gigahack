@@ -56,3 +56,6 @@ is still pending; users must not mistake surfaced hypotheses for completed corre
 
 Empty hypotheses, uncertain language switches, speaker accuracy, reviewed insertion,
 full long-speech behavior and human/target qualification remain open.
+
+Follow-up: Decision 017 implements and verifies reviewed insertion and transcript-only
+reanalysis. The acoustic and hardware qualification limits above remain open.

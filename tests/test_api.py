@@ -503,7 +503,7 @@ def test_migration_upgrade_keeps_existing_accounts(tmp_path, monkeypatch):
         c.execute("INSERT INTO users VALUES('u','existing','hash','secretary','en')")
     migrate()
     with transaction() as c:
-        assert c.execute("SELECT MAX(version) FROM schema_version").fetchone()[0] == 4
+        assert c.execute("SELECT MAX(version) FROM schema_version").fetchone()[0] == 5
         assert c.execute("SELECT name FROM users").fetchone()[0] == "existing"
 
 
@@ -1063,3 +1063,135 @@ def test_low_storage_rejects_upload_and_never_acknowledges_new_chunk(client, mon
     with transaction() as c:
         assert c.execute("SELECT COUNT(*) FROM chunks").fetchone()[0] == 0
         assert c.execute("SELECT COUNT(*) FROM assets").fetchone()[0] == 0
+
+
+def test_reviewed_gap_insertion_reanalysis_and_immutable_history(client, monkeypatch):
+    from services.worker import supervisor
+    from services.worker.audio_checks import save_checks
+    from tests.browser_fixture import fixture_stage
+
+    meeting = new_meeting(client)
+    base = f"/api/v1/meetings/{meeting['id']}"
+    asset = client.post(base + "/uploads", files={"file": ("synthetic.wav", audio(), "audio/wav")}).json()["id"]
+    queued = client.post(base + "/jobs", json={"asset_id": asset, "device": "cpu"}).json()
+    with transaction() as c:
+        job = dict(c.execute("SELECT * FROM jobs WHERE id=?", (queued["id"],)).fetchone())
+    calls = []
+
+    def fixture(job, stage, spec):
+        calls.append(stage)
+        result = fixture_stage(job, stage, spec)
+        if spec["config"].get("transcript_only"):
+            assert any(s["text"] == "Обсудим cererea завтра." for s in spec["segments"])
+        return result
+
+    monkeypatch.setattr(supervisor, "run_stage", fixture)
+    supervisor.process(job)
+    save_checks(job, "empty_second_recognizer", [{"start": 0, "end": 16000}])
+    items = client.get(base + "/items").json()
+    candidate = items["candidates"][0]["id"]
+    accepted = client.post(f"/api/v1/review-issues/{candidate}/resolve", json={"revision": items["revision"], "action": "accepted"}).json()
+    snapshot = client.post(base + "/snapshots", json={"revision": accepted["revision"]}).json()["id"]
+    frozen = client.get(f"/api/v1/snapshots/{snapshot}/exports/json").json()
+    client.post(f"/api/v1/snapshots/{snapshot}/approve", json={"revision": accepted["revision"]})
+    path = f"/api/v1/jobs/{job['id']}/transcript-additions"
+    body = {"revision": accepted["revision"], "start": 16000, "end": 32000,
+            "text": "Обсудим cererea завтра.", "reason": "Synthetic reviewed source correction", "reviewed": True}
+    assert client.post(path, json={**body, "reviewed": False}).status_code == 422
+    assert client.post(path, json={**body, "revision": 1}).json()["code"] == "revision_conflict"
+    added = client.post(path, json=body)
+    assert added.status_code == 200, added.text
+    result = added.json()
+    repeated = client.post(path, json=body).json()
+    assert repeated["already_applied"] and repeated["segment_id"] == result["segment_id"]
+    assert client.post(path, json={**body, "text": "Other words"}).json()["code"] == "gap_already_corrected"
+    source = client.get(f"/api/v1/segments/{result['segment_id']}").json()
+    assert source["start"] == 16000 and source["end"] == 32000 and source["speaker"] is None
+    assert json.loads(source["raw"])["origin"] == "reviewer_gap_insertion"
+    assert json.loads(source["raw"])["recovery_hypotheses"] and json.loads(source["words"]) == []
+    assert client.get(base).json()["transcript_pending_assets"] == [asset]
+    assert client.get(base + "/items").json()["items"] == []
+    assert client.post(base + "/snapshots", json={"revision": result["revision"]}).json()["code"] == "transcript_reanalysis_required"
+    assert client.post(f"/api/v1/review-issues/{candidate}/resolve", json={"revision": result["revision"], "action": "accepted"}).json()["code"] == "transcript_reanalysis_required"
+    assert client.post(f"/api/v1/snapshots/{snapshot}/approve", json={"revision": accepted["revision"]}).status_code == 409
+    assert client.get(f"/api/v1/snapshots/{snapshot}/exports/json").json() == frozen
+    checks = client.get(f"/api/v1/jobs/{job['id']}/audio-checks").json()
+    assert next(row for row in checks["items"] if row["kind"] == "speech_without_transcript")["inserted_segment_id"] == result["segment_id"]
+    # Replay only extraction, and put an unchanged invalidated item back in review.
+    queued = client.post(base + "/jobs", json={"asset_id": asset, "device": "cpu", "transcript_only": True}).json()
+    with transaction() as c:
+        rerun = dict(c.execute("SELECT * FROM jobs WHERE id=?", (queued["id"],)).fetchone())
+    calls.clear()
+    supervisor.process(rerun)
+    assert calls == ["extract"]
+    assert client.get(base).json()["transcript_pending_assets"] == []
+    items = client.get(base + "/items").json()
+    assert len(items["candidates"]) == 1 and items["candidates"][0]["review"] == "unreviewed"
+    assert items["items"] == []
+    accepted = client.post(f"/api/v1/review-issues/{candidate}/resolve", json={"revision": items["revision"], "action": "accepted"}).json()
+    new_snapshot = client.post(base + "/snapshots", json={"revision": accepted["revision"]})
+    assert new_snapshot.status_code == 200, new_snapshot.text
+    new_export = client.get(f"/api/v1/snapshots/{new_snapshot.json()['id']}/exports/json").json()
+    assert len(new_export["audio_checks"]) == 1
+    assert new_export["audio_checks"][0]["kind"] == "empty_second_recognizer"  # Unresolved flag survives transcript-only analysis.
+    assert new_export["audio_checks"][0]["count"] == 1
+    assert len(new_export["items"]) == 1
+    with transaction() as c:
+        assert c.execute("SELECT COUNT(*) FROM segments").fetchone()[0] == 2
+        assert c.execute("SELECT COUNT(*) FROM transcript_additions").fetchone()[0] == 1
+        assert c.execute("SELECT COUNT(*) FROM outbox").fetchone()[0] == 0
+
+
+def test_gap_correction_overlap_active_job_and_authorization(client):
+    from services.worker.audio_checks import save_checks
+
+    meeting = new_meeting(client)
+    sid, candidate, asset = seed_candidate(client, meeting)
+    job = client.post(f"/api/v1/meetings/{meeting['id']}/jobs", json={"asset_id": asset}).json()
+    save_checks(job, "speech_without_transcript", [{"start": 0, "end": 16000}])
+    path = f"/api/v1/jobs/{job['id']}/transcript-additions"
+    body = {"revision": 1, "start": 0, "end": 16000, "text": "Reviewed text", "reason": "Synthetic test", "reviewed": True}
+    assert client.post(path, json=body).json()["code"] == "processing_incomplete"
+    assert client.post(f"/api/v1/review-issues/{candidate}/resolve", json={"revision": 1, "action": "accepted"}).json()["code"] == "processing_incomplete"
+    with transaction() as c:
+        c.execute("UPDATE jobs SET state='complete'")
+    assert client.post(path, json=body).json()["code"] == "gap_overlaps_transcript"
+    assert client.post(path, json={**body, "start": 1}).json()["code"] == "audio_observation_not_found"
+    actor = client.post("/api/v1/accounts", json={"name": "gap-viewer", "password": "synthetic-password-456", "role": "viewer"}).json()
+    with transaction() as c:
+        c.execute("INSERT INTO members VALUES(?,?)", (meeting["id"], actor["id"]))
+    client.delete("/api/v1/sessions/current")
+    signed = client.post("/api/v1/sessions", json={"name": "gap-viewer", "password": "synthetic-password-456"}).json()
+    client.headers["x-csrf-token"] = signed["csrf"]
+    assert client.post(path, json=body).status_code == 403
+    with transaction() as c:
+        c.execute("DELETE FROM members WHERE user_id=?", (actor["id"],))
+    assert client.post(path, json=body).status_code == 404
+
+
+def test_reanalysis_rejects_new_segments_arriving_during_extraction(client, monkeypatch):
+    from services.worker import supervisor
+    from services.api.transcript_state import changed
+
+    meeting = new_meeting(client)
+    sid, _, asset = seed_candidate(client, meeting)
+    with transaction() as c:
+        c.execute("UPDATE segments SET raw='{}' WHERE id=?", (sid,))
+        changed(c, meeting["id"], asset)
+    queued = client.post(f"/api/v1/meetings/{meeting['id']}/jobs", json={"asset_id": asset, "transcript_only": True}).json()
+    with transaction() as c:
+        job = dict(c.execute("SELECT * FROM jobs WHERE id=?", (queued["id"],)).fetchone())
+
+    def race(job, stage, spec):
+        assert stage == "extract"
+        with transaction() as c:
+            c.execute("INSERT INTO segments(id,meeting_id,asset_id,revision,start,end,text,raw) VALUES(?,?,?,1,0,1,'Concurrent text','{}')",
+                      (uid(), meeting["id"], asset))
+        return {"events": []}
+
+    monkeypatch.setattr(supervisor, "run_stage", race)
+    with pytest.raises(RuntimeError, match="transcript_changed_during_extraction"):
+        supervisor.process(job)
+    assert client.get(f"/api/v1/meetings/{meeting['id']}").json()["transcript_pending_assets"] == [asset]
+    with transaction() as c:
+        assert c.execute("SELECT review FROM candidates").fetchone()[0] == "needs_review"

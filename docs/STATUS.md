@@ -1,7 +1,7 @@
 # Current implementation status
 
 Complete mission remains active. The last verified remote checkpoint is
-5fb5820a2f36de4b1f8362abed466fcf364ab0b0 (CI 36234696489 PASS). It contains multilingual
+a3d0096844455a4d06de530b48b59ac14c22e527 (CI 36235636106 PASS). It contains multilingual
 transcription, frozen developer settings, current-step ETA and bounded ASR checkpoints.
 It also includes atomic recording/stage recovery and kernel-backed model-process ownership.
 Exact bounded audio clips and optional-model excerpt results are included. Full-recording
@@ -12,8 +12,12 @@ the known H03 regression, eight new development contrasts and all 25 original te
 
 ## Current evidence
 
-- 167 backend tests pass locally with two Linux-only checks skipped; those ownership/RF64
-  checks pass in Linux. Current frontend checkpoint: 11 tests and strict build pass.
+- 170 backend tests pass locally with two Linux-only checks skipped; those ownership/RF64
+  checks pass in Linux. Current frontend checkpoint: 12 tests and strict build pass.
+- Reviewed gap insertion now has idempotent receipts, overlap/revision/authorization guards
+  and mandatory transcript reanalysis. Transcript-only jobs preserve audio checks and bypass
+  speech models. Actual synthetic Qwen reanalysis passes in 43.47s; the browser correction,
+  reanalysis, re-review and export/Mailpit flow passes. See Decision 017 for scope and limits.
 - Hard-killing a model stage now terminates its owned child through Windows Job Objects or
   Linux parent-death binding; the actual tests preserve an unrelated running process.
   New CUDA silence inference passes in 7.00s. Full application crash rehearsal remains open.
@@ -43,7 +47,7 @@ Current gap recovery independently processes diarizer-positive intervals outside
 transcript when both options are enabled. Bounded/checkpointed hypotheses are shown with source
 context, without automatic transcript fusion. Actual app run persisted 56 hypotheses (52 nonempty
 context outputs, four empty), including 115 word midpoints inside 35 flagged gaps. These are not
-human-verified recovered words. Reviewed insertion and full accuracy qualification remain open;
+human-verified recovered words. Reviewed insertion is now implemented and tested; full accuracy qualification remains open;
 see Decision 016. The real optional run took 144.57s; the synthetic browser workflow passes.
 
 Pinned Parakeet and Community-1 assets downloaded; user accepted Community-1 access terms.

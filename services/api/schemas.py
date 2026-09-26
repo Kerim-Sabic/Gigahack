@@ -54,6 +54,7 @@ class JobView(BaseModel):
     cancel: int
     created: float
     progress: ProgressView | None = None
+    transcript_only: bool = False
 
 
 class RecordingView(BaseModel):
@@ -72,6 +73,7 @@ class MeetingDetail(MeetingView):
     assets: list[AssetView]
     jobs: list[JobView]
     recordings: list[RecordingView]
+    transcript_pending_assets: list[str] = Field(default_factory=list)
 
 
 class SegmentView(BaseModel):
@@ -105,6 +107,7 @@ class AudioCheckView(BaseModel):
     start: int = Field(ge=0)
     end: int = Field(gt=0)
     hypotheses: list[RecoveryHypothesis] = Field(default_factory=list)
+    inserted_segment_id: str | None = None
 
 
 class AudioChecksPage(BaseModel):

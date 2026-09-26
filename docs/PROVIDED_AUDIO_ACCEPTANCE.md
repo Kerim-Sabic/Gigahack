@@ -152,3 +152,7 @@ The separate real `recovery-stress-1790417989021120246` run exercised 90–150s 
 preselected source intervals: three empty initial windows led to six shorter retries, only one
 of which was nonempty. Failures remain visible. Decision 016 records implementation, resource,
 browser and checkpoint evidence. Native acoustic accuracy and reviewed gap insertion remain open.
+
+Decision 017 subsequently implements reviewed gap insertion and transcript-only reanalysis,
+verified with synthetic UI/API and actual local Qwen text checks. No human corrections were
+fabricated for this private recording; its acoustic accuracy remains unmeasured.

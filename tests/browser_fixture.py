@@ -19,17 +19,18 @@ TEXT = "Elena sends the report on 30 September. Confirmed."
 
 def fixture_stage(job, stage, spec):
     if stage == "whisper":
-        return {"segments": [{"start": 0, "end": 32000, "text": TEXT, "raw": {"fixture": True, "boundary_review": True}, "words": []}]}
+        return {"segments": [{"start": 0, "end": 16000, "text": TEXT, "raw": {"fixture": True, "boundary_review": True}, "words": []}]}
     if stage != "extract":
         raise RuntimeError("CI fixture does not implement optional inference")
     # Explicit synthetic observation exercises review playback, not model accuracy.
     from services.worker.audio_checks import save_checks
-    save_checks(job, "empty_second_recognizer", [{"start": 0, "end": 16000}])
+    if not spec.get("config", {}).get("transcript_only"):
+        save_checks(job, "speech_without_transcript", [{"start": 16000, "end": 32000}])
     from services.api.db import transaction, canonical
     with transaction() as c:
         c.execute("UPDATE audio_checks SET hypotheses=? WHERE job_id=?", (canonical([{
             "engine": "parakeet", "text": "Synthetic recovery: cererea сегодня.", "attempt": "short_retry",
-            "source_start": 0, "source_end": 32000, "primary_start": 0, "primary_end": 16000,
+            "source_start": 0, "source_end": 32000, "primary_start": 16000, "primary_end": 32000,
             "timestamps": {}, "review": "unreviewed",
         }]), job["id"]))
     source = spec["segments"][0]

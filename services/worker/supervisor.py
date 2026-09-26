@@ -236,12 +236,15 @@ def process(job):
         "input_audio_hash": asset["hash"],
         "canonical_audio_hash": sha(asset["path"]),
     }
-    asr = retry_stage(job, "whisper", spec)
+    transcript_only = bool(queued_config.get("transcript_only"))
+    asr = None if transcript_only else retry_stage(job, "whisper", spec)
     with transaction() as c:
         existing = c.execute(
             "SELECT * FROM segments WHERE asset_id=? ORDER BY start", (asset["id"],)
         ).fetchall()
         if not existing:
+            if asr is None:
+                raise RuntimeError("transcript_required")
             for s in asr["segments"]:
                 c.execute(
                     "INSERT INTO segments(id,meeting_id,asset_id,revision,start,end,text,raw,words) VALUES(?,?,?,1,?,?,?,?,?)",
@@ -262,7 +265,8 @@ def process(job):
         ]
     from .optional import optional_stages
 
-    optional_stages(job, spec, asset, segments, retry_stage)
+    if not transcript_only:
+        optional_stages(job, spec, asset, segments, retry_stage)
     with transaction() as c:
         segments = [
             dict(r)
@@ -299,12 +303,15 @@ def process(job):
         event.uncertainties = list(dict.fromkeys(event.uncertainties))
         validated.append((event, validate_evidence(event, source)))
     with transaction() as c:
-        for s in segments:
-            current = c.execute("SELECT revision FROM segments WHERE id=?", (s["id"],)).fetchone()
-            if not current or current["revision"] != s["revision"]:
-                raise RuntimeError("transcript_changed_during_extraction")
+        current_versions = {r["id"]: r["revision"] for r in c.execute(
+            "SELECT id,revision FROM segments WHERE asset_id=?", (asset["id"],))}
+        if current_versions != {s["id"]: s["revision"] for s in segments}:
+            raise RuntimeError("transcript_changed_during_extraction")
         if queued_config.get("implementation") and queued_config["implementation"] != runtime_identity():
             raise RuntimeError("implementation_changed_queue_new_job")
+        invalidated = {r[0] for r in c.execute(
+            "SELECT DISTINCT e.candidate_id FROM evidence e JOIN segments s ON s.id=e.segment_id "
+            "JOIN candidates x ON x.id=e.candidate_id WHERE s.asset_id=? AND x.review='needs_review'", (asset["id"],))}
         c.execute(
             "UPDATE candidates SET review='excluded' WHERE review='needs_review' AND id IN (SELECT e.candidate_id FROM evidence e JOIN segments s ON s.id=e.segment_id WHERE s.asset_id=?)",
             (asset["id"],),
@@ -315,6 +322,8 @@ def process(job):
             # Scope semantic key to meeting; same utterance in another meeting is distinct.
             ident = hashlib.sha256((meeting["id"] + ident).encode()).hexdigest()
             if c.execute("SELECT 1 FROM candidates WHERE id=?", (ident,)).fetchone():
+                if ident in invalidated:
+                    c.execute("UPDATE candidates SET review='unreviewed',actor=NULL,body=? WHERE id=?", (canonical(body), ident))
                 continue
             chronology = [e for e in evidence if e["field"] == "kind"] or [
                 e for e in evidence if e["field"] == "text"
@@ -339,6 +348,7 @@ def process(job):
                         e["end"],
                     ),
                 )
+        c.execute("DELETE FROM transcript_analysis_state WHERE asset_id=?", (asset["id"],))
         c.execute("UPDATE jobs SET state='complete',stage='awaiting_review',lease=0 WHERE id=?", (job["id"],))
         c.execute(
             "UPDATE meetings SET status='awaiting_review',revision=revision+1 WHERE id=?", (meeting["id"],)

@@ -155,6 +155,8 @@ def snapshot(ident: str, body: Revision, u=Depends(authenticated)):
         m = access(c, ident, u, True)
         if m["revision"] != body.revision:
             fail("revision_conflict", 409)
+        if c.execute("SELECT 1 FROM transcript_analysis_state WHERE meeting_id=?", (ident,)).fetchone():
+            fail("transcript_reanalysis_required", 409)
         pending = c.execute(
             "SELECT COUNT(*) FROM candidates WHERE meeting_id=? AND review NOT IN ('accepted','excluded')",
             (ident,),
@@ -180,7 +182,10 @@ def snapshot(ident: str, body: Revision, u=Depends(authenticated)):
         data["audio_checks"] = [dict(row) for row in c.execute(
             "SELECT j.id AS job_id,j.asset_id,a.kind,COUNT(*) AS count FROM audio_checks a JOIN jobs j ON j.id=a.job_id "
             "WHERE j.meeting_id=? AND j.id=(SELECT latest.id FROM jobs latest WHERE latest.asset_id=j.asset_id "
-            "AND latest.meeting_id=j.meeting_id ORDER BY latest.created DESC,latest.rowid DESC LIMIT 1) "
+            "AND latest.meeting_id=j.meeting_id AND COALESCE(json_extract(latest.config,'$.transcript_only'),0)=0 "
+            "ORDER BY latest.created DESC,latest.rowid DESC LIMIT 1) "
+            "AND NOT EXISTS(SELECT 1 FROM transcript_additions t WHERE t.job_id=a.job_id AND t.start=a.start "
+            "AND t.end=a.end AND a.kind='speech_without_transcript') "
             "GROUP BY j.id,j.asset_id,a.kind ORDER BY j.id,a.kind", (ident,))]
         flag_count = sum(row["count"] for row in data["audio_checks"])
         if flag_count:

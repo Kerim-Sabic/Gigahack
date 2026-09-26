@@ -2,6 +2,21 @@ import type { Lang } from './i18n';
 let language:Lang='en';
 export function setUiLanguage(value:Lang){language=value;document.documentElement.lang=value;}
 const rows:[string,string,string][]=[
+ ["Reviewed words added to the transcript.", "Cuvintele verificate au fost adăugate la transcriere.", "Проверенные слова добавлены в расшифровку."],
+ ["Add reviewed words", "Adaugă cuvinte verificate", "Добавить проверенные слова"],
+ ["Enter only words you heard inside the flagged interval. Do not copy surrounding context. A new analysis is required before creating minutes.", "Introduceți doar cuvintele auzite în intervalul semnalat. Nu copiați contextul din jur. Este necesară o nouă analiză înainte de crearea procesului-verbal.", "Введите только слова, услышанные в отмеченном интервале. Не копируйте окружающий контекст. Перед созданием протокола нужен повторный анализ."],
+ ["Corrected words for this interval", "Cuvinte corectate pentru acest interval", "Исправленные слова для этого интервала"],
+ ["Reason for correction", "Motivul corectării", "Причина исправления"],
+ ["I listened to this interval and checked these words.", "Am ascultat acest interval și am verificat aceste cuvinte.", "Я прослушал этот интервал и проверил эти слова."],
+ ["Save reviewed words", "Salvează cuvintele verificate", "Сохранить проверенные слова"],
+ ["The transcript changed. Reanalyze it before creating new minutes.", "Transcrierea s-a modificat. Reanalizați-o înainte de a crea un nou proces-verbal.", "Расшифровка изменилась. Повторите анализ перед созданием нового протокола."],
+ ["Reanalyze corrected transcript", "Reanalizează transcrierea corectată", "Повторно проанализировать исправленную расшифровку"],
+ ["There is no saved transcript to analyze yet.", "Nu există încă o transcriere salvată pentru analiză.", "Сохранённой расшифровки для анализа пока нет."],
+ ["Transcript reanalysis does not run speech or speaker models.", "Reanaliza transcrierii nu rulează modelele de vorbire sau de identificare a vorbitorilor.", "Повторный анализ расшифровки не запускает модели распознавания речи и разделения говорящих."],
+ ["This interval was already corrected. Edit its saved transcript instead.", "Acest interval a fost deja corectat. Editați transcrierea salvată.", "Этот интервал уже исправлен. Отредактируйте сохранённую расшифровку."],
+ ["This interval now overlaps saved speech. Edit the existing transcript instead.", "Acest interval se suprapune acum cu vorbirea salvată. Editați transcrierea existentă.", "Этот интервал теперь пересекается с сохранённой речью. Отредактируйте существующую расшифровку."],
+ ["This audio observation is no longer available. Refresh the review.", "Această observație audio nu mai este disponibilă. Reîmprospătați revizuirea.", "Эта аудиоотметка больше недоступна. Обновите страницу проверки."],
+ ["Enter corrected words and a reason for the change.", "Introduceți cuvintele corectate și motivul modificării.", "Введите исправленные слова и причину изменения."],
  ["Audio playback failed. Your recording is retained. Try playing the passage again.", "Redarea audio a eșuat. Înregistrarea este păstrată. Încercați să redați din nou fragmentul.", "Не удалось воспроизвести аудио. Запись сохранена. Попробуйте прослушать фрагмент ещё раз."],
  ["Previous audio section", "Secțiunea audio anterioară", "Предыдущий аудиофрагмент"],
  ["Next audio section", "Următoarea secțiune audio", "Следующий аудиофрагмент"],

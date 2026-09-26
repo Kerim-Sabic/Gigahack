@@ -746,6 +746,53 @@
         }
       }
     },
+    "/api/v1/jobs/{ident}/transcript-additions": {
+      "post": {
+        "summary": "Add Gap Transcript",
+        "operationId": "add_gap_transcript_api_v1_jobs__ident__transcript_additions_post",
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GapCorrection"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/jobs/{ident}/{action}": {
       "post": {
         "summary": "Job Action",
@@ -2048,6 +2095,17 @@
             },
             "type": "array",
             "title": "Hypotheses"
+          },
+          "inserted_segment_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inserted Segment Id"
           }
         },
         "type": "object",
@@ -2377,6 +2435,65 @@
         ],
         "title": "Finish"
       },
+      "GapCorrection": {
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Revision"
+          },
+          "start": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Start"
+          },
+          "end": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "End"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 10000,
+            "minLength": 1,
+            "title": "Text"
+          },
+          "speaker": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speaker"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 3,
+            "title": "Reason"
+          },
+          "reviewed": {
+            "type": "boolean",
+            "const": true,
+            "title": "Reviewed"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "revision",
+          "start",
+          "end",
+          "text",
+          "reason",
+          "reviewed"
+        ],
+        "title": "GapCorrection"
+      },
       "Glossary": {
         "properties": {
           "version": {
@@ -2523,6 +2640,11 @@
                 "type": "null"
               }
             ]
+          },
+          "transcript_only": {
+            "type": "boolean",
+            "title": "Transcript Only",
+            "default": false
           }
         },
         "type": "object",
@@ -2675,6 +2797,13 @@
             },
             "type": "array",
             "title": "Recordings"
+          },
+          "transcript_pending_assets": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Transcript Pending Assets"
           }
         },
         "type": "object",
@@ -2981,6 +3110,11 @@
           "diarization": {
             "type": "boolean",
             "title": "Diarization",
+            "default": false
+          },
+          "transcript_only": {
+            "type": "boolean",
+            "title": "Transcript Only",
             "default": false
           }
         },

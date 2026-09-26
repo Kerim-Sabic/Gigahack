@@ -248,6 +248,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/jobs/{ident}/transcript-additions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add Gap Transcript */
+        post: operations["add_gap_transcript_api_v1_jobs__ident__transcript_additions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/jobs/{ident}/{action}": {
         parameters: {
             query?: never;
@@ -762,6 +779,8 @@ export interface components {
             end: number;
             /** Hypotheses */
             hypotheses?: components["schemas"]["RecoveryHypothesis"][];
+            /** Inserted Segment Id */
+            inserted_segment_id?: string | null;
         };
         /** AudioChecksPage */
         AudioChecksPage: {
@@ -853,6 +872,26 @@ export interface components {
                 [key: string]: unknown;
             }[];
         };
+        /** GapCorrection */
+        GapCorrection: {
+            /** Revision */
+            revision: number;
+            /** Start */
+            start: number;
+            /** End */
+            end: number;
+            /** Text */
+            text: string;
+            /** Speaker */
+            speaker?: string | null;
+            /** Reason */
+            reason: string;
+            /**
+             * Reviewed
+             * @constant
+             */
+            reviewed: true;
+        };
         /** Glossary */
         Glossary: {
             /** Version */
@@ -905,6 +944,11 @@ export interface components {
             /** Created */
             created: number;
             progress?: components["schemas"]["ProgressView"] | null;
+            /**
+             * Transcript Only
+             * @default false
+             */
+            transcript_only: boolean;
         };
         /** Meeting */
         Meeting: {
@@ -966,6 +1010,8 @@ export interface components {
             jobs: components["schemas"]["JobView"][];
             /** Recordings */
             recordings: components["schemas"]["RecordingView"][];
+            /** Transcript Pending Assets */
+            transcript_pending_assets?: string[];
         };
         /** MeetingEdit */
         MeetingEdit: {
@@ -1093,6 +1139,11 @@ export interface components {
              * @default false
              */
             diarization: boolean;
+            /**
+             * Transcript Only
+             * @default false
+             */
+            transcript_only: boolean;
         };
         /** RecordingView */
         RecordingView: {
@@ -1858,6 +1909,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AudioChecksPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_gap_transcript_api_v1_jobs__ident__transcript_additions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ident: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GapCorrection"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

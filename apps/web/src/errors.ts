@@ -1,6 +1,13 @@
 import { tr } from './translations';
 
 const messages: Record<string, string> = {
+  transcript_reanalysis_required: 'The transcript changed. Reanalyze it before creating new minutes.',
+  transcript_required: 'There is no saved transcript to analyze yet.',
+  transcript_only_excludes_audio_stages: 'Transcript reanalysis does not run speech or speaker models.',
+  gap_already_corrected: 'This interval was already corrected. Edit its saved transcript instead.',
+  gap_overlaps_transcript: 'This interval now overlaps saved speech. Edit the existing transcript instead.',
+  audio_observation_not_found: 'This audio observation is no longer available. Refresh the review.',
+  correction_text_required: 'Enter corrected words and a reason for the change.',
   recording_finalizing: 'This recording is still being saved. Wait a moment and retry.',
   recording_chunk_corrupt: 'A saved audio chunk failed its integrity check. The other chunks are retained. Ask the operator to inspect the recording.',
   stage_stalled: 'Processing stopped after a long period without activity. Your audio and saved work are retained. Retry or ask the operator to inspect local logs.',

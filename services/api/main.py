@@ -349,6 +349,8 @@ def meeting(ident: str, u=Depends(user)):
             m[table] = [dict(r) for r in c.execute(f"SELECT * FROM {table} WHERE meeting_id=?", (ident,))]
         for a in m["assets"]:
             a.pop("path")
+        m["transcript_pending_assets"] = [r[0] for r in c.execute(
+            "SELECT asset_id FROM transcript_analysis_state WHERE meeting_id=?", (ident,))]
         for r in m["recordings"]:
             stats = c.execute(
                 "SELECT COUNT(*),COALESCE(SUM(samples),0),MAX(sequence) FROM chunks WHERE recording_id=?",
@@ -359,6 +361,7 @@ def meeting(ident: str, u=Depends(user)):
 
     for job in m["jobs"]:
         job["progress"] = read_progress(config.DATA, job)
+        job["transcript_only"] = bool(json.loads(job["config"]).get("transcript_only"))
     return m
 
 
@@ -710,6 +713,7 @@ class Queue(Strict):
     device: Literal["cuda", "cpu"] = "cuda"
     parakeet: bool = False
     diarization: bool = False
+    transcript_only: bool = False
 
 
 @app.post("/api/v1/meetings/{ident}/jobs")
@@ -717,6 +721,9 @@ def queue(ident: str, body: Queue, u=Depends(user)):
     from .capabilities import capabilities
 
     from services.worker.settings import load_settings
+
+    if body.transcript_only and (body.parakeet or body.diarization):
+        fail("transcript_only_excludes_audio_stages", 422)
 
     inference_settings = load_settings().model_dump()
     available = capabilities(inference_settings)
@@ -738,12 +745,15 @@ def queue(ident: str, body: Queue, u=Depends(user)):
             )
         ]
         glossary = c.execute("SELECT version,body FROM settings WHERE key='glossary'").fetchone()
+        if body.transcript_only and not source_versions:
+            fail("transcript_required", 409)
         settings = canonical(
             {
                 "device": body.device,
                 "inference": inference_settings,
                 "parakeet": body.parakeet,
                 "diarization": body.diarization,
+                "transcript_only": body.transcript_only,
                 "prompt_hash": prompt_hash,
                 "implementation": runtime_identity(),
                 "contract": 1,
@@ -780,12 +790,68 @@ def audio_checks(ident: str, offset: int = 0, limit: int = 50, u=Depends(user)):
         if not job:
             fail("job_not_found", 404)
         access(c, job["meeting_id"], u)
-        rows = c.execute("SELECT kind,start,end,hypotheses FROM audio_checks WHERE job_id=? ORDER BY start,end,kind LIMIT ? OFFSET ?",
+        rows = c.execute("SELECT a.kind,a.start,a.end,a.hypotheses,t.segment_id AS inserted_segment_id FROM audio_checks a "
+                         "LEFT JOIN transcript_additions t ON t.job_id=a.job_id AND t.start=a.start AND t.end=a.end "
+                         "AND a.kind='speech_without_transcript' WHERE a.job_id=? ORDER BY a.start,a.end,a.kind LIMIT ? OFFSET ?",
                          (ident, min(max(limit, 1), 100), max(offset, 0))).fetchall()
         total = c.execute("SELECT COUNT(*) FROM audio_checks WHERE job_id=?", (ident,)).fetchone()[0]
         return {"asset_id": job["asset_id"], "total": total,
                 "items": [{**dict(r), "hypotheses": json.loads(r["hypotheses"])} for r in rows],
                 "scope": "Automated observations from this processing attempt; not proof of missing speech or transcript accuracy"}
+
+
+class GapCorrection(Strict):
+    revision: int = Field(ge=1)
+    start: int = Field(ge=0)
+    end: int = Field(gt=0)
+    text: str = Field(min_length=1, max_length=10000)
+    speaker: str | None = Field(default=None, max_length=200)
+    reason: str = Field(min_length=3, max_length=1000)
+    reviewed: Literal[True]
+
+
+@app.post("/api/v1/jobs/{ident}/transcript-additions")
+def add_gap_transcript(ident: str, body: GapCorrection, u=Depends(user)):
+    from .transcript_state import changed
+
+    if not body.text.strip() or len(body.reason.strip()) < 3:
+        fail("correction_text_required", 422)
+    request_hash = hashlib.sha256(canonical({**body.model_dump(exclude={"revision"}), "actor": u["id"]}).encode()).hexdigest()
+    with transaction() as c:
+        job = c.execute("SELECT * FROM jobs WHERE id=?", (ident,)).fetchone()
+        if not job:
+            fail("job_not_found", 404)
+        meeting = access(c, job["meeting_id"], u, True)
+        existing = c.execute("SELECT * FROM transcript_additions WHERE job_id=? AND start=? AND end=?",
+                             (ident, body.start, body.end)).fetchone()
+        if existing:
+            if existing["request_hash"] != request_hash:
+                fail("gap_already_corrected", 409)
+            return {"segment_id": existing["segment_id"], "revision": meeting["revision"], "already_applied": True}
+        if meeting["revision"] != body.revision:
+            fail("revision_conflict", 409)
+        if c.execute("SELECT 1 FROM jobs WHERE meeting_id=? AND state IN ('queued','running')", (job["meeting_id"],)).fetchone():
+            fail("processing_incomplete", 409)
+        observation = c.execute("SELECT * FROM audio_checks WHERE job_id=? AND kind='speech_without_transcript' AND start=? AND end=?",
+                                (ident, body.start, body.end)).fetchone()
+        asset = c.execute("SELECT * FROM assets WHERE id=? AND meeting_id=?", (job["asset_id"], job["meeting_id"])).fetchone()
+        if not observation or not asset or not 0 <= body.start < body.end <= asset["samples"]:
+            fail("audio_observation_not_found", 404)
+        if c.execute("SELECT 1 FROM segments WHERE asset_id=? AND start<? AND end>? AND trim(text)!=''",
+                     (asset["id"], body.end, body.start)).fetchone():
+            fail("gap_overlaps_transcript", 409)
+        segment, now = uid(), time.time()
+        raw = {"origin": "reviewer_gap_insertion", "actor": u["id"], "reason": body.reason,
+               "created": now, "source_job_id": ident, "gap": {"start": body.start, "end": body.end},
+               "recovery_hypotheses": json.loads(observation["hypotheses"])}
+        c.execute("INSERT INTO segments(id,meeting_id,asset_id,revision,start,end,text,raw,speaker,words) VALUES(?,?,?,1,?,?,?,?,?,'[]')",
+                  (segment, job["meeting_id"], asset["id"], body.start, body.end, body.text, canonical(raw), body.speaker))
+        c.execute("INSERT INTO transcript_additions VALUES(?,?,?,?,?,?,?)",
+                  (ident, body.start, body.end, segment, request_hash, u["id"], now))
+        changed(c, job["meeting_id"], asset["id"])
+        audit(c, job["meeting_id"], u["id"], "transcript_gap_corrected",
+              {"segment": segment, "job": ident, "start": body.start, "end": body.end, "reason": body.reason})
+        return {"segment_id": segment, "revision": meeting["revision"] + 1, "already_applied": False}
 
 
 @app.post("/api/v1/jobs/{ident}/{action}")
@@ -864,20 +930,16 @@ def edit_segment(ident: str, body: Edit, u=Depends(user)):
             "UPDATE segments SET revision=revision+1,text=?,speaker=? WHERE id=?",
             (body.text, body.speaker, ident),
         )
-        c.execute(
-            "UPDATE candidates SET review='needs_review' WHERE review!='excluded' AND id IN (SELECT candidate_id FROM evidence WHERE segment_id=?)",
-            (ident,),
-        )
-        c.execute(
-            "UPDATE meetings SET revision=revision+1,status='awaiting_review' WHERE id=?", (s["meeting_id"],)
-        )
+        from .transcript_state import changed
+        changed(c, s["meeting_id"], s["asset_id"])
         audit(c, s["meeting_id"], u["id"], "transcript_corrected", {"segment": ident})
         return {"revision": s["revision"] + 1}
 
 
 def projections(c, ident):
     rows = c.execute(
-        "SELECT e.* FROM accepted_events e JOIN candidates x ON x.id=e.candidate_id WHERE e.meeting_id=? AND x.review='accepted'",
+        "SELECT e.* FROM accepted_events e JOIN candidates x ON x.id=e.candidate_id WHERE e.meeting_id=? AND x.review='accepted' "
+        "AND e.rowid=(SELECT MAX(latest.rowid) FROM accepted_events latest WHERE latest.candidate_id=e.candidate_id)",
         (ident,),
     ).fetchall()
     return reduce_events([dict(r) for r in rows])
@@ -1062,6 +1124,10 @@ def review(ident: str, body: Review, u=Depends(user)):
         m = access(c, event["meeting_id"], u, True)
         revision(c, m, body.revision)
         if body.action == "accepted":
+            if c.execute("SELECT 1 FROM transcript_analysis_state WHERE meeting_id=?", (m["id"],)).fetchone():
+                fail("transcript_reanalysis_required", 409)
+            if c.execute("SELECT 1 FROM jobs WHERE meeting_id=? AND state IN ('queued','running')", (m["id"],)).fetchone():
+                fail("processing_incomplete", 409)
             stale = c.execute(
                 "SELECT 1 FROM evidence e JOIN segments s ON s.id=e.segment_id WHERE e.candidate_id=? AND e.revision<>s.revision",
                 (ident,),

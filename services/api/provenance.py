@@ -10,6 +10,7 @@ FILES = (
     "services/worker/settings.py",
     "services/worker/asr_chunks.py",
     "services/api/progress.py",
+    "services/api/transcript_state.py",
     "services/api/audio.py",
     "services/api/pcm.py",
     "services/worker/stage.py",
