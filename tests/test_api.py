@@ -503,7 +503,7 @@ def test_migration_upgrade_keeps_existing_accounts(tmp_path, monkeypatch):
         c.execute("INSERT INTO users VALUES('u','existing','hash','secretary','en')")
     migrate()
     with transaction() as c:
-        assert c.execute("SELECT MAX(version) FROM schema_version").fetchone()[0] == 5
+        assert c.execute("SELECT MAX(version) FROM schema_version").fetchone()[0] == 6
         assert c.execute("SELECT name FROM users").fetchone()[0] == "existing"
 
 

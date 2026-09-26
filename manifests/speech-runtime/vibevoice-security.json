@@ -1,0 +1,8 @@
+{
+  "checked_at_unix": 1790431865.8771732,
+  "source": "https://api.osv.dev/v1/querybatch",
+  "package_count": 96,
+  "lock_sha256": "b268bb3080964ca3c3b23e377a82a1aec5450720dbed71e8ee6967ffece1f8ef",
+  "findings": [],
+  "limits": "Known advisories only; Transformers development commit cannot be fully evaluated by release-version matching"
+}

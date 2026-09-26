@@ -53,7 +53,7 @@ def test_stage_cancel_terminates_actual_child_process(tmp_path, monkeypatch):
     migrate()
     with transaction() as c:
         c.execute(
-            "INSERT INTO meetings VALUES('m','synthetic','2026-09-25','Europe/Chisinau','en','Administrative',1,'queued',0)"
+            "INSERT INTO meetings(id,title,date,timezone,language,classification,revision,status,created) VALUES('m','synthetic','2026-09-25','Europe/Chisinau','en','Administrative',1,'queued',0)"
         )
         c.execute(
             "INSERT INTO jobs(id,meeting_id,state,stage,cancel,config,created) VALUES('j','m','running','whisper',1,'{}',0)"
@@ -80,7 +80,7 @@ def test_lease_recovery_preserves_job_identity(tmp_path, monkeypatch):
     migrate()
     with transaction() as c:
         c.execute(
-            "INSERT INTO meetings VALUES('m','synthetic','2026-09-25','Europe/Chisinau','en','Administrative',1,'queued',0)"
+            "INSERT INTO meetings(id,title,date,timezone,language,classification,revision,status,created) VALUES('m','synthetic','2026-09-25','Europe/Chisinau','en','Administrative',1,'queued',0)"
         )
         c.execute(
             "INSERT INTO jobs(id,meeting_id,state,stage,lease,config,created) VALUES('j','m','running','whisper',0,'{}',0)"

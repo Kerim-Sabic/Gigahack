@@ -12,7 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 class ProgressView(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    stage: Literal["whisper", "extract", "parakeet", "diarize"]
+    stage: Literal["whisper", "extract", "parakeet", "diarize", "qwen_asr", "vibevoice"]
     phase: Literal["loading_model", "transcribing", "extracting", "checking", "diarizing", "stage_complete"]
     completed: float = Field(ge=0, allow_inf_nan=False)
     total: float | None = Field(default=None, gt=0, allow_inf_nan=False)

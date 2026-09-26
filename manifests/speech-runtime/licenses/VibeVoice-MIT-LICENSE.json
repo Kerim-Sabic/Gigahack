@@ -1,0 +1,9 @@
+{
+  "repo": "microsoft/VibeVoice",
+  "revision": "1541f590c7099820f10ea012f48d2399282df69f",
+  "source": "https://raw.githubusercontent.com/microsoft/VibeVoice/1541f590c7099820f10ea012f48d2399282df69f/LICENSE",
+  "sha256": "98a96c38494df4963951e32b81ec4effebe4c8a812ab8d9e7d185d59e86fe2fc",
+  "model_revision": "f22241c2062b3b25272bf117397e03d73381037a",
+  "reviewed_at_unix": 1790431933.2914603,
+  "runtime": "Native Transformers pinned at 27166ea03f12c940f23176a904ab1d2ff1a3dcbb; publisher Python code not executed"
+}

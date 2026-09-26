@@ -278,6 +278,8 @@ class Meeting(Strict):
     language: Literal["en", "ro", "ru"] = "en"
     classification: Literal["Medical", "Executive", "Administrative"] = "Administrative"
     participants: list[str] = Field(default_factory=list, max_length=100)
+    time: str = Field(default="", pattern=r"^(?:[01][0-9]|2[0-3]):[0-5][0-9]$|^$")
+    notes: str = Field(default="", max_length=20000)
 
 
 @app.post("/api/v1/meetings", response_model=MeetingView)
@@ -317,6 +319,7 @@ def create_meeting(body: Meeting, request: Request, u=Depends(user)):
             ),
         )
         c.execute("INSERT INTO members VALUES(?,?)", (ident, u["id"]))
+        c.execute("UPDATE meetings SET time=?,notes=? WHERE id=?", (body.time, body.notes, ident))
         for name in body.participants:
             c.execute("INSERT INTO participants VALUES(?,?,?)", (uid(), ident, name[:200]))
         audit(c, ident, u["id"], "meeting_created")
@@ -387,6 +390,9 @@ def update_meeting(ident: str, body: MeetingEdit, u=Depends(user)):
             "UPDATE meetings SET title=?,date=?,timezone=?,language=?,classification=? WHERE id=?",
             (body.title, (body.date.isoformat() if body.date else ""), body.timezone, body.language, body.classification, ident),
         )
+        c.execute("UPDATE meetings SET time=?,notes=? WHERE id=?",
+                  (body.time if "time" in body.model_fields_set else m["time"],
+                   body.notes if "notes" in body.model_fields_set else m["notes"], ident))
         if (body.date.isoformat() if body.date else "") != m["date"] or body.timezone != m["timezone"]:
             c.execute(
                 "UPDATE candidates SET review='needs_review' WHERE meeting_id=? AND review!='excluded'",
@@ -1277,6 +1283,9 @@ app.include_router(minutes_router)
 from .settings import router as settings_router  # noqa: E402
 
 app.include_router(settings_router)
+from .transcript_import import router as transcript_import_router  # noqa: E402
+
+app.include_router(transcript_import_router)
 web = config.ROOT / "apps/web/dist"
 if web.exists():
     app.mount("/", StaticFiles(directory=web, html=True), name="web")

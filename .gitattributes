@@ -2,3 +2,6 @@
 manifests/licenses/** -text -whitespace
 
 apps/web/public/brand/*.svg text eol=lf
+manifests/speech-runtime/*.txt text eol=lf
+manifests/speech-runtime/*.json text eol=lf
+manifests/speech-runtime/*licenses/** -text -whitespace

@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "dataset": "google/fleurs",
+  "source": "https://huggingface.co/datasets/google/fleurs",
+  "revision": "70bb2e84b976b7e960aa89f1c648e09c59f894dd",
+  "license": "CC-BY-4.0",
+  "attribution": "FLEURS: Few-shot Learning Evaluation of Universal Representations of Speech, Google",
+  "license_notice": "manifests/licenses/optional-models-CC-BY-4.0.txt",
+  "split": "validation",
+  "selection": "First three rows in each Romanian/Russian validation parquet; selected before inference",
+  "scope": "Monolingual development baseline; not medical, Moldovan-accent, code-switch or held-out accuracy",
+  "local_storage": ".runtime/speech-data/fleurs (ignored; audio and transcripts excluded from Git)",
+  "cases": [
+    {
+      "id": "ro_ro-1598",
+      "language": "ro",
+      "audio_sha256": "522e95ba4ab399afecfe2b8a32dc55b06102c74a2f6b1477202aea0824f0134f"
+    },
+    {
+      "id": "ro_ro-1576",
+      "language": "ro",
+      "audio_sha256": "0d529664d981a09d19e878564b249793ca631d0bcbd5485b4da425e232318423"
+    },
+    {
+      "id": "ro_ro-1655",
+      "language": "ro",
+      "audio_sha256": "dafd5f5dc80b1988a4ad840635a740f1ebb63a38585525bf4b5d8b2f68cd84c2"
+    },
+    {
+      "id": "ru_ru-1614",
+      "language": "ru",
+      "audio_sha256": "0ebc61463e1e2db72f81f5261b865b5cead812851cbb07a799d5e98cf9df8654"
+    },
+    {
+      "id": "ru_ru-1554",
+      "language": "ru",
+      "audio_sha256": "363087f90513f5484750d8076da3cf7d029065d6b09f7ea68170bcf10b487d27"
+    },
+    {
+      "id": "ru_ru-1634",
+      "language": "ru",
+      "audio_sha256": "6322af8001ae8063cce679fa86dde252858f0f5354fb2dca2b8b0614b331fb3b"
+    }
+  ]
+}

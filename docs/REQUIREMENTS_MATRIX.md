@@ -1,6 +1,8 @@
 # Requirements matrix
 
-Only named successful checks justify VERIFIED. Development host is not the 8 GB target laptop.
+Only named successful checks justify VERIFIED. The newer SPEECH_UPGRADE_SPEC makes
+the dual RTX 5080/128 GB workstation the primary target. Earlier laptop-only gates
+remain historical/secondary. The speech upgrade is still IN PROGRESS; see Decision 021.
 
 | ID | Requirement | Status | Implementation | Actual evidence / prerequisite |
 |---|---|---|---|---|

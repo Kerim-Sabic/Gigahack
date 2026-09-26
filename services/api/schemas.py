@@ -25,6 +25,8 @@ class MeetingView(BaseModel):
     revision: int
     status: str
     created: float
+    time: str = ""
+    notes: str = ""
 
 
 class ParticipantView(BaseModel):

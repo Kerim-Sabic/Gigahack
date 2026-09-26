@@ -124,13 +124,32 @@ def run_stage(job, stage, spec):
         pass  # Display artifacts do not authorize or block inference.
     from services.worker.settings import settings_for
 
-    runtime_prefix = settings_for(spec).optional.runtime_prefix if stage in ("parakeet", "diarize") else None
+    runtime_prefix = settings_for(spec).optional.runtime_prefix if stage in ("parakeet", "diarize", "qwen_asr") else None
     python = sys.executable
-    if stage in ("parakeet", "diarize"):
+    if stage == "vibevoice":
+        from services.speech.runtime import prepared_python
+
+        runtime_prefix = settings_for(spec).vibevoice.runtime_prefix
+        python = prepared_python(runtime_prefix, "vibevoice")
+    elif stage == "diarize" and settings_for(spec).optional.diarization_engine == "nemotron3":
+        from services.speech.runtime import prepared_python
+
+        runtime_prefix = settings_for(spec).nemotron.runtime_prefix
+        python = prepared_python(runtime_prefix, "nemotron3")
+    elif stage == "qwen_asr" and settings_for(spec).qwen_asr.backend == "official":
+        from services.speech.runtime import prepared_python
+
+        runtime_prefix = settings_for(spec).qwen_asr.runtime_prefix
+        python = prepared_python(runtime_prefix)
+    elif stage in ("parakeet", "diarize", "qwen_asr"):
         from services.worker.optional_runtime import stage_python
 
         python = stage_python(runtime_prefix)
     env = {**stage_environment(runtime_prefix), "MOM_STAGE_PARENT_PID": str(os.getpid())}
+    if stage == "vibevoice":
+        # The existing global host/model locks reserve BOTH devices exclusively.
+        # This is one sharded worker, not admission of concurrent GPU stages.
+        env["CUDA_VISIBLE_DEVICES"] = "0,1"
     from services.worker.resources import ResourceSampler
 
     sampler = ResourceSampler()

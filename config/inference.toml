@@ -36,6 +36,7 @@ gpu_compute_type = "int8_float16"
 cpu_compute_type = "int8"
 
 [optional]
+diarization_engine = "community1" # nemotron3 is available for qualification; requires its separate prepared runtime.
 runtime_prefix = "" # Prepared Linux/WSL environment; MOM_OPTIONAL_RUNTIME may override this at queue time.
 parakeet_audio_fraction = 1.0 # Compare every transcript segment when the optional check is selected.
 parakeet_batch_size = 1
@@ -43,6 +44,26 @@ diarization_batch_size = 16
 recovery_window_seconds = 20 # Suspected speech gaps; preserve hypotheses separately for review.
 recovery_retry_seconds = 10 # One shorter pass only when a longer window returns no text.
 recovery_padding_seconds = 2 # Context around each gap; total clip stays at most 25 seconds.
+
+# Experimental explicit-window benchmark stage; not yet selected by normal jobs.
+[qwen_asr]
+backend = "native" # official uses the publisher implementation in a separate, registered runtime.
+runtime_prefix = "" # Absolute Linux/WSL path for the official runtime; never downloads at inference time.
+max_new_tokens = 1024 # Cap exhaustion fails explicitly; never publish truncated speech.
+context_characters = 1024 # Session-provided spelling hints only; no generated facts.
+attention = "sdpa"
+precision = "bfloat16" # Float32/eager available for numerical diagnostics; qualify VRAM separately.
+
+[nemotron]
+runtime_prefix = "" # Absolute Linux/WSL path to the registered Nemotron runtime.
+mode = "offline_context" # Other modes require separate latency/accuracy qualification.
+threshold = 0.5 # Speaker activity threshold; changing this changes overlap/turn boundaries.
+
+[vibevoice]
+runtime_prefix = "" # Experimental offline benchmark only; separate registered Linux runtime.
+max_new_tokens = 2048 # Truncated/invalid structured output fails explicitly.
+context_characters = 1024
+seed = 42 # Upstream audio latent sampling; recorded for reproducibility.
 
 # Generation slots and GPU admission remain fixed at one. This is a safety invariant,
 # not an unqualified performance knob. No runtime setting enables network inference.

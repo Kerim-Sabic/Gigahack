@@ -1,0 +1,83 @@
+{
+  "qwen_asr": {
+    "directory": "qwen-asr",
+    "repo": "Qwen/Qwen3-ASR-1.7B-hf",
+    "revision": "bcd2b5b7f32b480ab5790554cfa8347f246a14f3",
+    "license": "Apache-2.0",
+    "files": {
+      "chat_template.jinja": "f50e6b694fbf4a683206e37869990d68333fe95d285730f084c838a34b0d98c2",
+      "config.json": "117ac8e63e2af7cae3665e5a632d6eb03f5f384915519ceb6403c15ec6533f63",
+      "generation_config.json": "9939fc9388b79bd70757f938b87381e817173d6a6158f5af6506c0b73e775c3c",
+      "model.safetensors": "2db53c7d81bd9b8cbc6a074e89be2c968a0d373fb4ee68bb1b1e14f7042dfee1",
+      "processor_config.json": "bc0b230081b44e629dd5b9045b78495615c1831b4b9f4cffe97bd37e82a6156a",
+      "README.md": "427b9a6a4a32477e9df8790ef92f5cbcde790ee148ee5dd8c36f77d9556998a2",
+      "tokenizer.json": "fe1fad59be22a41ee293363fcf95fdedbc7c93f3b49270b1d2e18bd1399a7a05",
+      "tokenizer_config.json": "945e980986de2ca7768f3326bfdbb4fbea3406f972b8ae0be233089f2b253c11"
+    },
+    "qualification": "not yet measured; preparation is not inference or accuracy proof"
+  },
+  "nemotron_diarization": {
+    "directory": "nemotron-diarization",
+    "repo": "nvidia/Nemotron-3-Diarization",
+    "revision": "f667ed73aee57d40cc39428eb768b4fd87a0a29e",
+    "license": "OpenMDW-1.1",
+    "files": {
+      "ASR_INTEGRATION_GUIDE.md": "6eb2213b72aac92f9fdecf7481a4ac2d9f5fa4926841248a0f4db79be380f70e",
+      "bias.md": "94a85f2260ab9d825b11ff28c3686af668bfe44f6b3d0e4525f5c0de9d968a17",
+      "config.json": "dd795ec07ffa09acf18d231aa3fa8642aa5c521760953754e02559a7413b6873",
+      "diarization_evaluation.md": "7bfbb965f50360f2fb261a81388448e0d2572aa4f77f1ec04995fed82ee68b71",
+      "explainability.md": "e3a4c7664d0c71cebcbff90ba1776316b37c6e445c20307bd5b8a1a622899d47",
+      "model.safetensors": "c074d86335b3b794f8fa5edc25594558f128bdb3914d27806a3a5a2e44963cb6",
+      "privacy.md": "ce9c4820379a1a1a077c26ea8ae5b380cf1a2c200b121f9c6fc1fd552f49a109",
+      "processor_config.json": "91726746788a024a2f0f2f699a6c3667f0d74e6a0e9288fc44fe3018e23af68e",
+      "README.md": "5fe88ca4020d2ee134f806a0a02c52c19855b73047bc2e6f25b9171e1abeebfd",
+      "safety.md": "c178dc56b306f33e7981267a8a73ad11dd0ded16336f62e8eb1452398af45cbf"
+    },
+    "qualification": "not yet measured; preparation is not inference or accuracy proof"
+  },
+  "qwen_asr_original": {
+    "directory": "qwen-asr-original",
+    "repo": "Qwen/Qwen3-ASR-1.7B",
+    "revision": "7278e1e70fe206f11671096ffdd38061171dd6e5",
+    "license": "Apache-2.0",
+    "files": {
+      "README.md": "5058416891bc47a2051557765997e8c42f8eb78a0e33c3e775bd17d4b0ba4d50",
+      "chat_template.json": "75a8cfca24f00de72d796fbfed6858fc9614ef3dabd8696684cc3bc03a9c58ff",
+      "config.json": "2e74a751548b8ad7d7526d29365ad8144c345d8b412b1152d25dc6698452712f",
+      "generation_config.json": "1da527824d81e07118facff437e03f2e24a23311e3bdeb2368973fe77e5f275c",
+      "merges.txt": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5",
+      "model-00001-of-00002.safetensors": "a4cd1f1a04d90b757dc7f7dd26254e69a013b19e80efe590a83c6a3bde8608d6",
+      "model-00002-of-00002.safetensors": "6e0b9d9e09e2e0238e7ef3cc8a484ab387e91b90f1900bedf88bc92d7929ccfc",
+      "model.safetensors.index.json": "f994739fe38e5210b9e3e8ce6c6307315e2ceac3cb630e7b7414d69dce520f60",
+      "preprocessor_config.json": "45e120a4eda2c20c5d7f2ea9354e63536bf35e27aa573fb7cdf78017b378770d",
+      "tokenizer_config.json": "4942d005604266809309cabc9f4e9cb89ce855d59b14681fdc0e1cc62ea26c4c",
+      "vocab.json": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+    },
+    "qualification": "experimental publisher implementation; accuracy not yet measured"
+  },
+  "vibevoice": {
+    "directory": "vibevoice-asr",
+    "repo": "microsoft/VibeVoice-ASR-HF",
+    "revision": "f22241c2062b3b25272bf117397e03d73381037a",
+    "license": "MIT",
+    "files": {
+      "README.md": "0dd08a10759eb29dea227c17b763a1db111853a1a73be7c8de2efaadf6784ed5",
+      "chat_template.jinja": "facaa74472ce1cc68fd19be60062e202ec5ce8b7b87c28a28a7d27f6adfef58d",
+      "config.json": "89e5f9e4932e72cd8ace355e80b8c5c0e4ac6f6a92e97bf47e8b8ffdca1035e0",
+      "generation_config.json": "0d18916d2ae79a3cebc7b05d99fd66203c6180a64dfeb4586856c104bcd46e32",
+      "model-00001-of-00008.safetensors": "580189757a1c737ecc6fad16e633b922bc73220268356e31362c24365f081095",
+      "model-00002-of-00008.safetensors": "65e419d28fc8c87d6938ec611c7b425b38e391c80a2df59c2b4935f6fd65c7c2",
+      "model-00003-of-00008.safetensors": "30f574c764550d26c654cc3f5dd000b90b0c3305db955267c577001c1013fdf7",
+      "model-00004-of-00008.safetensors": "8fa3d9350f0a8cc97524617ff582e451159bfdba2ef0b2e372a627518ef681b1",
+      "model-00005-of-00008.safetensors": "5015ecacc86d897d20d5e42ba52ef83355d42f587d3b158ff897ec94847bd083",
+      "model-00006-of-00008.safetensors": "7463d75607185c118925cea6a60a5698aaa6f428e626bcee774572bdc28ef55d",
+      "model-00007-of-00008.safetensors": "b52aa2fab9640bcac5201a278f540b018c439ed4e99516d9ff30ea1ae399525e",
+      "model-00008-of-00008.safetensors": "a66ced85b619507e1970dc51be45786ff55803ccc63658765e412ea23d9a8ace",
+      "model.safetensors.index.json": "c807b82f9bb711f0fd3cc9cc138abccb3bcb1e27a002605cc4fbb3c113d322f3",
+      "processor_config.json": "918e2554dde40a1558a2c9c5f1ae4e077b594c00c14276f776ad67c73a2eb6a6",
+      "tokenizer.json": "3fd169731d2cbde95e10bf356d66d5997fd885dd8dbb6fb4684da3f23b2585d8",
+      "tokenizer_config.json": "64029a57ca4f977c2f50fe95dda323a923d4b5f9e31836257610c0362c8e683c"
+    },
+    "qualification": "Experimental; accuracy and memory to be measured; never automatically replaces primary transcript"
+  }
+}

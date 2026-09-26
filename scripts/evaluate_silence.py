@@ -56,7 +56,7 @@ def main(condition="silence"):
     }
     with transaction() as db:
         db.execute(
-            "INSERT INTO meetings VALUES(?,?,'2026-09-25','Europe/Chisinau','en','Administrative',1,'queued',?)",
+            "INSERT INTO meetings(id,title,date,timezone,language,classification,revision,status,created) VALUES(?,?,'2026-09-25','Europe/Chisinau','en','Administrative',1,'queued',?)",
             (meeting, "Synthetic " + condition + " evaluation", time.time()),
         )
         db.execute(

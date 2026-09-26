@@ -1,5 +1,62 @@
 # Current implementation status
 
+The transcription workspace redesign is implemented (Decision 024): warm Notavra
+identity, source-timed speaker activity, absolute cross-window audio seeking,
+contextual editing/history, Unicode search, bounded transcript DOM, source links
+from actions, and quieter minutes controls. Actual Medpark browser checks passed
+at desktop/tablet/mobile sizes; separate synthetic edit/history fixture passed
+and was removed. Final checks: 18 frontend tests, 238 backend tests / 2 platform
+skips, strict build and Ruff passed. Exact shared MAI transcript session/screenshots
+were unavailable; public live reference and the user’s specifications informed
+iterative visual comparisons. No private content was sent to that service.
+
+Supplied-transcript import and source-based drafting are implemented (Decision 023).
+The requested Medpark test contains 234 supplied transcript entries, original
+audio, current test date/time, patient-organized notes and 14 source-linked items.
+Automatic text analysis was cancelled at the user’s request; an unapproved minutes
+preview was prepared directly from the supplied source, with no delivery. Current
+checks: 238 backend passed / 2 platform skips; 12 frontend passed; strict build and
+Ruff passed. This is source preparation, not clinical or acoustic qualification.
+
+VibeVoice qualification is complete for the bounded experiment in Decision 022.
+The publisher's native checkpoint ran offline on both RTX 5080 GPUs. It was worse
+than Whisper on the matched five completed FLEURS clips and failed the sixth by
+output-cap exhaustion. It is retained as a benchmark option, not promoted.
+Corrected constructed three-word switching probes failed exact minority-word
+preservation for VibeVoice, Whisper, Parakeet and Qwen. Isolated controls expose
+both contextual word loss and short-clip language ambiguity; natural code-switch
+accuracy remains unmeasured. Medpark hypotheses remain unreviewed.
+Current local checks: 230 backend tests passed, two platform-specific skips;
+12 frontend tests, strict build and Ruff passed. Broader speech-upgrade work below
+remains incomplete. User-facing comparison reports were saved outside Git.
+
+The newer speech-upgrade request is **IN PROGRESS**, not complete. Its primary target
+is the actual dual RTX 5080/128 GB workstation and its priority is minority-language
+word preservation in Romanian/Russian medical speech. See SPEECH_UPGRADE_SPEC and
+Decision 021. Medpark is likely mostly Romanian according to the user; this is not
+a reference transcript. New candidate adapters and isolated runtime qualification
+are underway; final fusion, live streaming and dual-GPU scheduling remain open.
+
+Latest local verification: 215 backend tests passed, two Linux-only checks skipped
+on Windows, and Ruff passed. The tracked offline benchmark command was exercised
+through the API and production supervisor on all six FLEURS clips; its Whisper
+results reproduce the earlier baseline (7 word errors / 110 reference words).
+Run: `.runtime/speech-benchmarks/whisper-1790430710226487137/report.json`.
+This verifies the replay command and reference scoring, not mixed-language accuracy.
+Nemotron completed the whole Medpark source in bounded blocks; Decision 021 records
+timing, memory, unscored tail and remaining speaker-accuracy limitations.
+
+The offline core package at commit `1e0bb65` was built with ordinary copies and
+installed into a separate location without package-index access. All 57 pinned
+wheels, asset checks and doctor passed; the installed copy passed 183 tests (two
+Linux-only skips), and first-run account/meeting creation passed in a real browser
+with no page errors or external page requests. This package excludes the new speech
+upgrade and Linux optional runtimes. It is not a completed all-model distribution.
+
+After extraction checkpoint changes, actual isolated Qwen LLM regression run
+`1790423172286595131` finished with 25 PASS, 0 FAIL, and 5 NOT RUN (outside the
+text-only scope). It predates the new speech adapters and does not verify them.
+
 Complete mission remains active. The last verified remote checkpoint is
 43927c26f2c61c66a209706c7c2fac651a39b71f (CI 36238714648 PASS). It contains multilingual
 transcription, frozen developer settings, current-step ETA and bounded ASR checkpoints.

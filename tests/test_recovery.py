@@ -103,7 +103,7 @@ def test_smtp_timeout_does_not_automatically_retry(tmp_path, monkeypatch):
     migrate()
     with transaction() as c:
         c.execute(
-            "INSERT INTO meetings VALUES('m','test','2026-09-25','Europe/Chisinau','en','Administrative',1,'ready',0)"
+            "INSERT INTO meetings(id,title,date,timezone,language,classification,revision,status,created) VALUES('m','test','2026-09-25','Europe/Chisinau','en','Administrative',1,'ready',0)"
         )
         c.execute(
             "INSERT INTO snapshots VALUES('s','m',1,?,'hash','<p>synthetic</p>',0)",
@@ -148,7 +148,7 @@ def test_internal_smtp_requires_verified_tls_before_auth(tmp_path, monkeypatch, 
     migrate()
     with transaction() as c:
         c.execute(
-            "INSERT INTO meetings VALUES('m','test','2026-09-25','Europe/Chisinau','en','Administrative',1,'ready',0)"
+            "INSERT INTO meetings(id,title,date,timezone,language,classification,revision,status,created) VALUES('m','test','2026-09-25','Europe/Chisinau','en','Administrative',1,'ready',0)"
         )
         c.execute(
             "INSERT INTO snapshots VALUES('s','m',1,?,'hash','<p>synthetic</p>',0)",

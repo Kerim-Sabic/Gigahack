@@ -1,0 +1,12 @@
+[
+  {
+    "file": "OpenMDW-1.1.html",
+    "source": "https://openmdw.ai/license/1-1/",
+    "sha256": "06972986d33abfa4018be0c98b645d77fcff390b8829a23cdd728bb68dd7462d"
+  },
+  {
+    "file": "Qwen3-ASR-LICENSE",
+    "source": "https://raw.githubusercontent.com/QwenLM/Qwen3-ASR/main/LICENSE",
+    "sha256": "a44a6081c73ad75f0255bb2bb5cab74ef1829565a895a24e53a4f11290ab7655"
+  }
+]

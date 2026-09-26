@@ -1908,6 +1908,101 @@
           }
         }
       }
+    },
+    "/api/v1/meetings/{ident}/transcript-imports": {
+      "post": {
+        "summary": "Import Transcript",
+        "operationId": "import_transcript_api_v1_meetings__ident__transcript_imports_post",
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportTranscript"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/meetings/{ident}/transcript-draft": {
+      "post": {
+        "summary": "Source Draft",
+        "description": "Explicit source-based authoring is an alternative to model extraction, not approval.",
+        "operationId": "source_draft_api_v1_meetings__ident__transcript_draft_post",
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SourceDraft"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2162,6 +2257,149 @@
         ],
         "title": "Body_upload_api_v1_meetings__ident__uploads_post"
       },
+      "Candidate": {
+        "properties": {
+          "subject": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Subject"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "action",
+              "decision",
+              "information"
+            ],
+            "title": "Category"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "propose",
+              "confirm",
+              "amend",
+              "reject",
+              "cancel",
+              "reopen",
+              "inform"
+            ],
+            "title": "Kind"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Text"
+          },
+          "owner": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner"
+          },
+          "due": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due"
+          },
+          "raw_due": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Due"
+          },
+          "condition": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Condition"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quantity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "changed_fields": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "text",
+                "owner",
+                "due",
+                "condition",
+                "value"
+              ]
+            },
+            "type": "array",
+            "title": "Changed Fields"
+          },
+          "uncertainties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Uncertainties"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            },
+            "type": "array",
+            "maxItems": 20,
+            "minItems": 1,
+            "title": "Evidence"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "subject",
+          "category",
+          "kind",
+          "text",
+          "evidence"
+        ],
+        "title": "Candidate"
+      },
       "Capture": {
         "properties": {
           "sample_rate": {
@@ -2177,6 +2415,45 @@
           "sample_rate"
         ],
         "title": "Capture"
+      },
+      "Citation": {
+        "properties": {
+          "segment_id": {
+            "type": "string",
+            "title": "Segment Id"
+          },
+          "revision": {
+            "type": "integer",
+            "title": "Revision"
+          },
+          "field": {
+            "type": "string",
+            "enum": [
+              "text",
+              "owner",
+              "due",
+              "condition",
+              "value",
+              "kind"
+            ],
+            "title": "Field"
+          },
+          "quote": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Quote"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "segment_id",
+          "revision",
+          "field",
+          "quote"
+        ],
+        "title": "Citation"
       },
       "Correction": {
         "properties": {
@@ -2586,6 +2863,40 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "ImportTranscript": {
+        "properties": {
+          "asset_id": {
+            "type": "string",
+            "title": "Asset Id"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Revision"
+          },
+          "source": {
+            "type": "string",
+            "maxLength": 2000000,
+            "minLength": 1,
+            "title": "Source"
+          },
+          "filename": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Filename"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "asset_id",
+          "revision",
+          "source",
+          "filename"
+        ],
+        "title": "ImportTranscript"
+      },
       "JobView": {
         "properties": {
           "id": {
@@ -2713,6 +3024,18 @@
             "type": "array",
             "maxItems": 100,
             "title": "Participants"
+          },
+          "time": {
+            "type": "string",
+            "pattern": "^(?:[01][0-9]|2[0-3]):[0-5][0-9]$|^$",
+            "title": "Time",
+            "default": ""
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 20000,
+            "title": "Notes",
+            "default": ""
           }
         },
         "additionalProperties": false,
@@ -2769,6 +3092,16 @@
           "created": {
             "type": "number",
             "title": "Created"
+          },
+          "time": {
+            "type": "string",
+            "title": "Time",
+            "default": ""
+          },
+          "notes": {
+            "type": "string",
+            "title": "Notes",
+            "default": ""
           },
           "participants": {
             "items": {
@@ -2877,6 +3210,18 @@
             "maxItems": 100,
             "title": "Participants"
           },
+          "time": {
+            "type": "string",
+            "pattern": "^(?:[01][0-9]|2[0-3]):[0-5][0-9]$|^$",
+            "title": "Time",
+            "default": ""
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 20000,
+            "title": "Notes",
+            "default": ""
+          },
           "revision": {
             "type": "integer",
             "title": "Revision"
@@ -2937,6 +3282,16 @@
           "created": {
             "type": "number",
             "title": "Created"
+          },
+          "time": {
+            "type": "string",
+            "title": "Time",
+            "default": ""
+          },
+          "notes": {
+            "type": "string",
+            "title": "Notes",
+            "default": ""
           }
         },
         "type": "object",
@@ -3003,7 +3358,9 @@
               "whisper",
               "extract",
               "parakeet",
-              "diarize"
+              "diarize",
+              "qwen_asr",
+              "vibevoice"
             ],
             "title": "Stage"
           },
@@ -3086,6 +3443,65 @@
           "updated_at"
         ],
         "title": "ProgressView"
+      },
+      "Quantity": {
+        "properties": {
+          "amount": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Amount"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "scope": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Scope"
+          },
+          "raw": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Raw"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            },
+            "type": "array",
+            "maxItems": 20,
+            "minItems": 1,
+            "title": "Evidence"
+          },
+          "uncertainties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Uncertainties"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "amount",
+          "scope",
+          "raw",
+          "evidence"
+        ],
+        "title": "Quantity"
       },
       "Queue": {
         "properties": {
@@ -3362,6 +3778,51 @@
           "words"
         ],
         "title": "SegmentView"
+      },
+      "SourceDraft": {
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Revision"
+          },
+          "asset_id": {
+            "type": "string",
+            "title": "Asset Id"
+          },
+          "source_versions": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Source Versions"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/Candidate"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Events"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 3,
+            "title": "Reason"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "revision",
+          "asset_id",
+          "source_versions",
+          "events",
+          "reason"
+        ],
+        "title": "SourceDraft"
       },
       "TemplateEdit": {
         "properties": {

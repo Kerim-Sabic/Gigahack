@@ -694,6 +694,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/meetings/{ident}/transcript-imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import Transcript */
+        post: operations["import_transcript_api_v1_meetings__ident__transcript_imports_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/meetings/{ident}/transcript-draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Source Draft
+         * @description Explicit source-based authoring is an alternative to model extraction, not approval.
+         */
+        post: operations["source_draft_api_v1_meetings__ident__transcript_draft_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -798,10 +835,58 @@ export interface components {
             /** File */
             file: string;
         };
+        /** Candidate */
+        Candidate: {
+            /** Subject */
+            subject: string;
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "action" | "decision" | "information";
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "propose" | "confirm" | "amend" | "reject" | "cancel" | "reopen" | "inform";
+            /** Text */
+            text: string;
+            /** Owner */
+            owner?: string | null;
+            /** Due */
+            due?: string | null;
+            /** Raw Due */
+            raw_due?: string | null;
+            /** Condition */
+            condition?: string | null;
+            /** Value */
+            value?: string | null;
+            quantity?: components["schemas"]["Quantity"] | null;
+            /** Changed Fields */
+            changed_fields?: ("text" | "owner" | "due" | "condition" | "value")[];
+            /** Uncertainties */
+            uncertainties?: string[];
+            /** Evidence */
+            evidence: components["schemas"]["Citation"][];
+        };
         /** Capture */
         Capture: {
             /** Sample Rate */
             sample_rate: number;
+        };
+        /** Citation */
+        Citation: {
+            /** Segment Id */
+            segment_id: string;
+            /** Revision */
+            revision: number;
+            /**
+             * Field
+             * @enum {string}
+             */
+            field: "text" | "owner" | "due" | "condition" | "value" | "kind";
+            /** Quote */
+            quote: string;
         };
         /** Correction */
         Correction: {
@@ -923,6 +1008,17 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** ImportTranscript */
+        ImportTranscript: {
+            /** Asset Id */
+            asset_id: string;
+            /** Revision */
+            revision: number;
+            /** Source */
+            source: string;
+            /** Filename */
+            filename: string;
+        };
         /** JobView */
         JobView: {
             /** Id */
@@ -975,6 +1071,16 @@ export interface components {
             classification: "Medical" | "Executive" | "Administrative";
             /** Participants */
             participants?: string[];
+            /**
+             * Time
+             * @default
+             */
+            time: string;
+            /**
+             * Notes
+             * @default
+             */
+            notes: string;
         };
         /** MeetingDetail */
         MeetingDetail: {
@@ -1002,6 +1108,16 @@ export interface components {
             status: string;
             /** Created */
             created: number;
+            /**
+             * Time
+             * @default
+             */
+            time: string;
+            /**
+             * Notes
+             * @default
+             */
+            notes: string;
             /** Participants */
             participants: components["schemas"]["ParticipantView"][];
             /** Assets */
@@ -1038,6 +1154,16 @@ export interface components {
             classification: "Medical" | "Executive" | "Administrative";
             /** Participants */
             participants?: string[];
+            /**
+             * Time
+             * @default
+             */
+            time: string;
+            /**
+             * Notes
+             * @default
+             */
+            notes: string;
             /** Revision */
             revision: number;
         };
@@ -1067,6 +1193,16 @@ export interface components {
             status: string;
             /** Created */
             created: number;
+            /**
+             * Time
+             * @default
+             */
+            time: string;
+            /**
+             * Notes
+             * @default
+             */
+            notes: string;
         };
         /** ParticipantView */
         ParticipantView: {
@@ -1091,7 +1227,7 @@ export interface components {
              * Stage
              * @enum {string}
              */
-            stage: "whisper" | "extract" | "parakeet" | "diarize";
+            stage: "whisper" | "extract" | "parakeet" | "diarize" | "qwen_asr" | "vibevoice";
             /**
              * Phase
              * @enum {string}
@@ -1118,6 +1254,21 @@ export interface components {
             eta_scope: "current_phase";
             /** Updated At */
             updated_at: number;
+        };
+        /** Quantity */
+        Quantity: {
+            /** Amount */
+            amount: string;
+            /** Unit */
+            unit?: string | null;
+            /** Scope */
+            scope: string;
+            /** Raw */
+            raw: string;
+            /** Evidence */
+            evidence: components["schemas"]["Citation"][];
+            /** Uncertainties */
+            uncertainties?: string[];
         };
         /** Queue */
         Queue: {
@@ -1243,6 +1394,21 @@ export interface components {
             alternatives: string;
             /** Words */
             words: string;
+        };
+        /** SourceDraft */
+        SourceDraft: {
+            /** Revision */
+            revision: number;
+            /** Asset Id */
+            asset_id: string;
+            /** Source Versions */
+            source_versions: {
+                [key: string]: number;
+            };
+            /** Events */
+            events: components["schemas"]["Candidate"][];
+            /** Reason */
+            reason: string;
         };
         /** TemplateEdit */
         TemplateEdit: {
@@ -2822,6 +2988,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TemplateView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_transcript_api_v1_meetings__ident__transcript_imports_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ident: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportTranscript"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    source_draft_api_v1_meetings__ident__transcript_draft_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ident: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SourceDraft"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

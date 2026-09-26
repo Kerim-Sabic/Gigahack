@@ -23,6 +23,10 @@ from services.api.progress import ProgressReporter
 
 
 def whisper(spec):
+    if "benchmark_cases" in spec:
+        from services.speech.benchmark import baseline_batch
+
+        return baseline_batch(spec, "whisper")
     from faster_whisper import WhisperModel
 
     device = spec["config"]["device"]
@@ -669,6 +673,10 @@ def extract(spec):
 
 
 def parakeet(spec):
+    if "benchmark_cases" in spec:
+        from services.speech.benchmark import baseline_batch
+
+        return baseline_batch(spec, "parakeet")
     progress = ProgressReporter(spec["run_dir"], "parakeet")
     import nemo.collections.asr as nemo_asr
 
@@ -696,6 +704,10 @@ def parakeet(spec):
 
 
 def diarize(spec):
+    if settings_for(spec).optional.diarization_engine == "nemotron3":
+        from services.speech.diarization_stage import nemotron_diarize
+
+        return nemotron_diarize(spec)
     progress = ProgressReporter(spec["run_dir"], "diarize")
     import torch
     from pyannote.audio import Pipeline
@@ -722,6 +734,67 @@ def diarize(spec):
             for t, _, speaker in result.speaker_diarization.itertracks(yield_label=True)
         ]
     }
+
+
+def qwen_asr(spec):
+    from services.speech.qwen import QwenASREngine
+    from services.api.audio import sha
+
+    cases = spec.get("benchmark_cases")
+    if cases is not None:
+        if not isinstance(cases, list) or not 1 <= len(cases) <= 32:
+            raise ValueError("benchmark_requires_one_to_32_cases")
+        for case in cases:
+            if sha(case["audio"]) != case["canonical_audio_hash"]:
+                raise ValueError("benchmark_audio_changed")
+    progress = ProgressReporter(spec["run_dir"], "qwen_asr")
+    engine = QwenASREngine(**settings_for(spec).qwen_asr.model_dump(exclude={"runtime_prefix"}))
+    if cases is None:
+        return qwen_window(spec, engine, progress)
+    outputs = []
+    for index, case in enumerate(cases):
+        folder = Path(spec["run_dir"]) / f"case-{index:03d}"
+        item = {**spec, **case, "run_dir": str(folder)}
+        item.pop("benchmark_cases")
+        result = qwen_window(item, engine, ProgressReporter(folder, "qwen_asr"))
+        from services.api.audio import atomic_write
+
+        atomic_write(folder / "result.json", json.dumps(result, ensure_ascii=False).encode())
+        outputs.append({"id": case["id"], "result": result})
+        progress.begin("checking", len(cases), "clips", initial_completed=index + 1)
+    return {"cases": outputs, "scope": "independent source clips; no transcript fusion or approval"}
+
+
+def qwen_window(spec, engine, progress):
+    from services.speech.qwen import TruncatedASR
+    from services.api.audio import atomic_write
+
+    window = spec["speech_window"]
+    duration = (window["end"] - window["start"]) / 16000
+    hints = spec.get("diagnostic_language_hints", [])
+    if not isinstance(hints, list) or len(hints) > 3 or any(hint not in ("ro", "ru", "en") for hint in hints) or len(set(hints)) != len(hints):
+        raise ValueError("invalid_diagnostic_language_hints")
+    progress.begin("transcribing", duration * (1 + len(hints)), "seconds")
+    results = []
+    for index, hint in enumerate([None, *hints]):
+        try:
+            result = engine.transcribe(spec["audio"], window["start"], window["end"], terms=spec.get("terms", ()),
+                                       language_hint=hint)
+        except TruncatedASR as exc:
+            atomic_write(Path(spec["run_dir"]) / f"qwen_asr-truncated-{hint or 'auto'}.json", json.dumps(exc.evidence, ensure_ascii=False).encode())
+            raise
+        results.append(result.model_dump())
+        progress.advance(duration * (index + 1), force=True)
+    primary = results[0]
+    if hints:
+        primary["diagnostic_alternatives"] = results[1:]
+    return primary
+
+
+def vibevoice(spec):
+    from services.speech.benchmark import baseline_batch
+
+    return baseline_batch(spec, "vibevoice")
 
 
 if __name__ == "__main__":
@@ -760,13 +833,26 @@ if __name__ == "__main__":
     spec = json.loads(Path(sys.argv[2]).read_text(encoding="utf-8"))
     started = time.time()
     optional_runtime = None
-    if sys.argv[1] in ("parakeet", "diarize"):
+    if sys.argv[1] == "vibevoice":
+        from services.speech.runtime import verify_runtime
+
+        optional_runtime = verify_runtime("vibevoice")
+    elif sys.argv[1] == "diarize" and settings_for(spec).optional.diarization_engine == "nemotron3":
+        from services.speech.runtime import verify_runtime
+
+        optional_runtime = verify_runtime("nemotron3")
+    elif sys.argv[1] == "qwen_asr" and settings_for(spec).qwen_asr.backend == "official":
+        from services.speech.runtime import verify_runtime
+
+        optional_runtime = verify_runtime()
+    elif sys.argv[1] in ("parakeet", "diarize", "qwen_asr"):
         from services.worker.assets import verify_optional_assets
         from services.worker.optional_runtime import verify_runtime
 
         optional_runtime = verify_runtime()
-        verify_optional_assets(sys.argv[1], ProgressReporter(spec["run_dir"], sys.argv[1]))
-    result = {"whisper": whisper, "extract": extract, "parakeet": parakeet, "diarize": diarize}[sys.argv[1]](
+        if sys.argv[1] in ("parakeet", "diarize"):
+            verify_optional_assets(sys.argv[1], ProgressReporter(spec["run_dir"], sys.argv[1]))
+    result = {"whisper": whisper, "extract": extract, "parakeet": parakeet, "diarize": diarize, "qwen_asr": qwen_asr, "vibevoice": vibevoice}[sys.argv[1]](
         spec
     )
     result["elapsed_seconds"] = time.time() - started

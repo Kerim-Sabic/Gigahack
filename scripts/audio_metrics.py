@@ -8,7 +8,25 @@ import re
 import unicodedata
 
 
-CATEGORIES = {"name", "number", "unit", "negation", "medical_term", "date"}
+CATEGORIES = {"name", "number", "unit", "negation", "medical_term", "medication", "dose", "acronym", "date"}
+
+
+def character_score(reference, hypothesis):
+    # Strict CER: only NFC, case and whitespace are normalized. Accents, scripts,
+    # decimal punctuation and other punctuation are not silently equated.
+    ref = ''.join(c for c in unicodedata.normalize('NFC', reference).casefold() if not c.isspace())
+    hyp = ''.join(c for c in unicodedata.normalize('NFC', hypothesis).casefold() if not c.isspace())
+    if (len(ref)+1)*(len(hyp)+1) > 4_000_000:
+        return {'cer':None,'character_errors':None,'reference_character_count':len(ref),
+                'cer_status':'NOT MEASURED: score source-aligned clips within the character alignment budget'}
+    previous = list(range(len(hyp)+1))
+    for i, character in enumerate(ref,1):
+        row = [i]
+        for j, observed in enumerate(hyp,1):
+            row.append(min(previous[j-1]+(character!=observed),previous[j]+1,row[-1]+1))
+        previous = row
+    return {'cer':previous[-1]/len(ref) if ref else None,'character_errors':previous[-1],
+            'reference_character_count':len(ref),'cer_status':'NFC and casefold; whitespace excluded; punctuation, scripts and diacritics preserved'}
 
 
 def tokens(text):
@@ -60,6 +78,7 @@ def score(reference, hypothesis, critical_spans=()):
         critical[category]["correct"] += correct
         spans.append({**span, "correct": correct, "edits": affected})
     return {
+        **character_score(reference, hypothesis),
         "scope": "transcript alignment; supplied gold, not human or clinical validation",
         "normalization": "Unicode NFC and casefold; punctuation outside tokens ignored; numbers, units, accents and internal separators preserved",
         "reference_tokens": ref,

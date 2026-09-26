@@ -77,6 +77,7 @@ class ASRSettings(LocalModelSettings):
 
 
 class OptionalSettings(FrozenSettings):
+    diarization_engine: Literal["community1", "nemotron3"] = "community1"
     runtime_prefix: str = Field(default="", max_length=4096)
     parakeet_audio_fraction: float = Field(gt=0, le=1)
     parakeet_batch_size: int = Field(ge=1, le=8)
@@ -105,12 +106,37 @@ class WorkerSettings(FrozenSettings):
     no_activity_timeout_seconds: int = Field(ge=60, le=86400)
 
 
+class QwenASRSettings(FrozenSettings):
+    backend: Literal["native", "official"] = "native"
+    runtime_prefix: str = Field(default="", max_length=4096)
+    max_new_tokens: int = Field(default=1024, ge=32, le=2048)
+    context_characters: int = Field(default=1024, ge=64, le=4096)
+    attention: Literal["sdpa", "eager"] = "sdpa"
+    precision: Literal["bfloat16", "float16", "float32"] = "bfloat16"
+
+
+class NemotronSettings(FrozenSettings):
+    runtime_prefix: str = Field(default="", max_length=4096)
+    mode: Literal["offline_context", "low_latency", "very_low_latency", "ultra_low_latency"] = "offline_context"
+    threshold: float = Field(default=0.5, gt=0, lt=1)
+
+
+class VibeVoiceSettings(FrozenSettings):
+    runtime_prefix: str = Field(default="", max_length=4096)
+    max_new_tokens: int = Field(default=2048, ge=32, le=4096)
+    context_characters: int = Field(default=1024, ge=64, le=4096)
+    seed: int = Field(default=42, ge=0, le=2147483647)
+
+
 class InferenceSettings(FrozenSettings):
     schema_version: Literal[1]
     llm: LLMSettings
     asr: ASRSettings
     optional: OptionalSettings
     worker: WorkerSettings
+    qwen_asr: QwenASRSettings = Field(default_factory=QwenASRSettings)
+    nemotron: NemotronSettings = Field(default_factory=NemotronSettings)
+    vibevoice: VibeVoiceSettings = Field(default_factory=VibeVoiceSettings)
 
 
 def load_settings(path: Path | None = None):
