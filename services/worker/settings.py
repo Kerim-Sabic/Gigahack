@@ -30,6 +30,7 @@ class LLMSettings(LocalModelSettings):
     context_tokens: int = Field(ge=2048, le=131072)
     source_window_tokens: int = Field(ge=128)
     reconciliation_tokens: int = Field(ge=128)
+    conversation_context_turns: int = Field(default=6, ge=0, le=32)
     extraction_tokens: int = Field(ge=128)
     classification_tokens: int = Field(ge=32)
     category_tokens: int = Field(ge=16)

@@ -30,6 +30,18 @@ def new_meeting(c):
     return r.json()
 
 
+def test_audio_upload_preserves_display_filename_without_client_path(client):
+    meeting = new_meeting(client)
+    uploaded = client.post(f"/api/v1/meetings/{meeting['id']}/uploads",
+                           files={"file": ("C:\\fakepath\\Meeting audio.wav", audio(), "audio/wav")})
+    assert uploaded.status_code == 200
+    detail = client.get(f"/api/v1/meetings/{meeting['id']}").json()
+    original = json.loads(detail["assets"][0]["original"])
+    assert original["filename"] == "Meeting audio.wav"
+    assert original["file"] == "original.wav"
+    assert detail["jobs"] == []
+
+
 def test_queue_freezes_effective_developer_model_settings(client, monkeypatch):
     from services.worker import settings
 
@@ -503,7 +515,7 @@ def test_migration_upgrade_keeps_existing_accounts(tmp_path, monkeypatch):
         c.execute("INSERT INTO users VALUES('u','existing','hash','secretary','en')")
     migrate()
     with transaction() as c:
-        assert c.execute("SELECT MAX(version) FROM schema_version").fetchone()[0] == 6
+        assert c.execute("SELECT MAX(version) FROM schema_version").fetchone()[0] == 7
         assert c.execute("SELECT name FROM users").fetchone()[0] == "existing"
 
 
@@ -1195,3 +1207,60 @@ def test_reanalysis_rejects_new_segments_arriving_during_extraction(client, monk
     assert client.get(f"/api/v1/meetings/{meeting['id']}").json()["transcript_pending_assets"] == [asset]
     with transaction() as c:
         assert c.execute("SELECT review FROM candidates").fetchone()[0] == "needs_review"
+
+def test_meeting_files_template_audio_and_current_transcript(client, tmp_path, monkeypatch):
+    from pathlib import Path
+    from services.api.meeting_files import sync_one
+    monkeypatch.setenv('MOM_TRANSCRIPT_EXPORT_DIR', str(tmp_path / 'exports'))
+    m = new_meeting(client)
+    base = f"/api/v1/meetings/{m['id']}"
+    assert client.get(base + '/files').json()['state'] == 'disabled'
+    uploaded = client.post(base + '/uploads', files={'file': ('recording.wav', audio(), 'audio/wav')}).json()
+    response = client.post(base + '/files')
+    assert response.status_code == 200, response.text
+    folder = Path(response.json()['folder'])
+    sync_one(m['id'])
+    assert 'TEMPLATE ONLY' in (folder / 'transcript-template.txt').read_text(encoding='utf-8')
+    assert not (folder / 'transcript.txt').exists()
+    assert (folder / 'audio-01.wav').read_bytes() == audio()
+    current = client.get(base).json()
+    imported = client.post(base + '/transcript-imports', json={'asset_id': uploaded['id'], 'revision': current['revision'], 'filename':'test.txt', 'source':'Speaker 1\n0:00\nConfirmăm raportul. Да.'})
+    assert imported.status_code == 200, imported.text
+    sync_one(m['id'])
+    assert 'Confirmăm raportul. Да.' in (folder / 'transcript.txt').read_text(encoding='utf-8')
+    assert not (folder / 'transcript-template.txt').exists()
+    assert client.get(base + '/files').json()['state'] == 'ready'
+    assert client.get(base).json()['jobs'] == []
+    with transaction() as c:
+        segment = c.execute('SELECT id,revision FROM segments WHERE meeting_id=?', (m['id'],)).fetchone()
+    edited = client.post(f"/api/v1/segments/{segment['id']}/revisions", json={'revision':segment['revision'],'text':'Updated transcript','speaker':'Speaker 1'})
+    assert edited.status_code == 200, edited.text
+    sync_one(m['id'])
+    assert 'Updated transcript' in (folder / 'transcript.txt').read_text(encoding='utf-8')
+
+
+def test_meeting_files_refuses_unowned_folder_and_requires_membership(client, tmp_path, monkeypatch):
+    from pathlib import Path
+    from services.api.meeting_files import sync_one, safe_name
+    monkeypatch.setenv('MOM_TRANSCRIPT_EXPORT_DIR', str(tmp_path / 'exports'))
+    m = new_meeting(client)
+    base = f"/api/v1/meetings/{m['id']}/files"
+    folder = Path(client.post(base).json()['folder'])
+    folder.mkdir(parents=True)
+    (folder / 'unrelated.txt').write_text('preserve')
+    with pytest.raises(ValueError, match='not_empty'):
+        sync_one(m['id'])
+    assert (folder / 'unrelated.txt').read_text() == 'preserve'
+    assert '/' not in safe_name('../../meeting') and '\\' not in safe_name('C:\\meeting')
+    assert safe_name('CON') == 'Meeting'
+    actor = client.post('/api/v1/accounts', json={'name':'files-viewer','password':'synthetic-password-456','role':'viewer'}).json()
+    with transaction() as c:
+        c.execute('INSERT INTO members VALUES(?,?)', (m['id'], actor['id']))
+    signed = client.post('/api/v1/sessions', json={'name':'files-viewer','password':'synthetic-password-456'}).json()
+    client.headers['x-csrf-token'] = signed['csrf']
+    assert client.get(base).status_code == 200
+    assert client.post(base).status_code == 403
+    with transaction() as c:
+        c.execute('DELETE FROM members WHERE user_id=?', (actor['id'],))
+    assert client.get(base).status_code == 404
+    assert client.post(base).status_code == 404

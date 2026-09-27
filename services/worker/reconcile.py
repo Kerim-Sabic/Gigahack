@@ -7,7 +7,7 @@ import json
 import re
 
 
-def context_for(event, segments, previous, token_count, budget=1800):
+def context_for(event, segments, previous, token_count, budget=1800, before_turns=6):
     by_id = {s["id"]: s for s in segments}
     positions = {s["id"]: i for i, s in enumerate(segments)}
     required = set(e["segment_id"] for e in event["evidence"])
@@ -16,7 +16,7 @@ def context_for(event, segments, previous, token_count, budget=1800):
     near = set()
     for ident in required:
         index = positions[ident]
-        near.update(s["id"] for s in segments[max(0, index - 2) : index + 1])
+        near.update(s["id"] for s in segments[max(0, index - max(0, min(before_turns, 32))) : index + 1])
     words = set(re.findall(r"[^\W\d_]+", event["subject"].casefold()))
     latest = {}
     for prior in previous:

@@ -210,3 +210,12 @@ def test_native_binary_tamper_blocks_prepared_runtime(tmp_path, monkeypatch):
     (tmp_path / ".runtime/tools/llama/server").write_bytes(b"modified binary")
     with pytest.raises(SystemExit, match="checksum mismatch"):
         verify_tools()
+
+def test_conversation_context_includes_prior_turns_but_never_future_turns():
+    from services.worker.reconcile import context_for
+    segments = [{'id': str(i), 'text': f'Turn {i}', 'start': i} for i in range(12)]
+    event = {'subject': 'report', 'evidence': [{'segment_id': '8', 'field': 'text'}]}
+    result = context_for(event, segments, [], len, budget=10000, before_turns=6)
+    assert [s['id'] for s in result['source']] == [str(i) for i in range(2, 9)]
+    focused = context_for(event, segments, [], len, budget=10000, before_turns=0)
+    assert [s['id'] for s in focused['source']] == ['8']

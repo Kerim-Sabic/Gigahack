@@ -39,7 +39,22 @@ attempts = {}
 @asynccontextmanager
 async def lifespan(app):
     migrate()
-    yield
+    async def publish_files():
+        from .meeting_files import sync_enabled
+        while True:
+            await asyncio.sleep(3)
+            try:
+                await asyncio.to_thread(sync_enabled)
+            except Exception:
+                print(canonical({'code': 'meeting_file_sync_failed'}), flush=True)
+    publisher = asyncio.create_task(publish_files())
+    try:
+        yield
+    finally:
+        publisher.cancel()
+        from contextlib import suppress
+        with suppress(asyncio.CancelledError):
+            await publisher
 
 
 app = FastAPI(title="Secure MOM", version="0.1.0", lifespan=lifespan)
@@ -572,10 +587,29 @@ def upload(ident: str, file: UploadFile, u=Depends(user)):
                 metadata["sample_rate"],
                 metadata["samples"],
                 1,
-                canonical({**json.loads(metadata["original"]), "file": original.name}),
+                canonical({**json.loads(metadata["original"]), "file": original.name,
+                           "filename": (file.filename or "recording").replace("\\", "/").rsplit("/", 1)[-1][:255]}),
             ),
         )
     return {"id": asset, "samples": metadata["samples"], "sample_rate": 16000}
+
+
+@app.get("/api/v1/meetings/{ident}/files")
+def meeting_files_status(ident: str, u=Depends(user)):
+    from .meeting_files import status
+    with transaction() as c:
+        access(c, ident, u)
+        return status(c, ident)
+
+
+@app.post("/api/v1/meetings/{ident}/files")
+def enable_meeting_files(ident: str, u=Depends(user)):
+    from .meeting_files import enable, status
+    with transaction() as c:
+        meeting = access(c, ident, u, True)
+        enable(c, meeting)
+        audit(c, ident, u['id'], 'local_meeting_files_enabled', {})
+        return status(c, ident)
 
 
 class Capture(Strict):

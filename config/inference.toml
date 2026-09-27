@@ -8,6 +8,7 @@ model_file = "Qwen3.5-4B-Q4_K_M.gguf"
 context_tokens = 4096
 source_window_tokens = 1800
 reconciliation_tokens = 1800
+conversation_context_turns = 6 # Preceding source turns, trimmed to the reconciliation token budget.
 extraction_tokens = 768
 classification_tokens = 256
 category_tokens = 32

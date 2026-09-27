@@ -409,7 +409,7 @@ def extract(spec):
             # Keep diagnostic response memory bounded to this item, not the whole meeting.
             raw.clear()
             checkpoint_request = json.loads(json.dumps(checkpoint_request))
-            context = context_for(event, spec["segments"], previous, tokens, budget=llm.reconciliation_tokens)
+            context = context_for(event, spec["segments"], previous, tokens, budget=llm.reconciliation_tokens, before_turns=llm.conversation_context_turns)
             relevant = [by_id[i] for i in dict.fromkeys(e["segment_id"] for e in event["evidence"])]
             check_messages = [
                 {

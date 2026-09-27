@@ -1,5 +1,30 @@
 # Current implementation status
 
+Action review and local meeting folders are implemented (Decision 026). Review
+uses one queue and detail pane, source/context/history on demand, safe accept/next,
+and persistent reviewer corrections. The Actions register supports search,
+owner filtering and meeting links. Conversation reconciliation includes up to
+six preceding turns within the existing token budget (developer-configurable).
+A real local LLM synthetic test distinguished an October 16 proposal/confirmation
+from an unapproved October 20 proposal in 25.7 seconds. This is one focused
+smoke test, not an accuracy benchmark. Live browser checks covered acceptance,
+filters, correction persistence/history, source jumps, minutes and mobile layout.
+Medpark's original audio and supplied transcript were copied to the requested
+local folder; audio hash matched. No Medpark inference was run. Meeting folders
+are enabled after UI uploads/recordings or explicitly in Meeting options, and
+synchronize while the API runs. Export copies survive app deletion by design.
+Final verification: 242 backend tests passed, two platform skips; 27 frontend
+tests passed; production TypeScript/build, Ruff and whitespace checks passed.
+
+
+Audio intake and explicit transcript action extraction are implemented (Decision
+025). Audio selection/save/transcription are distinct, saved filenames and duration
+are visible, upload progress is real, and the AI button runs only the selected
+recording's saved text. Real synthetic browser-to-local-LLM extraction passed with
+correct owner/deadline and no ASR or approval. Desktop/mobile checked; 23 frontend
+and 239 backend tests passed (two platform skips), strict build and Ruff passed.
+Medpark content was not reprocessed. General accuracy qualification remains open.
+
 The transcription workspace redesign is implemented (Decision 024): warm Notavra
 identity, source-timed speaker activity, absolute cross-window audio seeking,
 contextual editing/history, Unicode search, bounded transcript DOM, source links
