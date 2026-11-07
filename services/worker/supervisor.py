@@ -146,6 +146,11 @@ def run_stage(job, stage, spec):
 
         python = stage_python(runtime_prefix)
     env = {**stage_environment(runtime_prefix), "MOM_STAGE_PARENT_PID": str(os.getpid())}
+    if stage == "whisper" and "speed_benchmark" in spec:
+        gpu = spec["speed_benchmark"]["gpu"]
+        if not isinstance(gpu, int) or gpu < -1 or gpu > 15:
+            raise ValueError("invalid_benchmark_gpu")
+        env["CUDA_VISIBLE_DEVICES"] = "0,1" if gpu == -1 else str(gpu)
     if stage == "vibevoice":
         # The existing global host/model locks reserve BOTH devices exclusively.
         # This is one sharded worker, not admission of concurrent GPU stages.
@@ -256,6 +261,9 @@ def process(job):
         "input_audio_hash": asset["hash"],
         "canonical_audio_hash": sha(asset["path"]),
     }
+    if queued_config.get("summary_only"):
+        from services.api.summaries import process_summary
+        return process_summary(job, spec, retry_stage)
     transcript_only = bool(queued_config.get("transcript_only"))
     asr = None if transcript_only else retry_stage(job, "whisper", spec)
     with transaction() as c:

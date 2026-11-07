@@ -56,6 +56,7 @@ class JobView(BaseModel):
     cancel: int
     created: float
     progress: ProgressView | None = None
+    summary_only: bool = False
     transcript_only: bool = False
 
 

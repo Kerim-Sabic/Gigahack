@@ -2,6 +2,17 @@ import type { Lang } from './i18n';
 let language:Lang='en';
 export function setUiLanguage(value:Lang){language=value;document.documentElement.lang=value;}
 const rows:[string,string,string][]=[
+["Meeting summary", "Rezumatul ședinței", "Краткое содержание встречи"],
+["Generate summary", "Generează rezumatul", "Создать краткое содержание"],
+["Regenerate summary", "Regenerează rezumatul", "Обновить краткое содержание"],
+["Summarizing…", "Se generează rezumatul…", "Создаётся краткое содержание…"],
+["A local AI overview of the saved transcript. Review it before approving minutes.", "Un rezumat AI local al transcrierii salvate. Verifică-l înainte de aprobarea procesului-verbal.", "Локальный ИИ создаёт обзор сохранённой расшифровки. Проверьте его перед утверждением протокола."],
+["AI draft · check against the source", "Ciornă AI · verifică sursa", "Черновик ИИ · проверьте источник"],
+["The transcript or meeting details changed. Regenerate the summary before creating minutes.", "Transcrierea sau detaliile ședinței s-au schimbat. Regenerează rezumatul înainte de crearea procesului-verbal.", "Расшифровка или сведения о встрече изменились. Обновите краткое содержание перед созданием протокола."],
+["Reading the transcript and summarizing the meeting locally…", "Transcrierea este citită și rezumată local…", "Расшифровка обрабатывается локально…"],
+["Generate a summary to include the main discussion in your minutes.", "Generează un rezumat pentru a include discuția principală în procesul-verbal.", "Создайте краткое содержание основной дискуссии для протокола."],
+["Add a transcript to generate a meeting summary.", "Adaugă o transcriere pentru a genera rezumatul ședinței.", "Добавьте расшифровку для создания краткого содержания."],
+
 ["Action extraction","Extragerea sarcinilor","Извлечение задач"],
 ["Audio transcription","Transcriere audio","Расшифровка аудио"],
 ["Audio recordings","Înregistrări audio","Аудиозаписи"],

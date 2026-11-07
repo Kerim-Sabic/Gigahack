@@ -515,7 +515,7 @@ def test_migration_upgrade_keeps_existing_accounts(tmp_path, monkeypatch):
         c.execute("INSERT INTO users VALUES('u','existing','hash','secretary','en')")
     migrate()
     with transaction() as c:
-        assert c.execute("SELECT MAX(version) FROM schema_version").fetchone()[0] == 7
+        assert c.execute("SELECT MAX(version) FROM schema_version").fetchone()[0] == 8
         assert c.execute("SELECT name FROM users").fetchone()[0] == "existing"
 
 
@@ -1264,3 +1264,89 @@ def test_meeting_files_refuses_unowned_folder_and_requires_membership(client, tm
         c.execute('DELETE FROM members WHERE user_id=?', (actor['id'],))
     assert client.get(base).status_code == 404
     assert client.post(base).status_code == 404
+
+
+def test_login_checks_stored_password_without_applying_creation_minimum(client, monkeypatch):
+    monkeypatch.setattr("services.api.main.attempts", {})
+    from services.api.main import passwords
+    with transaction() as c:
+        c.execute("UPDATE users SET password=? WHERE name='secretary'", (passwords.hash('test-short'),))
+    signed = client.post('/api/v1/sessions', json={'name': 'secretary', 'password': 'test-short'})
+    assert signed.status_code == 200
+    client.headers['x-csrf-token'] = signed.json()['csrf']
+    assert client.post('/api/v1/sessions', json={'name': 'secretary', 'password': 'wrong'}).status_code == 401
+    assert client.post('/api/v1/setup', json={'name': 'new-user', 'password': 'test-short'}).status_code == 422
+
+def summary_fixture(client):
+    m = new_meeting(client)
+    asset = client.post(f"/api/v1/meetings/{m['id']}/uploads", files={'file': ('test.wav', audio(), 'audio/wav')}).json()['id']
+    with transaction() as c:
+        c.execute("INSERT INTO segments(id,meeting_id,asset_id,revision,start,end,text,raw,words) VALUES('summary-source',?,?,1,0,16000,?,'{}','[]')", (m['id'], asset, 'Ana proposed a maintenance visit. The date remains undecided.'))
+    return m, asset
+
+
+def test_summary_whole_meeting_persistence_export_and_staleness(client):
+    from services.api.summaries import process_summary
+    m, asset = summary_fixture(client)
+    base = f"/api/v1/meetings/{m['id']}"
+    queued = client.post(base+'/summary', json={'revision': m['revision']})
+    assert queued.status_code == 200
+    with transaction() as c:
+        job = dict(c.execute('SELECT * FROM jobs WHERE id=?', (queued.json()['id'],)).fetchone())
+    spec = {'config': json.loads(job['config'])}
+    observed = []
+    def run(job, stage, spec):
+        observed.append(spec)
+        return {'points': [{'text': 'A maintenance visit was proposed; its date remains unresolved.', 'source_ids': ['summary-source']}]}
+    process_summary(job, spec, run)
+    assert observed[0]['config']['summary_only']
+    state = client.get(base+'/summary').json()
+    assert state['job']['state'] == 'complete' and not state['summary']['stale']
+    revision = client.get(base).json()['revision']
+    snapshot = client.post(base+'/snapshots', json={'revision':revision}).json()
+    export = client.get(f"/api/v1/snapshots/{snapshot['id']}/exports/json").json()
+    assert export['summary']['points'][0]['source_ids'] == ['summary-source']
+    assert 'A maintenance visit was proposed' in client.get(f"/api/v1/snapshots/{snapshot['id']}/exports/html").text
+    with transaction() as c:
+        assert c.execute('SELECT COUNT(*) FROM candidates WHERE meeting_id=?', (m['id'],)).fetchone()[0] == 0
+        c.execute("UPDATE segments SET text='Revised transcript',revision=revision+1 WHERE id='summary-source'")
+    assert client.get(base+'/summary').json()['summary']['stale']
+    assert client.post(base+'/snapshots',json={'revision':revision}).status_code == 409
+    # Historical immutable exports keep the summary they were approved against.
+    assert client.get(f"/api/v1/snapshots/{snapshot['id']}/exports/json").json()['summary'] == export['summary']
+
+
+def test_summary_rejects_invalid_sources_and_concurrent_edits(client):
+    from services.api.summaries import process_summary
+    m, _ = summary_fixture(client)
+    queued = client.post(f"/api/v1/meetings/{m['id']}/summary",json={'revision':m['revision']}).json()
+    with transaction() as c:
+        job = dict(c.execute('SELECT * FROM jobs WHERE id=?', (queued['id'],)).fetchone())
+    spec={'config':json.loads(job['config'])}
+    with pytest.raises(RuntimeError, match='summary_invalid_source'):
+        process_summary(job,spec,lambda *args:{'points':[{'text':'Unsupported','source_ids':['invented']}]})
+    def changed(*args):
+        with transaction() as c:
+            c.execute("UPDATE segments SET revision=revision+1 WHERE id='summary-source'")
+        return {'points':[{'text':'Draft','source_ids':['summary-source']}]}
+    with pytest.raises(RuntimeError, match='summary_source_changed'):
+        process_summary(job,spec,changed)
+    with transaction() as c:
+        assert c.execute('SELECT COUNT(*) FROM meeting_summaries').fetchone()[0] == 0
+
+
+def test_summary_requires_transcript_and_writer_membership(client, monkeypatch):
+    monkeypatch.setattr('services.api.main.attempts', {})
+    m = new_meeting(client)
+    base=f"/api/v1/meetings/{m['id']}/summary"
+    assert client.post(base,json={'revision':m['revision']}).status_code == 409
+    actor=client.post('/api/v1/accounts',json={'name':'summary-viewer','password':'synthetic-password-456','role':'viewer'}).json()
+    with transaction() as c:
+        c.execute('INSERT INTO members VALUES(?,?)',(m['id'],actor['id']))
+    signed=client.post('/api/v1/sessions',json={'name':'summary-viewer','password':'synthetic-password-456'}).json()
+    client.headers['x-csrf-token']=signed['csrf']
+    assert client.get(base).status_code == 200
+    assert client.post(base,json={'revision':m['revision']}).status_code == 403
+    with transaction() as c:
+        c.execute('DELETE FROM members WHERE user_id=?',(actor['id'],))
+    assert client.get(base).status_code == 404

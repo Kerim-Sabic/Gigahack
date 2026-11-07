@@ -15,7 +15,7 @@ from services.api.provenance import runtime_identity
 RATE = 16000
 
 
-def owned_segments(result, offset, start, end, total, multilingual, observe=lambda _: None):
+def owned_segments(result, offset, start, end, total, multilingual, observe=lambda _: None, language=None):
     """Use source word midpoint ownership, retaining the full raw hypothesis for review."""
     segments = []
     for segment in result:
@@ -44,7 +44,7 @@ def owned_segments(result, offset, start, end, total, multilingual, observe=lamb
             text=text, words=selected,
             raw=dict(text=segment.text, avg_logprob=segment.avg_logprob,
                      no_speech_prob=segment.no_speech_prob,
-                     language_policy='per_decoding_window' if multilingual else 'recording_level',
+                     language_policy=('forced_' + language) if language else ('per_decoding_window' if multilingual else 'recording_level'),
                      chunk_start=start, chunk_end=end,
                      boundary_review=boundary,
                      boundary_policy='source_word_midpoint; inspect boundary audio when uncertain'),
@@ -92,14 +92,14 @@ def transcribe_chunks(model, spec, settings, progress):
                     raise ValueError('truncated_canonical_audio')
                 samples = np.frombuffer(pcm, dtype='<i2').astype(np.float32) / 32768.0
                 result, info = model.transcribe(
-                    samples, language=None, task='transcribe', beam_size=settings.beam_size,
+                    samples, language=settings.language, task='transcribe', beam_size=settings.beam_size,
                     word_timestamps=True, condition_on_previous_text=settings.condition_on_previous_text,
                     multilingual=settings.multilingual, vad_filter=settings.vad_filter,
                     chunk_length=settings.retry_window_seconds if spec['config'].get('oom_retry') else settings.decode_window_seconds,
                 )
                 checkpoint = dict(key=key, start=start, end=end, language=info.language,
                                   segments=owned_segments(result, offset, start, end, total, settings.multilingual,
-                                      lambda done: progress.advance(max(progress.completed, done))))
+                                      lambda done: progress.advance(max(progress.completed, done)), language=settings.language))
                 envelope = dict(payload=checkpoint, sha256=hashlib.sha256(canonical(checkpoint).encode()).hexdigest())
                 atomic_write(path, canonical(envelope).encode())
                 del samples, pcm
@@ -111,6 +111,7 @@ def transcribe_chunks(model, spec, settings, progress):
             languages.append(checkpoint['language'])
             progress.advance(end / RATE, force=True)
     return dict(segments=segments, language=languages[0], duration=total / RATE,
-                language_scope='initial detection only; not a language label for every word',
+                language_scope=('forced transcription language; not detected' if settings.language else
+                                'initial detection only; not a language label for every word'),
                 multilingual=settings.multilingual, checkpoint_key=key, reused_chunks=reused,
                 chunk_count=len(languages), chunk_initial_languages=languages)

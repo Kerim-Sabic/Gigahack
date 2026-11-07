@@ -17,3 +17,10 @@ body{background:var(--page)}p{color:var(--ink)}h1,h2,h3{font-weight:500}button,i
 
 /* Notavra’s voice key and source-to-action navigation distinguish this workspace. */
 .audio-experience{border-left:3px solid #887098}.audio-playhead:before{background:inherit}.speaker-key{display:flex;gap:18px;align-items:center;flex-wrap:wrap}.speaker-key>span{display:flex;align-items:center;gap:6px;font-size:11px}.speaker-key i{width:5px;height:5px;border-radius:50%}.source-jump{display:inline-flex;font-size:12px;min-height:36px;margin-left:16px}.recording-metadata{align-items:center}.sidebar nav button.active{box-shadow:inset 2px 0 #887098}.workspace-heading h1{font-weight:550}.recording-metadata>span{font-size:10px}@media(max-width:640px){.speaker-key{gap:12px}.recording-metadata{align-items:flex-start;gap:8px}.source-jump{margin-left:0}}
+
+.meeting-summary {padding: 24px 0 32px; border-bottom: 1px solid rgba(60,50,40,.12); margin-bottom:24px}
+.summary-points {padding-left:22px; max-width:850px; line-height:1.65}
+.summary-points li {margin:18px 0}
+.summary-points p {margin:0 0 6px}
+.summary-sources {display:flex;gap:8px;flex-wrap:wrap}
+.summary-sources button {font-size:12px;padding:3px 8px}

@@ -133,6 +133,11 @@ def render(data):
     def esc(value):
         return html.escape(str(value if value is not None else labels["unknown"]))
 
+    summary_html = ""
+    if data.get("summary"):
+        heading = {"en": "Meeting summary", "ro": "Rezumatul ședinței", "ru": "Краткое содержание встречи"}[m["language"]]
+        summary_html = "<h3>" + esc(heading) + "</h3><ul>" + "".join(
+            "<li>" + esc(point["text"]) + "</li>" for point in data["summary"]["points"]) + "</ul>"
     rows = "".join(
         f"<tr><td>{esc(i['text'])}</td><td>{esc(i['owner'])}</td><td>{esc(i['due'])}</td><td>{esc(labels.get(i['status'], i['status']))}</td><td>{esc(i['condition'])}</td><td>{esc(i.get('value'))}</td></tr>"
         for i in data["items"]
@@ -152,7 +157,7 @@ def render(data):
     return f'''<!doctype html><html lang="{m["language"]}"><meta charset="utf-8"><title>{esc(m["title"])}</title>
 <style>*{{box-sizing:border-box}}body{{font:14px/1.5 sans-serif;color:#183438;max-width:900px;margin:32px auto;padding:24px;overflow-wrap:anywhere}}h1{{font-size:28px;line-height:1.2}}h2{{font-size:20px}}h3{{font-size:15px;margin-top:24px;break-after:avoid}}table{{border-collapse:collapse;table-layout:fixed;width:100%;font-size:12px}}td,th{{text-align:left;vertical-align:top;padding:9px 6px;border-bottom:1px solid #ccd6d5;overflow-wrap:anywhere}}th{{background:#edf5f2}}th:first-child{{width:28%}}th:nth-child(2){{width:18%}}th:nth-child(3){{width:12%}}th:nth-child(4){{width:16%}}th:nth-child(5){{width:12%}}th:nth-child(6){{width:14%}}thead{{display:table-header-group}}tr{{break-inside:avoid}}footer{{margin-top:32px;font-size:11px;border-top:2px solid #287f78;padding-top:12px}}@page{{size:A4;margin:18mm;@bottom-right{{content:counter(page);font:10px sans-serif;color:#587074}}}}@media print{{body{{max-width:none;margin:0;padding:0;font-size:12px}}table{{font-size:11px}}a{{color:inherit}}}}</style>
 <h1>{esc(title)}</h1><h2>{esc(m["title"])}</h2><p>{esc(m["date"] or labels["unknown"])} {esc(m.get("time", ""))} · {esc(m["timezone"] or labels["unknown"])} · {esc(m["classification"])}</p>
-<p style="white-space:pre-wrap">{esc(template.get("introduction", ""))}</p><h3>{labels["participants"]}</h3><p>{esc(", ".join(data["participants"]) or labels["no_participants"])}</p><p style="white-space:pre-wrap">{esc(m.get("notes", ""))}</p><h3>{labels["items"]}</h3>
+<p style="white-space:pre-wrap">{esc(template.get("introduction", ""))}</p><h3>{labels["participants"]}</h3><p>{esc(", ".join(data["participants"]) or labels["no_participants"])}</p><p style="white-space:pre-wrap">{esc(m.get("notes", ""))}</p>{summary_html}<h3>{labels["items"]}</h3>
 {table}
 <h3>{labels["unresolved"]}</h3>{unresolved}<h3>{labels["history"]}</h3>{history}
 <footer>{esc(data.get("product_name", PRODUCT_NAME))} · {labels["revision"]} {m["revision"]} · {labels["evidence"]}</footer></html>'''
@@ -215,6 +220,13 @@ def snapshot(ident: str, body: Revision, u=Depends(authenticated)):
                 data["unresolved"].append(
                     item["subject"] + ": " + LABELS[m["language"]]["conditional"] + " — " + item["condition"]
                 )
+        from .summaries import current_summary
+        summary = current_summary(c, m)
+        if summary and summary['stale']:
+            fail('summary_outdated_regenerate', 409)
+        if summary:
+            data['summary'] = summary['body']
+            data['summary_provenance'] = {k: summary[k] for k in ('id', 'job_id', 'source_hash', 'created')}
         blob = canonical(data)
         digest = hashlib.sha256(blob.encode()).hexdigest()
         existing = c.execute(

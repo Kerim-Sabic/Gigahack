@@ -6,6 +6,8 @@ from . import config
 
 
 FILES = (
+    "services/worker/meeting_summary.py",
+    "services/api/summaries.py",
     "scripts/benchmark_speech.py",
     "scripts/audio_metrics.py",
     "scripts/codeswitch_metrics.py",

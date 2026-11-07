@@ -23,6 +23,10 @@ from services.api.progress import ProgressReporter
 
 
 def whisper(spec):
+    if "speed_benchmark" in spec:
+        from services.speech.speed_benchmark import run
+
+        return run(spec)
     if "benchmark_cases" in spec:
         from services.speech.benchmark import baseline_batch
 
@@ -232,6 +236,9 @@ def extract(spec):
             time.sleep(1)
         if not ready:
             raise RuntimeError("llama_start_timeout")
+        if spec["config"].get("summary_only"):
+            from services.worker.meeting_summary import generate_summary
+            return generate_summary(client, spec, llm, raw_path, progress, bounded_completion)
         groups, current = [], []
         for s in spec["segments"]:
             trial = current + [s]

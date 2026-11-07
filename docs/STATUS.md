@@ -1,5 +1,16 @@
 # Current implementation status
 
+Local-only meeting summaries are available in Minutes (Decision 029). A supervised
+local LLM reads all saved meeting transcript sections, produces a cited AI draft,
+and includes current summaries in immutable HTML/PDF/JSON minutes. Changed source
+text invalidates a prior summary. Real synthetic generation and desktop/mobile
+controls passed; 251 backend tests passed / 2 skips, 30 frontend tests passed.
+No push was requested or performed for this change.
+
+An isolated transcription-only speed benchmark is complete (Decision 027):
+11:42.549 audio, 6.212 s median core inference on one RTX 5080; no accuracy
+claim or production model-setting change. The app worker was restored.
+
 Action review and local meeting folders are implemented (Decision 026). Review
 uses one queue and detail pane, source/context/history on demand, safe accept/next,
 and persistent reviewer corrections. The Actions register supports search,

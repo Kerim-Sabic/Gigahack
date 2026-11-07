@@ -26,7 +26,9 @@ def test_code_switches_are_preserved_without_translation_or_recording_wide_label
     with wave.open(str(audio), 'wb') as source:
         source.setparams((1, 2, 16000, 0, 'NONE', 'not compressed'))
         source.writeframes(b'\0\0' * 32000)
-    result = whisper({'audio': str(audio), 'run_dir': str(tmp_path), 'config': {'device': 'cpu', 'inference': load_settings().model_dump()}})
+    profile = load_settings().model_dump()
+    profile['asr'].update(language=None, multilingual=True)
+    result = whisper({'audio': str(audio), 'run_dir': str(tmp_path), 'config': {'device': 'cpu', 'inference': profile}})
     assert observed['local'] and observed['multilingual']
     assert observed['language'] is None and observed['task'] == 'transcribe'
     assert [s['text'] for s in result['segments']] == texts

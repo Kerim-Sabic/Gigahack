@@ -31,6 +31,7 @@ class LLMSettings(LocalModelSettings):
     source_window_tokens: int = Field(ge=128)
     reconciliation_tokens: int = Field(ge=128)
     conversation_context_turns: int = Field(default=6, ge=0, le=32)
+    summary_tokens: int = Field(default=1024, ge=256, le=2048)
     extraction_tokens: int = Field(ge=128)
     classification_tokens: int = Field(ge=32)
     category_tokens: int = Field(ge=16)
@@ -71,10 +72,18 @@ class ASRSettings(LocalModelSettings):
     decode_window_seconds: int = Field(ge=5, le=30)
     retry_window_seconds: int = Field(ge=5, le=30)
     condition_on_previous_text: bool
+    language: Literal["ro", "ru", "en"] | None = None # None preserves older frozen jobs.
     multilingual: bool
     vad_filter: bool
     gpu_compute_type: Literal["int8_float16", "float16", "float32", "int8"]
     cpu_compute_type: Literal["int8", "float32"]
+
+
+    @model_validator(mode="after")
+    def language_policy(self):
+        if self.language is not None and self.multilingual:
+            raise ValueError("forced_language_requires_multilingual_false")
+        return self
 
 
 class OptionalSettings(FrozenSettings):

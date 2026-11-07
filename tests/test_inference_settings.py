@@ -47,3 +47,12 @@ def test_custom_context_and_reasoning_reach_template_and_completion(tmp_path):
         bounded_completion(client, {"messages": [], "max_tokens": 100, "response_format": {"json_schema": {"name": "fields"}}}, tmp_path / "raw.jsonl", llm)
     assert seen[0][1]["chat_template_kwargs"]["enable_thinking"] is True
     assert seen[-1][1]["max_tokens"] == 260
+
+
+def test_forced_language_cannot_enable_automatic_window_detection():
+    profile = load_settings().model_dump()
+    with pytest.raises(ValidationError, match='forced_language_requires_multilingual_false'):
+        InferenceSettings.model_validate({**profile, 'asr': {**profile['asr'], 'multilingual': True}})
+    profile['asr'].pop('language')
+    profile['asr']['multilingual'] = True
+    assert InferenceSettings.model_validate(profile).asr.language is None

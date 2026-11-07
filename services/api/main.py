@@ -175,6 +175,11 @@ class Credentials(Strict):
     password: str = Field(min_length=12, max_length=256)
 
 
+class LoginCredentials(Credentials):
+    # Login verifies stored credentials; creation retains its separate length policy.
+    password: str = Field(min_length=1, max_length=256)
+
+
 class Account(Credentials):
     role: Literal["admin", "secretary", "viewer"] = "secretary"
 
@@ -225,7 +230,7 @@ def setup(body: Credentials, response: Response, request: Request):
 
 
 @app.post("/api/v1/sessions", response_model=AccountView)
-def login(body: Credentials, request: Request, response: Response):
+def login(body: LoginCredentials, request: Request, response: Response):
     key = request.client.host
     attempts[key] = [t for t in attempts.get(key, []) if t > time.time() - 60]
     if len(attempts[key]) >= 8:
@@ -379,6 +384,7 @@ def meeting(ident: str, u=Depends(user)):
 
     for job in m["jobs"]:
         job["progress"] = read_progress(config.DATA, job)
+        job["summary_only"] = bool(json.loads(job["config"]).get("summary_only"))
         job["transcript_only"] = bool(json.loads(job["config"]).get("transcript_only"))
     return m
 
@@ -481,6 +487,7 @@ def delete_meeting(ident: str, body: DeleteMeeting, u=Depends(user)):
                 "accepted_events",
                 "candidates",
                 "segments",
+                "meeting_summaries",
                 "jobs",
                 "snapshots",
                 "recordings",
@@ -1320,6 +1327,9 @@ app.include_router(settings_router)
 from .transcript_import import router as transcript_import_router  # noqa: E402
 
 app.include_router(transcript_import_router)
+from .summaries import router as summaries_router  # noqa: E402
+app.include_router(summaries_router)
+
 web = config.ROOT / "apps/web/dist"
 if web.exists():
     app.mount("/", StaticFiles(directory=web, html=True), name="web")

@@ -163,6 +163,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/meetings/{ident}/files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Meeting Files Status */
+        get: operations["meeting_files_status_api_v1_meetings__ident__files_get"];
+        put?: never;
+        /** Enable Meeting Files */
+        post: operations["enable_meeting_files_api_v1_meetings__ident__files_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/meetings/{ident}/recordings": {
         parameters: {
             query?: never;
@@ -731,6 +749,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/meetings/{ident}/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Summary */
+        get: operations["get_summary_api_v1_meetings__ident__summary_get"];
+        put?: never;
+        /** Queue Summary */
+        post: operations["queue_summary_api_v1_meetings__ident__summary_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1041,10 +1077,22 @@ export interface components {
             created: number;
             progress?: components["schemas"]["ProgressView"] | null;
             /**
+             * Summary Only
+             * @default false
+             */
+            summary_only: boolean;
+            /**
              * Transcript Only
              * @default false
              */
             transcript_only: boolean;
+        };
+        /** LoginCredentials */
+        LoginCredentials: {
+            /** Name */
+            name: string;
+            /** Password */
+            password: string;
         };
         /** Meeting */
         Meeting: {
@@ -1410,6 +1458,17 @@ export interface components {
             /** Reason */
             reason: string;
         };
+        /** SummaryRequest */
+        SummaryRequest: {
+            /** Revision */
+            revision: number;
+            /**
+             * Device
+             * @default cuda
+             * @enum {string}
+             */
+            device: "cuda" | "cpu";
+        };
         /** TemplateEdit */
         TemplateEdit: {
             /** Version */
@@ -1543,7 +1602,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Credentials"];
+                "application/json": components["schemas"]["LoginCredentials"];
             };
         };
         responses: {
@@ -1896,6 +1955,68 @@ export interface operations {
                 "multipart/form-data": components["schemas"]["Body_upload_api_v1_meetings__ident__uploads_post"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    meeting_files_status_api_v1_meetings__ident__files_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ident: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    enable_meeting_files_api_v1_meetings__ident__files_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ident: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {
@@ -3048,6 +3169,72 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["SourceDraft"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_summary_api_v1_meetings__ident__summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ident: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    queue_summary_api_v1_meetings__ident__summary_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ident: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SummaryRequest"];
             };
         };
         responses: {

@@ -83,3 +83,25 @@ def test_overlap_word_ownership_retains_raw_boundary_evidence():
     right = owned_segments([segment], 0, 30*16000, 60*16000, 60*16000, True)
     assert [s['text'] for s in left+right] == [' один', ' cuvânt']
     assert all(s['raw']['text'] == ' один cuvânt' and s['raw']['boundary_review'] for s in left+right)
+
+
+def test_romanian_default_reaches_every_chunk_and_invalidates_auto_checkpoints(tmp_path):
+    spec, settings = setup_audio(tmp_path)
+    assert settings.language == 'ro' and settings.multilingual is False
+    auto = settings.model_copy(update={'language': None, 'multilingual': True})
+    transcribe_chunks(Recognizer(), spec, auto, ProgressReporter(tmp_path, 'whisper'))
+
+    class RomanianRecognizer(Recognizer):
+        def transcribe(self, samples, **kwargs):
+            assert kwargs['language'] == 'ro'
+            assert kwargs['multilingual'] is False
+            assert kwargs['task'] == 'transcribe'
+            segments, _ = super().transcribe(samples, **kwargs)
+            return segments, SimpleNamespace(language='ro')
+
+    model = RomanianRecognizer()
+    result = transcribe_chunks(model, spec, settings, ProgressReporter(tmp_path, 'whisper'))
+    assert len(model.calls) == 3 and result['reused_chunks'] == 0
+    assert result['language'] == 'ro'
+    assert result['language_scope'] == 'forced transcription language; not detected'
+    assert all(s['raw']['language_policy'] == 'forced_ro' for s in result['segments'])
